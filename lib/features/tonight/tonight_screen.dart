@@ -239,7 +239,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     if (!_notifications.routineRequested.value) return;
     _notifications.routineRequested.value = false;
     final plan = await ref.read(tonightPlanProvider.future);
-    if (!mounted || plan.pendingCheckIn != null || !plan.routineEnabled) return;
+    if (!mounted || !plan.routineEnabled) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
     ref.read(selectedTabIndexProvider.notifier).state = 0;
     await _startRoutine(plan);
@@ -258,7 +258,13 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     final planAsync = ref.watch(tonightPlanProvider);
 
     final plan = hasSchedule ? planAsync.value : null;
-    final showBedArea = plan != null && plan.pendingCheckIn == null;
+    // An unanswered check-in stays open until 14:00 the next day; it must not
+    // hide tonight's button once the evening comes round again.
+    final showBedArea =
+        plan != null &&
+        (plan.pendingCheckIn == null ||
+            plan.inBedAt != null ||
+            _canPressInBed(plan));
 
     return Scaffold(
       appBar: AppBar(
