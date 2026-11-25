@@ -2238,6 +2238,18 @@ class $NightPlansTable extends NightPlans
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _fireAppliedAtMeta = const VerificationMeta(
+    'fireAppliedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fireAppliedAt =
+      GeneratedColumn<DateTime>(
+        'fire_applied_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2250,6 +2262,7 @@ class $NightPlansTable extends NightPlans
     isLocked,
     lockedAt,
     redAlertSentAt,
+    fireAppliedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2344,6 +2357,15 @@ class $NightPlansTable extends NightPlans
         ),
       );
     }
+    if (data.containsKey('fire_applied_at')) {
+      context.handle(
+        _fireAppliedAtMeta,
+        fireAppliedAt.isAcceptableOrUnknown(
+          data['fire_applied_at']!,
+          _fireAppliedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2397,6 +2419,10 @@ class $NightPlansTable extends NightPlans
         DriftSqlType.dateTime,
         data['${effectivePrefix}red_alert_sent_at'],
       ),
+      fireAppliedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fire_applied_at'],
+      ),
     );
   }
 
@@ -2420,6 +2446,11 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
   /// When the once-per-night "คืนแดงข้างหน้า" alert was shown, so it isn't
   /// repeated (CLAUDE.md section 5).
   final DateTime? redAlertSentAt;
+
+  /// When this night's fire/streak effect (section 7) was applied — from a
+  /// real check-in or the no-check-in-past-window sweep — so it's applied
+  /// exactly once.
+  final DateTime? fireAppliedAt;
   const NightPlan({
     required this.id,
     required this.wakeDate,
@@ -2431,6 +2462,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     required this.isLocked,
     this.lockedAt,
     this.redAlertSentAt,
+    this.fireAppliedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2448,6 +2480,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     }
     if (!nullToAbsent || redAlertSentAt != null) {
       map['red_alert_sent_at'] = Variable<DateTime>(redAlertSentAt);
+    }
+    if (!nullToAbsent || fireAppliedAt != null) {
+      map['fire_applied_at'] = Variable<DateTime>(fireAppliedAt);
     }
     return map;
   }
@@ -2468,6 +2503,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       redAlertSentAt: redAlertSentAt == null && nullToAbsent
           ? const Value.absent()
           : Value(redAlertSentAt),
+      fireAppliedAt: fireAppliedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fireAppliedAt),
     );
   }
 
@@ -2487,6 +2525,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       isLocked: serializer.fromJson<bool>(json['isLocked']),
       lockedAt: serializer.fromJson<DateTime?>(json['lockedAt']),
       redAlertSentAt: serializer.fromJson<DateTime?>(json['redAlertSentAt']),
+      fireAppliedAt: serializer.fromJson<DateTime?>(json['fireAppliedAt']),
     );
   }
   @override
@@ -2503,6 +2542,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       'isLocked': serializer.toJson<bool>(isLocked),
       'lockedAt': serializer.toJson<DateTime?>(lockedAt),
       'redAlertSentAt': serializer.toJson<DateTime?>(redAlertSentAt),
+      'fireAppliedAt': serializer.toJson<DateTime?>(fireAppliedAt),
     };
   }
 
@@ -2517,6 +2557,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     bool? isLocked,
     Value<DateTime?> lockedAt = const Value.absent(),
     Value<DateTime?> redAlertSentAt = const Value.absent(),
+    Value<DateTime?> fireAppliedAt = const Value.absent(),
   }) => NightPlan(
     id: id ?? this.id,
     wakeDate: wakeDate ?? this.wakeDate,
@@ -2530,6 +2571,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     redAlertSentAt: redAlertSentAt.present
         ? redAlertSentAt.value
         : this.redAlertSentAt,
+    fireAppliedAt: fireAppliedAt.present
+        ? fireAppliedAt.value
+        : this.fireAppliedAt,
   );
   NightPlan copyWithCompanion(NightPlansCompanion data) {
     return NightPlan(
@@ -2555,6 +2599,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       redAlertSentAt: data.redAlertSentAt.present
           ? data.redAlertSentAt.value
           : this.redAlertSentAt,
+      fireAppliedAt: data.fireAppliedAt.present
+          ? data.fireAppliedAt.value
+          : this.fireAppliedAt,
     );
   }
 
@@ -2570,7 +2617,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ..write('isPreExamNight: $isPreExamNight, ')
           ..write('isLocked: $isLocked, ')
           ..write('lockedAt: $lockedAt, ')
-          ..write('redAlertSentAt: $redAlertSentAt')
+          ..write('redAlertSentAt: $redAlertSentAt, ')
+          ..write('fireAppliedAt: $fireAppliedAt')
           ..write(')'))
         .toString();
   }
@@ -2587,6 +2635,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     isLocked,
     lockedAt,
     redAlertSentAt,
+    fireAppliedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -2601,7 +2650,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           other.isPreExamNight == this.isPreExamNight &&
           other.isLocked == this.isLocked &&
           other.lockedAt == this.lockedAt &&
-          other.redAlertSentAt == this.redAlertSentAt);
+          other.redAlertSentAt == this.redAlertSentAt &&
+          other.fireAppliedAt == this.fireAppliedAt);
 }
 
 class NightPlansCompanion extends UpdateCompanion<NightPlan> {
@@ -2615,6 +2665,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
   final Value<bool> isLocked;
   final Value<DateTime?> lockedAt;
   final Value<DateTime?> redAlertSentAt;
+  final Value<DateTime?> fireAppliedAt;
   const NightPlansCompanion({
     this.id = const Value.absent(),
     this.wakeDate = const Value.absent(),
@@ -2626,6 +2677,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.isLocked = const Value.absent(),
     this.lockedAt = const Value.absent(),
     this.redAlertSentAt = const Value.absent(),
+    this.fireAppliedAt = const Value.absent(),
   });
   NightPlansCompanion.insert({
     this.id = const Value.absent(),
@@ -2638,6 +2690,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.isLocked = const Value.absent(),
     this.lockedAt = const Value.absent(),
     this.redAlertSentAt = const Value.absent(),
+    this.fireAppliedAt = const Value.absent(),
   }) : wakeDate = Value(wakeDate),
        plannedWakeAt = Value(plannedWakeAt),
        plannedBedtimeAt = Value(plannedBedtimeAt);
@@ -2652,6 +2705,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Expression<bool>? isLocked,
     Expression<DateTime>? lockedAt,
     Expression<DateTime>? redAlertSentAt,
+    Expression<DateTime>? fireAppliedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2664,6 +2718,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       if (isLocked != null) 'is_locked': isLocked,
       if (lockedAt != null) 'locked_at': lockedAt,
       if (redAlertSentAt != null) 'red_alert_sent_at': redAlertSentAt,
+      if (fireAppliedAt != null) 'fire_applied_at': fireAppliedAt,
     });
   }
 
@@ -2678,6 +2733,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Value<bool>? isLocked,
     Value<DateTime?>? lockedAt,
     Value<DateTime?>? redAlertSentAt,
+    Value<DateTime?>? fireAppliedAt,
   }) {
     return NightPlansCompanion(
       id: id ?? this.id,
@@ -2690,6 +2746,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       isLocked: isLocked ?? this.isLocked,
       lockedAt: lockedAt ?? this.lockedAt,
       redAlertSentAt: redAlertSentAt ?? this.redAlertSentAt,
+      fireAppliedAt: fireAppliedAt ?? this.fireAppliedAt,
     );
   }
 
@@ -2726,6 +2783,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     if (redAlertSentAt.present) {
       map['red_alert_sent_at'] = Variable<DateTime>(redAlertSentAt.value);
     }
+    if (fireAppliedAt.present) {
+      map['fire_applied_at'] = Variable<DateTime>(fireAppliedAt.value);
+    }
     return map;
   }
 
@@ -2741,7 +2801,1057 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
           ..write('isPreExamNight: $isPreExamNight, ')
           ..write('isLocked: $isLocked, ')
           ..write('lockedAt: $lockedAt, ')
-          ..write('redAlertSentAt: $redAlertSentAt')
+          ..write('redAlertSentAt: $redAlertSentAt, ')
+          ..write('fireAppliedAt: $fireAppliedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CheckInsTable extends CheckIns
+    with TableInfo<$CheckInsTable, CheckInRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CheckInsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _wakeDateMeta = const VerificationMeta(
+    'wakeDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> wakeDate = GeneratedColumn<DateTime>(
+    'wake_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lightsOffAtMeta = const VerificationMeta(
+    'lightsOffAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lightsOffAt = GeneratedColumn<DateTime>(
+    'lights_off_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actualWakeAtMeta = const VerificationMeta(
+    'actualWakeAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> actualWakeAt = GeneratedColumn<DateTime>(
+    'actual_wake_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<CheckInResultDb, int> result =
+      GeneratedColumn<int>(
+        'result',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<CheckInResultDb>($CheckInsTable.$converterresult);
+  static const VerificationMeta _onTimeMeta = const VerificationMeta('onTime');
+  @override
+  late final GeneratedColumn<bool> onTime = GeneratedColumn<bool>(
+    'on_time',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("on_time" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _usedShieldMeta = const VerificationMeta(
+    'usedShield',
+  );
+  @override
+  late final GeneratedColumn<bool> usedShield = GeneratedColumn<bool>(
+    'used_shield',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("used_shield" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _checkedInAtMeta = const VerificationMeta(
+    'checkedInAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> checkedInAt = GeneratedColumn<DateTime>(
+    'checked_in_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    wakeDate,
+    lightsOffAt,
+    actualWakeAt,
+    result,
+    onTime,
+    usedShield,
+    checkedInAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'check_ins';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CheckInRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('wake_date')) {
+      context.handle(
+        _wakeDateMeta,
+        wakeDate.isAcceptableOrUnknown(data['wake_date']!, _wakeDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wakeDateMeta);
+    }
+    if (data.containsKey('lights_off_at')) {
+      context.handle(
+        _lightsOffAtMeta,
+        lightsOffAt.isAcceptableOrUnknown(
+          data['lights_off_at']!,
+          _lightsOffAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_lightsOffAtMeta);
+    }
+    if (data.containsKey('actual_wake_at')) {
+      context.handle(
+        _actualWakeAtMeta,
+        actualWakeAt.isAcceptableOrUnknown(
+          data['actual_wake_at']!,
+          _actualWakeAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_actualWakeAtMeta);
+    }
+    if (data.containsKey('on_time')) {
+      context.handle(
+        _onTimeMeta,
+        onTime.isAcceptableOrUnknown(data['on_time']!, _onTimeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_onTimeMeta);
+    }
+    if (data.containsKey('used_shield')) {
+      context.handle(
+        _usedShieldMeta,
+        usedShield.isAcceptableOrUnknown(data['used_shield']!, _usedShieldMeta),
+      );
+    }
+    if (data.containsKey('checked_in_at')) {
+      context.handle(
+        _checkedInAtMeta,
+        checkedInAt.isAcceptableOrUnknown(
+          data['checked_in_at']!,
+          _checkedInAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_checkedInAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {wakeDate},
+  ];
+  @override
+  CheckInRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CheckInRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      wakeDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}wake_date'],
+      )!,
+      lightsOffAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}lights_off_at'],
+      )!,
+      actualWakeAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}actual_wake_at'],
+      )!,
+      result: $CheckInsTable.$converterresult.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}result'],
+        )!,
+      ),
+      onTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}on_time'],
+      )!,
+      usedShield: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}used_shield'],
+      )!,
+      checkedInAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}checked_in_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CheckInsTable createAlias(String alias) {
+    return $CheckInsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<CheckInResultDb, int, int> $converterresult =
+      const EnumIndexConverter<CheckInResultDb>(CheckInResultDb.values);
+}
+
+class CheckInRow extends DataClass implements Insertable<CheckInRow> {
+  final int id;
+  final DateTime wakeDate;
+  final DateTime lightsOffAt;
+  final DateTime actualWakeAt;
+  final CheckInResultDb result;
+  final bool onTime;
+  final bool usedShield;
+  final DateTime checkedInAt;
+  const CheckInRow({
+    required this.id,
+    required this.wakeDate,
+    required this.lightsOffAt,
+    required this.actualWakeAt,
+    required this.result,
+    required this.onTime,
+    required this.usedShield,
+    required this.checkedInAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['wake_date'] = Variable<DateTime>(wakeDate);
+    map['lights_off_at'] = Variable<DateTime>(lightsOffAt);
+    map['actual_wake_at'] = Variable<DateTime>(actualWakeAt);
+    {
+      map['result'] = Variable<int>(
+        $CheckInsTable.$converterresult.toSql(result),
+      );
+    }
+    map['on_time'] = Variable<bool>(onTime);
+    map['used_shield'] = Variable<bool>(usedShield);
+    map['checked_in_at'] = Variable<DateTime>(checkedInAt);
+    return map;
+  }
+
+  CheckInsCompanion toCompanion(bool nullToAbsent) {
+    return CheckInsCompanion(
+      id: Value(id),
+      wakeDate: Value(wakeDate),
+      lightsOffAt: Value(lightsOffAt),
+      actualWakeAt: Value(actualWakeAt),
+      result: Value(result),
+      onTime: Value(onTime),
+      usedShield: Value(usedShield),
+      checkedInAt: Value(checkedInAt),
+    );
+  }
+
+  factory CheckInRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CheckInRow(
+      id: serializer.fromJson<int>(json['id']),
+      wakeDate: serializer.fromJson<DateTime>(json['wakeDate']),
+      lightsOffAt: serializer.fromJson<DateTime>(json['lightsOffAt']),
+      actualWakeAt: serializer.fromJson<DateTime>(json['actualWakeAt']),
+      result: $CheckInsTable.$converterresult.fromJson(
+        serializer.fromJson<int>(json['result']),
+      ),
+      onTime: serializer.fromJson<bool>(json['onTime']),
+      usedShield: serializer.fromJson<bool>(json['usedShield']),
+      checkedInAt: serializer.fromJson<DateTime>(json['checkedInAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'wakeDate': serializer.toJson<DateTime>(wakeDate),
+      'lightsOffAt': serializer.toJson<DateTime>(lightsOffAt),
+      'actualWakeAt': serializer.toJson<DateTime>(actualWakeAt),
+      'result': serializer.toJson<int>(
+        $CheckInsTable.$converterresult.toJson(result),
+      ),
+      'onTime': serializer.toJson<bool>(onTime),
+      'usedShield': serializer.toJson<bool>(usedShield),
+      'checkedInAt': serializer.toJson<DateTime>(checkedInAt),
+    };
+  }
+
+  CheckInRow copyWith({
+    int? id,
+    DateTime? wakeDate,
+    DateTime? lightsOffAt,
+    DateTime? actualWakeAt,
+    CheckInResultDb? result,
+    bool? onTime,
+    bool? usedShield,
+    DateTime? checkedInAt,
+  }) => CheckInRow(
+    id: id ?? this.id,
+    wakeDate: wakeDate ?? this.wakeDate,
+    lightsOffAt: lightsOffAt ?? this.lightsOffAt,
+    actualWakeAt: actualWakeAt ?? this.actualWakeAt,
+    result: result ?? this.result,
+    onTime: onTime ?? this.onTime,
+    usedShield: usedShield ?? this.usedShield,
+    checkedInAt: checkedInAt ?? this.checkedInAt,
+  );
+  CheckInRow copyWithCompanion(CheckInsCompanion data) {
+    return CheckInRow(
+      id: data.id.present ? data.id.value : this.id,
+      wakeDate: data.wakeDate.present ? data.wakeDate.value : this.wakeDate,
+      lightsOffAt: data.lightsOffAt.present
+          ? data.lightsOffAt.value
+          : this.lightsOffAt,
+      actualWakeAt: data.actualWakeAt.present
+          ? data.actualWakeAt.value
+          : this.actualWakeAt,
+      result: data.result.present ? data.result.value : this.result,
+      onTime: data.onTime.present ? data.onTime.value : this.onTime,
+      usedShield: data.usedShield.present
+          ? data.usedShield.value
+          : this.usedShield,
+      checkedInAt: data.checkedInAt.present
+          ? data.checkedInAt.value
+          : this.checkedInAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckInRow(')
+          ..write('id: $id, ')
+          ..write('wakeDate: $wakeDate, ')
+          ..write('lightsOffAt: $lightsOffAt, ')
+          ..write('actualWakeAt: $actualWakeAt, ')
+          ..write('result: $result, ')
+          ..write('onTime: $onTime, ')
+          ..write('usedShield: $usedShield, ')
+          ..write('checkedInAt: $checkedInAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    wakeDate,
+    lightsOffAt,
+    actualWakeAt,
+    result,
+    onTime,
+    usedShield,
+    checkedInAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CheckInRow &&
+          other.id == this.id &&
+          other.wakeDate == this.wakeDate &&
+          other.lightsOffAt == this.lightsOffAt &&
+          other.actualWakeAt == this.actualWakeAt &&
+          other.result == this.result &&
+          other.onTime == this.onTime &&
+          other.usedShield == this.usedShield &&
+          other.checkedInAt == this.checkedInAt);
+}
+
+class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
+  final Value<int> id;
+  final Value<DateTime> wakeDate;
+  final Value<DateTime> lightsOffAt;
+  final Value<DateTime> actualWakeAt;
+  final Value<CheckInResultDb> result;
+  final Value<bool> onTime;
+  final Value<bool> usedShield;
+  final Value<DateTime> checkedInAt;
+  const CheckInsCompanion({
+    this.id = const Value.absent(),
+    this.wakeDate = const Value.absent(),
+    this.lightsOffAt = const Value.absent(),
+    this.actualWakeAt = const Value.absent(),
+    this.result = const Value.absent(),
+    this.onTime = const Value.absent(),
+    this.usedShield = const Value.absent(),
+    this.checkedInAt = const Value.absent(),
+  });
+  CheckInsCompanion.insert({
+    this.id = const Value.absent(),
+    required DateTime wakeDate,
+    required DateTime lightsOffAt,
+    required DateTime actualWakeAt,
+    required CheckInResultDb result,
+    required bool onTime,
+    this.usedShield = const Value.absent(),
+    required DateTime checkedInAt,
+  }) : wakeDate = Value(wakeDate),
+       lightsOffAt = Value(lightsOffAt),
+       actualWakeAt = Value(actualWakeAt),
+       result = Value(result),
+       onTime = Value(onTime),
+       checkedInAt = Value(checkedInAt);
+  static Insertable<CheckInRow> custom({
+    Expression<int>? id,
+    Expression<DateTime>? wakeDate,
+    Expression<DateTime>? lightsOffAt,
+    Expression<DateTime>? actualWakeAt,
+    Expression<int>? result,
+    Expression<bool>? onTime,
+    Expression<bool>? usedShield,
+    Expression<DateTime>? checkedInAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (wakeDate != null) 'wake_date': wakeDate,
+      if (lightsOffAt != null) 'lights_off_at': lightsOffAt,
+      if (actualWakeAt != null) 'actual_wake_at': actualWakeAt,
+      if (result != null) 'result': result,
+      if (onTime != null) 'on_time': onTime,
+      if (usedShield != null) 'used_shield': usedShield,
+      if (checkedInAt != null) 'checked_in_at': checkedInAt,
+    });
+  }
+
+  CheckInsCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime>? wakeDate,
+    Value<DateTime>? lightsOffAt,
+    Value<DateTime>? actualWakeAt,
+    Value<CheckInResultDb>? result,
+    Value<bool>? onTime,
+    Value<bool>? usedShield,
+    Value<DateTime>? checkedInAt,
+  }) {
+    return CheckInsCompanion(
+      id: id ?? this.id,
+      wakeDate: wakeDate ?? this.wakeDate,
+      lightsOffAt: lightsOffAt ?? this.lightsOffAt,
+      actualWakeAt: actualWakeAt ?? this.actualWakeAt,
+      result: result ?? this.result,
+      onTime: onTime ?? this.onTime,
+      usedShield: usedShield ?? this.usedShield,
+      checkedInAt: checkedInAt ?? this.checkedInAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (wakeDate.present) {
+      map['wake_date'] = Variable<DateTime>(wakeDate.value);
+    }
+    if (lightsOffAt.present) {
+      map['lights_off_at'] = Variable<DateTime>(lightsOffAt.value);
+    }
+    if (actualWakeAt.present) {
+      map['actual_wake_at'] = Variable<DateTime>(actualWakeAt.value);
+    }
+    if (result.present) {
+      map['result'] = Variable<int>(
+        $CheckInsTable.$converterresult.toSql(result.value),
+      );
+    }
+    if (onTime.present) {
+      map['on_time'] = Variable<bool>(onTime.value);
+    }
+    if (usedShield.present) {
+      map['used_shield'] = Variable<bool>(usedShield.value);
+    }
+    if (checkedInAt.present) {
+      map['checked_in_at'] = Variable<DateTime>(checkedInAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckInsCompanion(')
+          ..write('id: $id, ')
+          ..write('wakeDate: $wakeDate, ')
+          ..write('lightsOffAt: $lightsOffAt, ')
+          ..write('actualWakeAt: $actualWakeAt, ')
+          ..write('result: $result, ')
+          ..write('onTime: $onTime, ')
+          ..write('usedShield: $usedShield, ')
+          ..write('checkedInAt: $checkedInAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FireStatesTable extends FireStates
+    with TableInfo<$FireStatesTable, FireStateRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FireStatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _pointsMeta = const VerificationMeta('points');
+  @override
+  late final GeneratedColumn<int> points = GeneratedColumn<int>(
+    'points',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _levelMeta = const VerificationMeta('level');
+  @override
+  late final GeneratedColumn<int> level = GeneratedColumn<int>(
+    'level',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _shieldsMeta = const VerificationMeta(
+    'shields',
+  );
+  @override
+  late final GeneratedColumn<int> shields = GeneratedColumn<int>(
+    'shields',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _maxLevelEverReachedMeta =
+      const VerificationMeta('maxLevelEverReached');
+  @override
+  late final GeneratedColumn<int> maxLevelEverReached = GeneratedColumn<int>(
+    'max_level_ever_reached',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _currentStreakMeta = const VerificationMeta(
+    'currentStreak',
+  );
+  @override
+  late final GeneratedColumn<int> currentStreak = GeneratedColumn<int>(
+    'current_streak',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _longestStreakMeta = const VerificationMeta(
+    'longestStreak',
+  );
+  @override
+  late final GeneratedColumn<int> longestStreak = GeneratedColumn<int>(
+    'longest_streak',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastFreeShieldMondayMeta =
+      const VerificationMeta('lastFreeShieldMonday');
+  @override
+  late final GeneratedColumn<DateTime> lastFreeShieldMonday =
+      GeneratedColumn<DateTime>(
+        'last_free_shield_monday',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    points,
+    level,
+    shields,
+    maxLevelEverReached,
+    currentStreak,
+    longestStreak,
+    lastFreeShieldMonday,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'fire_states';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FireStateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('points')) {
+      context.handle(
+        _pointsMeta,
+        points.isAcceptableOrUnknown(data['points']!, _pointsMeta),
+      );
+    }
+    if (data.containsKey('level')) {
+      context.handle(
+        _levelMeta,
+        level.isAcceptableOrUnknown(data['level']!, _levelMeta),
+      );
+    }
+    if (data.containsKey('shields')) {
+      context.handle(
+        _shieldsMeta,
+        shields.isAcceptableOrUnknown(data['shields']!, _shieldsMeta),
+      );
+    }
+    if (data.containsKey('max_level_ever_reached')) {
+      context.handle(
+        _maxLevelEverReachedMeta,
+        maxLevelEverReached.isAcceptableOrUnknown(
+          data['max_level_ever_reached']!,
+          _maxLevelEverReachedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('current_streak')) {
+      context.handle(
+        _currentStreakMeta,
+        currentStreak.isAcceptableOrUnknown(
+          data['current_streak']!,
+          _currentStreakMeta,
+        ),
+      );
+    }
+    if (data.containsKey('longest_streak')) {
+      context.handle(
+        _longestStreakMeta,
+        longestStreak.isAcceptableOrUnknown(
+          data['longest_streak']!,
+          _longestStreakMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_free_shield_monday')) {
+      context.handle(
+        _lastFreeShieldMondayMeta,
+        lastFreeShieldMonday.isAcceptableOrUnknown(
+          data['last_free_shield_monday']!,
+          _lastFreeShieldMondayMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FireStateRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FireStateRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      points: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}points'],
+      )!,
+      level: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}level'],
+      )!,
+      shields: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}shields'],
+      )!,
+      maxLevelEverReached: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_level_ever_reached'],
+      )!,
+      currentStreak: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}current_streak'],
+      )!,
+      longestStreak: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}longest_streak'],
+      )!,
+      lastFreeShieldMonday: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_free_shield_monday'],
+      ),
+    );
+  }
+
+  @override
+  $FireStatesTable createAlias(String alias) {
+    return $FireStatesTable(attachedDatabase, alias);
+  }
+}
+
+class FireStateRow extends DataClass implements Insertable<FireStateRow> {
+  final int id;
+  final int points;
+  final int level;
+  final int shields;
+  final int maxLevelEverReached;
+  final int currentStreak;
+  final int longestStreak;
+
+  /// Monday (date-only) the free weekly shield was last granted, so it's
+  /// only granted once per week (section 7: "ได้ฟรี 1 อันทุกวันจันทร์").
+  final DateTime? lastFreeShieldMonday;
+  const FireStateRow({
+    required this.id,
+    required this.points,
+    required this.level,
+    required this.shields,
+    required this.maxLevelEverReached,
+    required this.currentStreak,
+    required this.longestStreak,
+    this.lastFreeShieldMonday,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['points'] = Variable<int>(points);
+    map['level'] = Variable<int>(level);
+    map['shields'] = Variable<int>(shields);
+    map['max_level_ever_reached'] = Variable<int>(maxLevelEverReached);
+    map['current_streak'] = Variable<int>(currentStreak);
+    map['longest_streak'] = Variable<int>(longestStreak);
+    if (!nullToAbsent || lastFreeShieldMonday != null) {
+      map['last_free_shield_monday'] = Variable<DateTime>(lastFreeShieldMonday);
+    }
+    return map;
+  }
+
+  FireStatesCompanion toCompanion(bool nullToAbsent) {
+    return FireStatesCompanion(
+      id: Value(id),
+      points: Value(points),
+      level: Value(level),
+      shields: Value(shields),
+      maxLevelEverReached: Value(maxLevelEverReached),
+      currentStreak: Value(currentStreak),
+      longestStreak: Value(longestStreak),
+      lastFreeShieldMonday: lastFreeShieldMonday == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastFreeShieldMonday),
+    );
+  }
+
+  factory FireStateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FireStateRow(
+      id: serializer.fromJson<int>(json['id']),
+      points: serializer.fromJson<int>(json['points']),
+      level: serializer.fromJson<int>(json['level']),
+      shields: serializer.fromJson<int>(json['shields']),
+      maxLevelEverReached: serializer.fromJson<int>(
+        json['maxLevelEverReached'],
+      ),
+      currentStreak: serializer.fromJson<int>(json['currentStreak']),
+      longestStreak: serializer.fromJson<int>(json['longestStreak']),
+      lastFreeShieldMonday: serializer.fromJson<DateTime?>(
+        json['lastFreeShieldMonday'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'points': serializer.toJson<int>(points),
+      'level': serializer.toJson<int>(level),
+      'shields': serializer.toJson<int>(shields),
+      'maxLevelEverReached': serializer.toJson<int>(maxLevelEverReached),
+      'currentStreak': serializer.toJson<int>(currentStreak),
+      'longestStreak': serializer.toJson<int>(longestStreak),
+      'lastFreeShieldMonday': serializer.toJson<DateTime?>(
+        lastFreeShieldMonday,
+      ),
+    };
+  }
+
+  FireStateRow copyWith({
+    int? id,
+    int? points,
+    int? level,
+    int? shields,
+    int? maxLevelEverReached,
+    int? currentStreak,
+    int? longestStreak,
+    Value<DateTime?> lastFreeShieldMonday = const Value.absent(),
+  }) => FireStateRow(
+    id: id ?? this.id,
+    points: points ?? this.points,
+    level: level ?? this.level,
+    shields: shields ?? this.shields,
+    maxLevelEverReached: maxLevelEverReached ?? this.maxLevelEverReached,
+    currentStreak: currentStreak ?? this.currentStreak,
+    longestStreak: longestStreak ?? this.longestStreak,
+    lastFreeShieldMonday: lastFreeShieldMonday.present
+        ? lastFreeShieldMonday.value
+        : this.lastFreeShieldMonday,
+  );
+  FireStateRow copyWithCompanion(FireStatesCompanion data) {
+    return FireStateRow(
+      id: data.id.present ? data.id.value : this.id,
+      points: data.points.present ? data.points.value : this.points,
+      level: data.level.present ? data.level.value : this.level,
+      shields: data.shields.present ? data.shields.value : this.shields,
+      maxLevelEverReached: data.maxLevelEverReached.present
+          ? data.maxLevelEverReached.value
+          : this.maxLevelEverReached,
+      currentStreak: data.currentStreak.present
+          ? data.currentStreak.value
+          : this.currentStreak,
+      longestStreak: data.longestStreak.present
+          ? data.longestStreak.value
+          : this.longestStreak,
+      lastFreeShieldMonday: data.lastFreeShieldMonday.present
+          ? data.lastFreeShieldMonday.value
+          : this.lastFreeShieldMonday,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FireStateRow(')
+          ..write('id: $id, ')
+          ..write('points: $points, ')
+          ..write('level: $level, ')
+          ..write('shields: $shields, ')
+          ..write('maxLevelEverReached: $maxLevelEverReached, ')
+          ..write('currentStreak: $currentStreak, ')
+          ..write('longestStreak: $longestStreak, ')
+          ..write('lastFreeShieldMonday: $lastFreeShieldMonday')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    points,
+    level,
+    shields,
+    maxLevelEverReached,
+    currentStreak,
+    longestStreak,
+    lastFreeShieldMonday,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FireStateRow &&
+          other.id == this.id &&
+          other.points == this.points &&
+          other.level == this.level &&
+          other.shields == this.shields &&
+          other.maxLevelEverReached == this.maxLevelEverReached &&
+          other.currentStreak == this.currentStreak &&
+          other.longestStreak == this.longestStreak &&
+          other.lastFreeShieldMonday == this.lastFreeShieldMonday);
+}
+
+class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
+  final Value<int> id;
+  final Value<int> points;
+  final Value<int> level;
+  final Value<int> shields;
+  final Value<int> maxLevelEverReached;
+  final Value<int> currentStreak;
+  final Value<int> longestStreak;
+  final Value<DateTime?> lastFreeShieldMonday;
+  const FireStatesCompanion({
+    this.id = const Value.absent(),
+    this.points = const Value.absent(),
+    this.level = const Value.absent(),
+    this.shields = const Value.absent(),
+    this.maxLevelEverReached = const Value.absent(),
+    this.currentStreak = const Value.absent(),
+    this.longestStreak = const Value.absent(),
+    this.lastFreeShieldMonday = const Value.absent(),
+  });
+  FireStatesCompanion.insert({
+    this.id = const Value.absent(),
+    this.points = const Value.absent(),
+    this.level = const Value.absent(),
+    this.shields = const Value.absent(),
+    this.maxLevelEverReached = const Value.absent(),
+    this.currentStreak = const Value.absent(),
+    this.longestStreak = const Value.absent(),
+    this.lastFreeShieldMonday = const Value.absent(),
+  });
+  static Insertable<FireStateRow> custom({
+    Expression<int>? id,
+    Expression<int>? points,
+    Expression<int>? level,
+    Expression<int>? shields,
+    Expression<int>? maxLevelEverReached,
+    Expression<int>? currentStreak,
+    Expression<int>? longestStreak,
+    Expression<DateTime>? lastFreeShieldMonday,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (points != null) 'points': points,
+      if (level != null) 'level': level,
+      if (shields != null) 'shields': shields,
+      if (maxLevelEverReached != null)
+        'max_level_ever_reached': maxLevelEverReached,
+      if (currentStreak != null) 'current_streak': currentStreak,
+      if (longestStreak != null) 'longest_streak': longestStreak,
+      if (lastFreeShieldMonday != null)
+        'last_free_shield_monday': lastFreeShieldMonday,
+    });
+  }
+
+  FireStatesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? points,
+    Value<int>? level,
+    Value<int>? shields,
+    Value<int>? maxLevelEverReached,
+    Value<int>? currentStreak,
+    Value<int>? longestStreak,
+    Value<DateTime?>? lastFreeShieldMonday,
+  }) {
+    return FireStatesCompanion(
+      id: id ?? this.id,
+      points: points ?? this.points,
+      level: level ?? this.level,
+      shields: shields ?? this.shields,
+      maxLevelEverReached: maxLevelEverReached ?? this.maxLevelEverReached,
+      currentStreak: currentStreak ?? this.currentStreak,
+      longestStreak: longestStreak ?? this.longestStreak,
+      lastFreeShieldMonday: lastFreeShieldMonday ?? this.lastFreeShieldMonday,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (points.present) {
+      map['points'] = Variable<int>(points.value);
+    }
+    if (level.present) {
+      map['level'] = Variable<int>(level.value);
+    }
+    if (shields.present) {
+      map['shields'] = Variable<int>(shields.value);
+    }
+    if (maxLevelEverReached.present) {
+      map['max_level_ever_reached'] = Variable<int>(maxLevelEverReached.value);
+    }
+    if (currentStreak.present) {
+      map['current_streak'] = Variable<int>(currentStreak.value);
+    }
+    if (longestStreak.present) {
+      map['longest_streak'] = Variable<int>(longestStreak.value);
+    }
+    if (lastFreeShieldMonday.present) {
+      map['last_free_shield_monday'] = Variable<DateTime>(
+        lastFreeShieldMonday.value,
+      );
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FireStatesCompanion(')
+          ..write('id: $id, ')
+          ..write('points: $points, ')
+          ..write('level: $level, ')
+          ..write('shields: $shields, ')
+          ..write('maxLevelEverReached: $maxLevelEverReached, ')
+          ..write('currentStreak: $currentStreak, ')
+          ..write('longestStreak: $longestStreak, ')
+          ..write('lastFreeShieldMonday: $lastFreeShieldMonday')
           ..write(')'))
         .toString();
   }
@@ -2754,6 +3864,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WeeklyItemsTable weeklyItems = $WeeklyItemsTable(this);
   late final $OneTimeItemsTable oneTimeItems = $OneTimeItemsTable(this);
   late final $NightPlansTable nightPlans = $NightPlansTable(this);
+  late final $CheckInsTable checkIns = $CheckInsTable(this);
+  late final $FireStatesTable fireStates = $FireStatesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2763,6 +3875,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     weeklyItems,
     oneTimeItems,
     nightPlans,
+    checkIns,
+    fireStates,
   ];
 }
 
@@ -3786,6 +4900,7 @@ typedef $$NightPlansTableCreateCompanionBuilder = NightPlansCompanion Function({
   Value<bool> isLocked,
   Value<DateTime?> lockedAt,
   Value<DateTime?> redAlertSentAt,
+  Value<DateTime?> fireAppliedAt,
 });
 typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
   Value<int> id,
@@ -3798,6 +4913,7 @@ typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
   Value<bool> isLocked,
   Value<DateTime?> lockedAt,
   Value<DateTime?> redAlertSentAt,
+  Value<DateTime?> fireAppliedAt,
 });
 
 class $$NightPlansTableFilterComposer
@@ -3856,6 +4972,11 @@ class $$NightPlansTableFilterComposer
 
   ColumnFilters<DateTime> get redAlertSentAt => $composableBuilder(
     column: $table.redAlertSentAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fireAppliedAt => $composableBuilder(
+    column: $table.fireAppliedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3918,6 +5039,11 @@ class $$NightPlansTableOrderingComposer
     column: $table.redAlertSentAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get fireAppliedAt => $composableBuilder(
+    column: $table.fireAppliedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$NightPlansTableAnnotationComposer
@@ -3970,6 +5096,11 @@ class $$NightPlansTableAnnotationComposer
     column: $table.redAlertSentAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get fireAppliedAt => $composableBuilder(
+    column: $table.fireAppliedAt,
+    builder: (column) => column,
+  );
 }
 
 class $$NightPlansTableTableManager
@@ -4013,6 +5144,7 @@ class $$NightPlansTableTableManager
                 Value<bool> isLocked = const Value.absent(),
                 Value<DateTime?> lockedAt = const Value.absent(),
                 Value<DateTime?> redAlertSentAt = const Value.absent(),
+                Value<DateTime?> fireAppliedAt = const Value.absent(),
               }) => NightPlansCompanion(
                 id: id,
                 wakeDate: wakeDate,
@@ -4024,6 +5156,7 @@ class $$NightPlansTableTableManager
                 isLocked: isLocked,
                 lockedAt: lockedAt,
                 redAlertSentAt: redAlertSentAt,
+                fireAppliedAt: fireAppliedAt,
               ),
           createCompanionCallback:
               ({
@@ -4037,6 +5170,7 @@ class $$NightPlansTableTableManager
                 Value<bool> isLocked = const Value.absent(),
                 Value<DateTime?> lockedAt = const Value.absent(),
                 Value<DateTime?> redAlertSentAt = const Value.absent(),
+                Value<DateTime?> fireAppliedAt = const Value.absent(),
               }) => NightPlansCompanion.insert(
                 id: id,
                 wakeDate: wakeDate,
@@ -4048,6 +5182,7 @@ class $$NightPlansTableTableManager
                 isLocked: isLocked,
                 lockedAt: lockedAt,
                 redAlertSentAt: redAlertSentAt,
+                fireAppliedAt: fireAppliedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4080,6 +5215,536 @@ typedef $$NightPlansTableProcessedTableManager =
       NightPlan,
       PrefetchHooks Function()
     >;
+typedef $$CheckInsTableCreateCompanionBuilder = CheckInsCompanion Function({
+  Value<int> id,
+  required DateTime wakeDate,
+  required DateTime lightsOffAt,
+  required DateTime actualWakeAt,
+  required CheckInResultDb result,
+  required bool onTime,
+  Value<bool> usedShield,
+  required DateTime checkedInAt,
+});
+typedef $$CheckInsTableUpdateCompanionBuilder = CheckInsCompanion Function({
+  Value<int> id,
+  Value<DateTime> wakeDate,
+  Value<DateTime> lightsOffAt,
+  Value<DateTime> actualWakeAt,
+  Value<CheckInResultDb> result,
+  Value<bool> onTime,
+  Value<bool> usedShield,
+  Value<DateTime> checkedInAt,
+});
+
+class $$CheckInsTableFilterComposer
+    extends Composer<_$AppDatabase, $CheckInsTable> {
+  $$CheckInsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get wakeDate => $composableBuilder(
+    column: $table.wakeDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lightsOffAt => $composableBuilder(
+    column: $table.lightsOffAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get actualWakeAt => $composableBuilder(
+    column: $table.actualWakeAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<CheckInResultDb, CheckInResultDb, int>
+  get result => $composableBuilder(
+    column: $table.result,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<bool> get onTime => $composableBuilder(
+    column: $table.onTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get usedShield => $composableBuilder(
+    column: $table.usedShield,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get checkedInAt => $composableBuilder(
+    column: $table.checkedInAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CheckInsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CheckInsTable> {
+  $$CheckInsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get wakeDate => $composableBuilder(
+    column: $table.wakeDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lightsOffAt => $composableBuilder(
+    column: $table.lightsOffAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get actualWakeAt => $composableBuilder(
+    column: $table.actualWakeAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get result => $composableBuilder(
+    column: $table.result,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get onTime => $composableBuilder(
+    column: $table.onTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get usedShield => $composableBuilder(
+    column: $table.usedShield,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get checkedInAt => $composableBuilder(
+    column: $table.checkedInAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CheckInsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CheckInsTable> {
+  $$CheckInsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get wakeDate =>
+      $composableBuilder(column: $table.wakeDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lightsOffAt => $composableBuilder(
+    column: $table.lightsOffAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get actualWakeAt => $composableBuilder(
+    column: $table.actualWakeAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<CheckInResultDb, int> get result =>
+      $composableBuilder(column: $table.result, builder: (column) => column);
+
+  GeneratedColumn<bool> get onTime =>
+      $composableBuilder(column: $table.onTime, builder: (column) => column);
+
+  GeneratedColumn<bool> get usedShield => $composableBuilder(
+    column: $table.usedShield,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get checkedInAt => $composableBuilder(
+    column: $table.checkedInAt,
+    builder: (column) => column,
+  );
+}
+
+class $$CheckInsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CheckInsTable,
+          CheckInRow,
+          $$CheckInsTableFilterComposer,
+          $$CheckInsTableOrderingComposer,
+          $$CheckInsTableAnnotationComposer,
+          $$CheckInsTableCreateCompanionBuilder,
+          $$CheckInsTableUpdateCompanionBuilder,
+          (
+            CheckInRow,
+            BaseReferences<_$AppDatabase, $CheckInsTable, CheckInRow>,
+          ),
+          CheckInRow,
+          PrefetchHooks Function()
+        > {
+  $$CheckInsTableTableManager(_$AppDatabase db, $CheckInsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CheckInsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CheckInsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CheckInsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime> wakeDate = const Value.absent(),
+                Value<DateTime> lightsOffAt = const Value.absent(),
+                Value<DateTime> actualWakeAt = const Value.absent(),
+                Value<CheckInResultDb> result = const Value.absent(),
+                Value<bool> onTime = const Value.absent(),
+                Value<bool> usedShield = const Value.absent(),
+                Value<DateTime> checkedInAt = const Value.absent(),
+              }) => CheckInsCompanion(
+                id: id,
+                wakeDate: wakeDate,
+                lightsOffAt: lightsOffAt,
+                actualWakeAt: actualWakeAt,
+                result: result,
+                onTime: onTime,
+                usedShield: usedShield,
+                checkedInAt: checkedInAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required DateTime wakeDate,
+                required DateTime lightsOffAt,
+                required DateTime actualWakeAt,
+                required CheckInResultDb result,
+                required bool onTime,
+                Value<bool> usedShield = const Value.absent(),
+                required DateTime checkedInAt,
+              }) => CheckInsCompanion.insert(
+                id: id,
+                wakeDate: wakeDate,
+                lightsOffAt: lightsOffAt,
+                actualWakeAt: actualWakeAt,
+                result: result,
+                onTime: onTime,
+                usedShield: usedShield,
+                checkedInAt: checkedInAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CheckInsTable, CheckInRow>(table),
+                  BaseReferences<_$AppDatabase, $CheckInsTable, CheckInRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CheckInsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CheckInsTable,
+      CheckInRow,
+      $$CheckInsTableFilterComposer,
+      $$CheckInsTableOrderingComposer,
+      $$CheckInsTableAnnotationComposer,
+      $$CheckInsTableCreateCompanionBuilder,
+      $$CheckInsTableUpdateCompanionBuilder,
+      (CheckInRow, BaseReferences<_$AppDatabase, $CheckInsTable, CheckInRow>),
+      CheckInRow,
+      PrefetchHooks Function()
+    >;
+typedef $$FireStatesTableCreateCompanionBuilder = FireStatesCompanion Function({
+  Value<int> id,
+  Value<int> points,
+  Value<int> level,
+  Value<int> shields,
+  Value<int> maxLevelEverReached,
+  Value<int> currentStreak,
+  Value<int> longestStreak,
+  Value<DateTime?> lastFreeShieldMonday,
+});
+typedef $$FireStatesTableUpdateCompanionBuilder = FireStatesCompanion Function({
+  Value<int> id,
+  Value<int> points,
+  Value<int> level,
+  Value<int> shields,
+  Value<int> maxLevelEverReached,
+  Value<int> currentStreak,
+  Value<int> longestStreak,
+  Value<DateTime?> lastFreeShieldMonday,
+});
+
+class $$FireStatesTableFilterComposer
+    extends Composer<_$AppDatabase, $FireStatesTable> {
+  $$FireStatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get points => $composableBuilder(
+    column: $table.points,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get level => $composableBuilder(
+    column: $table.level,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get shields => $composableBuilder(
+    column: $table.shields,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxLevelEverReached => $composableBuilder(
+    column: $table.maxLevelEverReached,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get currentStreak => $composableBuilder(
+    column: $table.currentStreak,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get longestStreak => $composableBuilder(
+    column: $table.longestStreak,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastFreeShieldMonday => $composableBuilder(
+    column: $table.lastFreeShieldMonday,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FireStatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $FireStatesTable> {
+  $$FireStatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get points => $composableBuilder(
+    column: $table.points,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get level => $composableBuilder(
+    column: $table.level,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get shields => $composableBuilder(
+    column: $table.shields,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maxLevelEverReached => $composableBuilder(
+    column: $table.maxLevelEverReached,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get currentStreak => $composableBuilder(
+    column: $table.currentStreak,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get longestStreak => $composableBuilder(
+    column: $table.longestStreak,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastFreeShieldMonday => $composableBuilder(
+    column: $table.lastFreeShieldMonday,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FireStatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FireStatesTable> {
+  $$FireStatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get points =>
+      $composableBuilder(column: $table.points, builder: (column) => column);
+
+  GeneratedColumn<int> get level =>
+      $composableBuilder(column: $table.level, builder: (column) => column);
+
+  GeneratedColumn<int> get shields =>
+      $composableBuilder(column: $table.shields, builder: (column) => column);
+
+  GeneratedColumn<int> get maxLevelEverReached => $composableBuilder(
+    column: $table.maxLevelEverReached,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get currentStreak => $composableBuilder(
+    column: $table.currentStreak,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get longestStreak => $composableBuilder(
+    column: $table.longestStreak,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastFreeShieldMonday => $composableBuilder(
+    column: $table.lastFreeShieldMonday,
+    builder: (column) => column,
+  );
+}
+
+class $$FireStatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FireStatesTable,
+          FireStateRow,
+          $$FireStatesTableFilterComposer,
+          $$FireStatesTableOrderingComposer,
+          $$FireStatesTableAnnotationComposer,
+          $$FireStatesTableCreateCompanionBuilder,
+          $$FireStatesTableUpdateCompanionBuilder,
+          (
+            FireStateRow,
+            BaseReferences<_$AppDatabase, $FireStatesTable, FireStateRow>,
+          ),
+          FireStateRow,
+          PrefetchHooks Function()
+        > {
+  $$FireStatesTableTableManager(_$AppDatabase db, $FireStatesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FireStatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FireStatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FireStatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> points = const Value.absent(),
+                Value<int> level = const Value.absent(),
+                Value<int> shields = const Value.absent(),
+                Value<int> maxLevelEverReached = const Value.absent(),
+                Value<int> currentStreak = const Value.absent(),
+                Value<int> longestStreak = const Value.absent(),
+                Value<DateTime?> lastFreeShieldMonday = const Value.absent(),
+              }) => FireStatesCompanion(
+                id: id,
+                points: points,
+                level: level,
+                shields: shields,
+                maxLevelEverReached: maxLevelEverReached,
+                currentStreak: currentStreak,
+                longestStreak: longestStreak,
+                lastFreeShieldMonday: lastFreeShieldMonday,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> points = const Value.absent(),
+                Value<int> level = const Value.absent(),
+                Value<int> shields = const Value.absent(),
+                Value<int> maxLevelEverReached = const Value.absent(),
+                Value<int> currentStreak = const Value.absent(),
+                Value<int> longestStreak = const Value.absent(),
+                Value<DateTime?> lastFreeShieldMonday = const Value.absent(),
+              }) => FireStatesCompanion.insert(
+                id: id,
+                points: points,
+                level: level,
+                shields: shields,
+                maxLevelEverReached: maxLevelEverReached,
+                currentStreak: currentStreak,
+                longestStreak: longestStreak,
+                lastFreeShieldMonday: lastFreeShieldMonday,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$FireStatesTable, FireStateRow>(table),
+                  BaseReferences<_$AppDatabase, $FireStatesTable, FireStateRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FireStatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FireStatesTable,
+      FireStateRow,
+      $$FireStatesTableFilterComposer,
+      $$FireStatesTableOrderingComposer,
+      $$FireStatesTableAnnotationComposer,
+      $$FireStatesTableCreateCompanionBuilder,
+      $$FireStatesTableUpdateCompanionBuilder,
+      (
+        FireStateRow,
+        BaseReferences<_$AppDatabase, $FireStatesTable, FireStateRow>,
+      ),
+      FireStateRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4092,4 +5757,8 @@ class $AppDatabaseManager {
       $$OneTimeItemsTableTableManager(_db, _db.oneTimeItems);
   $$NightPlansTableTableManager get nightPlans =>
       $$NightPlansTableTableManager(_db, _db.nightPlans);
+  $$CheckInsTableTableManager get checkIns =>
+      $$CheckInsTableTableManager(_db, _db.checkIns);
+  $$FireStatesTableTableManager get fireStates =>
+      $$FireStatesTableTableManager(_db, _db.fireStates);
 }

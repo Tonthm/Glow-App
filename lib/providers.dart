@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import 'data/check_in_repository.dart';
 import 'data/database.dart';
+import 'data/fire_repository.dart';
 import 'data/night_planning_repository.dart';
 import 'data/schedule_repository.dart';
 import 'data/settings_repository.dart';
@@ -32,6 +34,23 @@ final nightPlanningRepositoryProvider = Provider<NightPlanningRepository>((
     ref.watch(scheduleRepositoryProvider),
     ref.watch(settingsRepositoryProvider),
   );
+});
+
+final fireRepositoryProvider = Provider<FireRepository>((ref) {
+  return FireRepository(ref.watch(databaseProvider));
+});
+
+final checkInRepositoryProvider = Provider<CheckInRepository>((ref) {
+  return CheckInRepository(
+    ref.watch(databaseProvider),
+    ref.watch(nightPlanningRepositoryProvider),
+    ref.watch(fireRepositoryProvider),
+    ref.watch(settingsRepositoryProvider),
+  );
+});
+
+final fireStateStreamProvider = StreamProvider<FireStateRow>((ref) {
+  return ref.watch(fireRepositoryProvider).watch();
 });
 
 final settingsStreamProvider = StreamProvider<SettingsRow>((ref) {

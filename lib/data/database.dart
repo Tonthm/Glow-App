@@ -13,6 +13,8 @@ enum ItemSource { typed, voice, calendar }
 
 enum AppThemeMode { system, light, dark }
 
+enum CheckInResultDb { enough, almostEnough, notEnough, over }
+
 /// Single-row table (id is always 0) holding all user-tunable values from
 /// CLAUDE.md section 3. Only target hours, prep/travel time, and free-day
 /// wake time have dedicated UI in phase 1 — the rest keep their spec
@@ -100,6 +102,10 @@ class NightPlans extends Table {
   /// When the once-per-night "คืนแดงข้างหน้า" alert was shown, so it isn't
   /// repeated (CLAUDE.md section 5).
   DateTimeColumn get redAlertSentAt => dateTime().nullable()();
+  /// When this night's fire/streak effect (section 7) was applied — from a
+  /// real check-in or the no-check-in-past-window sweep — so it's applied
+  /// exactly once.
+  DateTimeColumn get fireAppliedAt => dateTime().nullable()();
 
   @override
   List<Set<Column>> get uniqueKeys => [
@@ -107,14 +113,55 @@ class NightPlans extends Table {
   ];
 }
 
-@DriftDatabase(tables: [Settings, WeeklyItems, OneTimeItems, NightPlans])
+/// One check-in per wake date, per CLAUDE.md section 6.
+@DataClassName('CheckInRow')
+class CheckIns extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  DateTimeColumn get wakeDate => dateTime()();
+  DateTimeColumn get lightsOffAt => dateTime()();
+  DateTimeColumn get actualWakeAt => dateTime()();
+  IntColumn get result => intEnum<CheckInResultDb>()();
+  BoolColumn get onTime => boolean()();
+  BoolColumn get usedShield =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get checkedInAt => dateTime()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {wakeDate},
+  ];
+}
+
+/// Single-row table (id always 0) holding the fire/streak/shield state from
+/// CLAUDE.md section 7.
+@DataClassName('FireStateRow')
+class FireStates extends Table {
+  IntColumn get id => integer().withDefault(const Constant(0))();
+  IntColumn get points => integer().withDefault(const Constant(0))();
+  IntColumn get level => integer().withDefault(const Constant(0))();
+  IntColumn get shields => integer().withDefault(const Constant(0))();
+  IntColumn get maxLevelEverReached =>
+      integer().withDefault(const Constant(0))();
+  IntColumn get currentStreak => integer().withDefault(const Constant(0))();
+  IntColumn get longestStreak => integer().withDefault(const Constant(0))();
+  /// Monday (date-only) the free weekly shield was last granted, so it's
+  /// only granted once per week (section 7: "ได้ฟรี 1 อันทุกวันจันทร์").
+  DateTimeColumn get lastFreeShieldMonday => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(
+  tables: [Settings, WeeklyItems, OneTimeItems, NightPlans, CheckIns, FireStates],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'glow'));
 
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -125,6 +172,13 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.addColumn(settings, settings.themeMode);
+      }
+      if (from < 4) {
+        await m.createTable(checkIns);
+        await m.createTable(fireStates);
+      }
+      if (from < 5) {
+        await m.addColumn(nightPlans, nightPlans.fireAppliedAt);
       }
     },
   );

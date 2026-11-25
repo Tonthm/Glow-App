@@ -4,24 +4,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/night_date.dart';
 import '../../core/schedule_load.dart';
 import '../../core/sleep_calculator.dart';
+import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/warning_bar.dart';
 import '../shared/settings_button.dart';
+import 'check_in_card.dart';
+import 'check_in_result_screen.dart';
+import 'fire_badge.dart';
 
 class TonightPlanData {
   final DateTime wakeDate;
   final NightPlanDraft draft;
   final EveningLoadResult load;
   final ({OneTimeItem exam, int daysUntil})? examCountdown;
+  final PendingCheckIn? pendingCheckIn;
 
   const TonightPlanData({
     required this.wakeDate,
     required this.draft,
     required this.load,
     required this.examCountdown,
+    required this.pendingCheckIn,
   });
 }
 
@@ -39,6 +45,9 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   final settings = ref.watch(settingsStreamProvider).value;
   final repo = ref.watch(nightPlanningRepositoryProvider);
   final now = DateTime.now();
+
+  await ref.watch(fireRepositoryProvider).grantFreeShieldIfNewWeek(now);
+  await ref.watch(checkInRepositoryProvider).sweepMissedNights(now);
 
   if (settings != null) {
     final notificationService = ref.watch(notificationServiceProvider);
@@ -58,11 +67,15 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   final draft = await repo.getOrLockPlan(wakeDate, now: now);
   final load = await repo.computeEveningLoad(draft);
   final examCountdown = await repo.nextExamCountdown(now);
+  final pendingCheckIn = await ref
+      .watch(checkInRepositoryProvider)
+      .findPendingCheckIn(now);
   return TonightPlanData(
     wakeDate: wakeDate,
     draft: draft,
     load: load,
     examCountdown: examCountdown,
+    pendingCheckIn: pendingCheckIn,
   );
 });
 
@@ -111,6 +124,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
           children: [
             if (_notificationsOk == false) const _PermissionWarningBanner(),
             if (!hasSchedule) const _EmptyScheduleCard(),
+            const FireBadge(),
+            const SizedBox(height: GlowSpacing.lg),
             if (hasSchedule)
               planAsync.when(
                 loading: () => const Padding(
@@ -118,21 +133,39 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
-                data: (plan) => _PlanContent(
-                  plan: plan,
-                  checkedIn: _checkedIn,
-                  onCheckIn: () async {
-                    await ref
-                        .read(notificationServiceProvider)
-                        .cancelBedtimeNotification(plan.wakeDate);
-                    setState(() => _checkedIn = true);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('บันทึกแล้ว ฝันดีนะ')),
-                      );
-                    }
-                  },
-                ),
+                data: (plan) => plan.pendingCheckIn != null
+                    ? CheckInCard(
+                        pending: plan.pendingCheckIn!,
+                        onSubmitted: (outcome, fireBefore, fireAfter) {
+                          ref.invalidate(tonightPlanProvider);
+                          if (!context.mounted) return;
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => CheckInResultScreen(
+                                wakeDate: plan.pendingCheckIn!.wakeDate,
+                                outcome: outcome,
+                                fireBefore: fireBefore,
+                                fireAfter: fireAfter,
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : _PlanContent(
+                        plan: plan,
+                        checkedIn: _checkedIn,
+                        onCheckIn: () async {
+                          await ref
+                              .read(notificationServiceProvider)
+                              .cancelBedtimeNotification(plan.wakeDate);
+                          setState(() => _checkedIn = true);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('บันทึกแล้ว ฝันดีนะ')),
+                            );
+                          }
+                        },
+                      ),
               ),
           ],
         ),
