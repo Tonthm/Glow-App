@@ -287,12 +287,13 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
 
     final plan = hasSchedule ? planAsync.value : null;
     // An unanswered check-in stays open until 14:00 the next day; it must not
-    // hide tonight's button once the evening comes round again.
+    // hide tonight's button once the evening comes round again. While the
+    // card is about this same night, it replaces the button.
     final showBedArea =
         plan != null &&
         (plan.pendingCheckIn == null ||
-            plan.inBedAt != null ||
-            _canPressInBed(plan));
+            (plan.pendingCheckIn!.wakeDate != plan.wakeDate &&
+                (plan.inBedAt != null || _canPressInBed(plan))));
 
     return Scaffold(
       appBar: AppBar(
