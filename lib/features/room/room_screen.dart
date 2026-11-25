@@ -5,10 +5,10 @@ import '../../core/economy_config.dart';
 import '../../core/fire.dart';
 import '../../data/database.dart';
 import '../../data/shop_repository.dart';
+import '../../data/wallet_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/bed_character.dart';
-import '../../theme/widgets/empty_state.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/stat_tile.dart';
@@ -21,7 +21,7 @@ final _ownedItemsStreamProvider = StreamProvider.autoDispose<Set<String>>((
 });
 
 final _latestCheckInProvider = FutureProvider.autoDispose<CheckInRow?>((ref) {
-  ref.watch(_ownedItemsStreamProvider);
+  ref.watch(nightHistoryChangesProvider);
   return ref.watch(checkInRepositoryProvider).latestCheckIn();
 });
 
@@ -79,20 +79,24 @@ class RoomScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: GlowSpacing.lg),
                     Expanded(
-                      child: Row(
-                        children: [
-                          for (final (value, label) in [
-                            (fireLevelNames[fire.level], 'ระดับไฟ'),
-                            ('${wallet?.coins ?? 0}', 'เหรียญ'),
-                            ('${fire.longestStreak}', 'สตรีคยาวสุด'),
-                          ])
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
+                      // Scaled as one block so the three stay the same size.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          children: [
+                            for (final (value, label) in [
+                              (fireLevelNames[fire.level], 'ระดับไฟ'),
+                              ('${wallet?.coins ?? 0}', 'เหรียญ'),
+                              ('${fire.longestStreak}', 'สตรีคยาวสุด'),
+                            ])
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: GlowSpacing.sm,
+                                ),
                                 child: StatTile(value: value, label: label),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -141,8 +145,10 @@ class RoomScreen extends ConsumerWidget {
   }
 }
 
+const int _defaultBlanketColor = 0xFFBFC7D1;
+
 Color _blanketColor(String? itemId) {
-  if (itemId == null) return const Color(0xFFBFC7D1);
+  if (itemId == null) return const Color(_defaultBlanketColor);
   final match = EconomyConfig.blankets.where((b) => b.id == itemId);
   if (match.isNotEmpty) return Color(match.first.colorValue);
   for (final blanket in EconomyConfig.fireLevelRewardBlankets.values) {
@@ -151,7 +157,7 @@ Color _blanketColor(String? itemId) {
   if (itemId == EconomyConfig.examPeriodRewardBlanket.id) {
     return Color(EconomyConfig.examPeriodRewardBlanket.colorValue);
   }
-  return const Color(0xFFBFC7D1);
+  return const Color(_defaultBlanketColor);
 }
 
 class _MyBlanketsGrid extends ConsumerWidget {
@@ -170,15 +176,11 @@ class _MyBlanketsGrid extends ConsumerWidget {
           ...EconomyConfig.fireLevelRewardBlankets.values,
           EconomyConfig.examPeriodRewardBlanket,
         ];
-        final ownedBlankets = allBlankets
-            .where((b) => owned.contains(b.id))
-            .toList();
-        if (ownedBlankets.isEmpty) {
-          return const EmptyState(
-            icon: Icons.checkroom_outlined,
-            message: 'ยังไม่มีผ้าห่ม เช็กอินเก็บเหรียญ แล้วแวะร้านค้าได้เลย',
-          );
-        }
+        // The starting blanket is always available, so there's a way back.
+        final ownedBlankets = [
+          const BlanketConfig(defaultBlanketId, _defaultBlanketColor, 0),
+          ...allBlankets.where((b) => owned.contains(b.id)),
+        ];
         return GridView.builder(
           padding: const EdgeInsets.all(1),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

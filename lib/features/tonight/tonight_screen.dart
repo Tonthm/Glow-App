@@ -437,23 +437,35 @@ class _ExamCountdownBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final days = countdown.daysUntil;
     final label = days == 0 ? 'วันนี้' : 'อีก $days วัน';
-    return Card(
-      color: Theme.of(context).colorScheme.secondaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('สอบ${countdown.exam.title} $label'),
-            const SizedBox(height: 4),
-            const Text(
-              'นอนให้พอช่วยให้จำสิ่งที่อ่านได้ดีขึ้น ไม่ควรโต้รุ่ง',
-              style: TextStyle(fontSize: 12),
+    final title = countdown.exam.title;
+    final name = title.startsWith('สอบ') ? title : 'สอบ $title';
+    return Container(
+      padding: const EdgeInsets.all(GlowSpacing.md),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.primary),
+        borderRadius: BorderRadius.circular(GlowRadius.card),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.school_outlined, color: theme.colorScheme.primary),
+          const SizedBox(width: GlowSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$name $label', style: theme.textTheme.bodyLarge),
+                Text(
+                  'นอนให้พอช่วยให้จำสิ่งที่อ่านได้ดีขึ้น ไม่ควรโต้รุ่ง',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

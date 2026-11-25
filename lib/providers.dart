@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show TableUpdateQuery;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -88,6 +89,15 @@ final statsRepositoryProvider = Provider<StatsRepository>((ref) {
 
 final debugSampleDataServiceProvider = Provider<DebugSampleDataService>((ref) {
   return DebugSampleDataService(ref.watch(databaseProvider));
+});
+
+/// Emits whenever a night's check-in or plan changes, so screens that read
+/// history (stats, room) know to reload.
+final nightHistoryChangesProvider = StreamProvider<void>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.tableUpdates(
+    TableUpdateQuery.onAllTables([db.checkIns, db.nightPlans]),
+  );
 });
 
 final settingsStreamProvider = StreamProvider<SettingsRow>((ref) {

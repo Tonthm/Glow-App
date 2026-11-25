@@ -30,7 +30,8 @@ class DebugSampleDataService {
 
       await db
           .into(db.nightPlans)
-          .insertOnConflictUpdate(
+          .insert(
+            mode: InsertMode.insertOrReplace,
             NightPlansCompanion.insert(
               wakeDate: wakeDate,
               plannedWakeAt: plannedWake,
@@ -73,7 +74,8 @@ class DebugSampleDataService {
 
       await db
           .into(db.checkIns)
-          .insertOnConflictUpdate(
+          .insert(
+            mode: InsertMode.insertOrReplace,
             CheckInsCompanion.insert(
               wakeDate: wakeDate,
               lightsOffAt: lightsOffAt,

@@ -24,7 +24,7 @@ final _statsCellsProvider = FutureProvider.autoDispose<List<HeatmapCell>>((
   ref,
 ) async {
   final range = ref.watch(_statsRangeProvider);
-  ref.watch(fireStateStreamProvider); // refresh after a check-in
+  ref.watch(nightHistoryChangesProvider);
   final settings = await ref.watch(settingsStreamProvider.future);
   final today = _dateOnly(DateTime.now());
 
@@ -45,6 +45,7 @@ final _monthComparisonProvider = FutureProvider.autoDispose<String>((
   ref,
 ) async {
   final settings = await ref.watch(settingsStreamProvider.future);
+  ref.watch(nightHistoryChangesProvider);
   final repo = ref.watch(statsRepositoryProvider);
   final today = _dateOnly(DateTime.now());
   DateTime daysAgo(int n) => DateTime(today.year, today.month, today.day - n);
