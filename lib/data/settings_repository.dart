@@ -123,6 +123,12 @@ class SettingsRepository {
     );
   }
 
+  Future<void> markVoiceNoticeAccepted() async {
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      const SettingsCompanion(voiceNoticeAccepted: Value(true)),
+    );
+  }
+
   Future<void> markOnboardingCompleted(DateTime now) async {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(

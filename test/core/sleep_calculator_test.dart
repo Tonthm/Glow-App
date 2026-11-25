@@ -2,7 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/core/schedule_models.dart';
 import 'package:glow/core/sleep_calculator.dart';
 
-const defaultSettings = SleepSettings(targetMinMinutes: 480, targetMaxMinutes: 600);
+const defaultSettings = SleepSettings(
+  targetMinMinutes: 480,
+  targetMaxMinutes: 600,
+);
 
 DateTime d(int y, int m, int day, [int h = 0, int min = 0]) =>
     DateTime(y, m, day, h, min);
@@ -67,7 +70,10 @@ void main() {
     });
 
     test('a would-be after-midnight bedtime is capped to 23:30 by default', () {
-      const settings = SleepSettings(targetMinMinutes: 420, targetMaxMinutes: 540);
+      const settings = SleepSettings(
+        targetMinMinutes: 420,
+        targetMaxMinutes: 540,
+      );
       final result = calculateBedtime(
         wakeTime: d(2026, 11, 24, 8, 0),
         settings: settings,
@@ -135,50 +141,56 @@ void main() {
       expect(bedtime.bedtime, d(2026, 12, 24, 22, 45));
     });
 
-    test('wake time capped at latestWakeMinutes on a late afternoon-only day', () {
-      final entries = [
-        ScheduleEntry(
-          title: 'เรียนบ่าย',
-          kind: ItemKind.classSession,
-          start: d(2026, 11, 24, 13, 0),
-          end: d(2026, 11, 24, 15, 0),
-        ),
-      ];
-      final wake = calculateWakeTime(
-        wakeDate: d(2026, 11, 24),
-        settings: defaultSettings,
-        entriesForWakeDate: entries,
-      );
-      expect(wake.wakeTime, d(2026, 11, 24, 8, 0)); // capped, not 11:25
-      expect(wake.wasCapped, isTrue);
-    });
+    test(
+      'wake time capped at latestWakeMinutes on a late afternoon-only day',
+      () {
+        final entries = [
+          ScheduleEntry(
+            title: 'เรียนบ่าย',
+            kind: ItemKind.classSession,
+            start: d(2026, 11, 24, 13, 0),
+            end: d(2026, 11, 24, 15, 0),
+          ),
+        ];
+        final wake = calculateWakeTime(
+          wakeDate: d(2026, 11, 24),
+          settings: defaultSettings,
+          entriesForWakeDate: entries,
+        );
+        expect(wake.wakeTime, d(2026, 11, 24, 8, 0)); // capped, not 11:25
+        expect(wake.wasCapped, isTrue);
+      },
+    );
 
-    test('exam day uses 30-minute exam buffer and midpoint target that night', () {
-      final entries = [
-        ScheduleEntry(
-          title: 'สอบคณิต',
-          kind: ItemKind.exam,
-          start: d(2026, 11, 24, 9, 0),
-          end: d(2026, 11, 24, 11, 0),
-        ),
-      ];
-      final wake = calculateWakeTime(
-        wakeDate: d(2026, 11, 24),
-        settings: defaultSettings,
-        entriesForWakeDate: entries,
-      );
-      // leaveHome = 09:00 - 30(exam buffer) - 30(travel) = 08:00; wake = 08:00 - 45(prep) = 07:15
-      expect(wake.wakeTime, d(2026, 11, 24, 7, 15));
-      expect(wake.isPreExamNight, isTrue);
+    test(
+      'exam day uses 30-minute exam buffer and midpoint target that night',
+      () {
+        final entries = [
+          ScheduleEntry(
+            title: 'สอบคณิต',
+            kind: ItemKind.exam,
+            start: d(2026, 11, 24, 9, 0),
+            end: d(2026, 11, 24, 11, 0),
+          ),
+        ];
+        final wake = calculateWakeTime(
+          wakeDate: d(2026, 11, 24),
+          settings: defaultSettings,
+          entriesForWakeDate: entries,
+        );
+        // leaveHome = 09:00 - 30(exam buffer) - 30(travel) = 08:00; wake = 08:00 - 45(prep) = 07:15
+        expect(wake.wakeTime, d(2026, 11, 24, 7, 15));
+        expect(wake.isPreExamNight, isTrue);
 
-      final bedtime = calculateBedtime(
-        wakeTime: wake.wakeTime,
-        settings: defaultSettings,
-        isPreExamNight: true,
-      );
-      // midpoint target = (480+600)/2 = 540min = 9h; 07:15 - 9h - 15m = Monday 21:00
-      expect(bedtime.bedtime, d(2026, 11, 23, 22, 0));
-    });
+        final bedtime = calculateBedtime(
+          wakeTime: wake.wakeTime,
+          settings: defaultSettings,
+          isPreExamNight: true,
+        );
+        // midpoint target = (480+600)/2 = 540min = 9h; 07:15 - 9h - 15m = Monday 21:00
+        expect(bedtime.bedtime, d(2026, 11, 23, 22, 0));
+      },
+    );
 
     test('appointment so early that sleep target cannot be met still returns a plan', () {
       final entries = [
@@ -220,21 +232,27 @@ void main() {
       isPreExamNight: false,
     );
 
-    test('pulls an isolated late night earlier to within 60 min of neighbors', () {
-      final nights = [
-        draft(d(2026, 11, 23), d(2026, 11, 22, 21, 30)), // Mon night
-        draft(d(2026, 11, 24), d(2026, 11, 23, 23, 50)), // Tue night: very late
-        draft(d(2026, 11, 25), d(2026, 11, 24, 21, 40)), // Wed night
-      ];
+    test(
+      'pulls an isolated late night earlier to within 60 min of neighbors',
+      () {
+        final nights = [
+          draft(d(2026, 11, 23), d(2026, 11, 22, 21, 30)), // Mon night
+          draft(
+            d(2026, 11, 24),
+            d(2026, 11, 23, 23, 50),
+          ), // Tue night: very late
+          draft(d(2026, 11, 25), d(2026, 11, 24, 21, 40)), // Wed night
+        ];
 
-      final smoothed = smoothWeekNightPlans(nights);
+        final smoothed = smoothWeekNightPlans(nights);
 
-      expect(smoothed[0].bedtime, d(2026, 11, 22, 21, 30)); // unchanged
-      // Backward pass pulls Tue to 22:40 (60 min after Wed's 21:40), then the
-      // forward pass tightens it again to 22:30 (60 min after Mon's 21:30).
-      expect(smoothed[1].bedtime, d(2026, 11, 23, 22, 30));
-      expect(smoothed[2].bedtime, d(2026, 11, 24, 21, 40)); // unchanged
-    });
+        expect(smoothed[0].bedtime, d(2026, 11, 22, 21, 30)); // unchanged
+        // Backward pass pulls Tue to 22:40 (60 min after Wed's 21:40), then the
+        // forward pass tightens it again to 22:30 (60 min after Mon's 21:30).
+        expect(smoothed[1].bedtime, d(2026, 11, 23, 22, 30));
+        expect(smoothed[2].bedtime, d(2026, 11, 24, 21, 40)); // unchanged
+      },
+    );
 
     test('never moves a night later than its original bedtime', () {
       final nights = [

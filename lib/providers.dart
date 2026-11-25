@@ -17,6 +17,7 @@ import 'services/calendar_import_service.dart';
 import 'services/debug_sample_data_service.dart';
 import 'services/notification_service.dart';
 import 'services/permissions_service.dart';
+import 'services/speech_service.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -118,6 +119,10 @@ final permissionsServiceProvider = Provider<PermissionsService>((ref) {
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService(ref.watch(permissionsServiceProvider));
+});
+
+final speechServiceProvider = Provider<SpeechService>((ref) {
+  return SpeechService();
 });
 
 final backupServiceProvider = Provider<BackupService>((ref) {

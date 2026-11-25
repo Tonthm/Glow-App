@@ -249,6 +249,20 @@ class $SettingsTable extends Settings
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _voiceNoticeAcceptedMeta =
+      const VerificationMeta('voiceNoticeAccepted');
+  @override
+  late final GeneratedColumn<bool> voiceNoticeAccepted = GeneratedColumn<bool>(
+    'voice_notice_accepted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("voice_notice_accepted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -271,6 +285,7 @@ class $SettingsTable extends Settings
     onboardingCompleted,
     themeMode,
     onboardedAt,
+    voiceNoticeAccepted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -434,6 +449,15 @@ class $SettingsTable extends Settings
         ),
       );
     }
+    if (data.containsKey('voice_notice_accepted')) {
+      context.handle(
+        _voiceNoticeAcceptedMeta,
+        voiceNoticeAccepted.isAcceptableOrUnknown(
+          data['voice_notice_accepted']!,
+          _voiceNoticeAcceptedMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -527,6 +551,10 @@ class $SettingsTable extends Settings
         DriftSqlType.dateTime,
         data['${effectivePrefix}onboarded_at'],
       ),
+      voiceNoticeAccepted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}voice_notice_accepted'],
+      )!,
     );
   }
 
@@ -565,6 +593,10 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   /// When onboarding finished. Nights that started before this are never
   /// counted as missed check-ins.
   final DateTime? onboardedAt;
+
+  /// The "your voice may be sent to Google" notice, shown before the first
+  /// recording only.
+  final bool voiceNoticeAccepted;
   const SettingsRow({
     required this.id,
     required this.ageGroup,
@@ -586,6 +618,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.onboardingCompleted,
     required this.themeMode,
     this.onboardedAt,
+    required this.voiceNoticeAccepted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -624,6 +657,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     if (!nullToAbsent || onboardedAt != null) {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt);
     }
+    map['voice_notice_accepted'] = Variable<bool>(voiceNoticeAccepted);
     return map;
   }
 
@@ -655,6 +689,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardedAt: onboardedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(onboardedAt),
+      voiceNoticeAccepted: Value(voiceNoticeAccepted),
     );
   }
 
@@ -696,6 +731,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         serializer.fromJson<int>(json['themeMode']),
       ),
       onboardedAt: serializer.fromJson<DateTime?>(json['onboardedAt']),
+      voiceNoticeAccepted: serializer.fromJson<bool>(
+        json['voiceNoticeAccepted'],
+      ),
     );
   }
   @override
@@ -726,6 +764,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         $SettingsTable.$converterthemeMode.toJson(themeMode),
       ),
       'onboardedAt': serializer.toJson<DateTime?>(onboardedAt),
+      'voiceNoticeAccepted': serializer.toJson<bool>(voiceNoticeAccepted),
     };
   }
 
@@ -750,6 +789,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bool? onboardingCompleted,
     AppThemeMode? themeMode,
     Value<DateTime?> onboardedAt = const Value.absent(),
+    bool? voiceNoticeAccepted,
   }) => SettingsRow(
     id: id ?? this.id,
     ageGroup: ageGroup ?? this.ageGroup,
@@ -771,6 +811,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
     themeMode: themeMode ?? this.themeMode,
     onboardedAt: onboardedAt.present ? onboardedAt.value : this.onboardedAt,
+    voiceNoticeAccepted: voiceNoticeAccepted ?? this.voiceNoticeAccepted,
   );
   SettingsRow copyWithCompanion(SettingsCompanion data) {
     return SettingsRow(
@@ -824,6 +865,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardedAt: data.onboardedAt.present
           ? data.onboardedAt.value
           : this.onboardedAt,
+      voiceNoticeAccepted: data.voiceNoticeAccepted.present
+          ? data.voiceNoticeAccepted.value
+          : this.voiceNoticeAccepted,
     );
   }
 
@@ -849,13 +893,14 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('notifyCheckIn: $notifyCheckIn, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode, ')
-          ..write('onboardedAt: $onboardedAt')
+          ..write('onboardedAt: $onboardedAt, ')
+          ..write('voiceNoticeAccepted: $voiceNoticeAccepted')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     ageGroup,
     targetMinMinutes,
@@ -876,7 +921,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     onboardingCompleted,
     themeMode,
     onboardedAt,
-  );
+    voiceNoticeAccepted,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -900,7 +946,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.notifyCheckIn == this.notifyCheckIn &&
           other.onboardingCompleted == this.onboardingCompleted &&
           other.themeMode == this.themeMode &&
-          other.onboardedAt == this.onboardedAt);
+          other.onboardedAt == this.onboardedAt &&
+          other.voiceNoticeAccepted == this.voiceNoticeAccepted);
 }
 
 class SettingsCompanion extends UpdateCompanion<SettingsRow> {
@@ -924,6 +971,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<bool> onboardingCompleted;
   final Value<AppThemeMode> themeMode;
   final Value<DateTime?> onboardedAt;
+  final Value<bool> voiceNoticeAccepted;
   const SettingsCompanion({
     this.id = const Value.absent(),
     this.ageGroup = const Value.absent(),
@@ -945,6 +993,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.onboardedAt = const Value.absent(),
+    this.voiceNoticeAccepted = const Value.absent(),
   });
   SettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -967,6 +1016,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.onboardedAt = const Value.absent(),
+    this.voiceNoticeAccepted = const Value.absent(),
   });
   static Insertable<SettingsRow> custom({
     Expression<int>? id,
@@ -989,6 +1039,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<bool>? onboardingCompleted,
     Expression<int>? themeMode,
     Expression<DateTime>? onboardedAt,
+    Expression<bool>? voiceNoticeAccepted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1017,6 +1068,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
         'onboarding_completed': onboardingCompleted,
       if (themeMode != null) 'theme_mode': themeMode,
       if (onboardedAt != null) 'onboarded_at': onboardedAt,
+      if (voiceNoticeAccepted != null)
+        'voice_notice_accepted': voiceNoticeAccepted,
     });
   }
 
@@ -1041,6 +1094,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<bool>? onboardingCompleted,
     Value<AppThemeMode>? themeMode,
     Value<DateTime?>? onboardedAt,
+    Value<bool>? voiceNoticeAccepted,
   }) {
     return SettingsCompanion(
       id: id ?? this.id,
@@ -1063,6 +1117,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       themeMode: themeMode ?? this.themeMode,
       onboardedAt: onboardedAt ?? this.onboardedAt,
+      voiceNoticeAccepted: voiceNoticeAccepted ?? this.voiceNoticeAccepted,
     );
   }
 
@@ -1133,6 +1188,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     if (onboardedAt.present) {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt.value);
     }
+    if (voiceNoticeAccepted.present) {
+      map['voice_notice_accepted'] = Variable<bool>(voiceNoticeAccepted.value);
+    }
     return map;
   }
 
@@ -1158,7 +1216,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('notifyCheckIn: $notifyCheckIn, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode, ')
-          ..write('onboardedAt: $onboardedAt')
+          ..write('onboardedAt: $onboardedAt, ')
+          ..write('voiceNoticeAccepted: $voiceNoticeAccepted')
           ..write(')'))
         .toString();
   }
@@ -5075,6 +5134,7 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
   Value<DateTime?> onboardedAt,
+  Value<bool> voiceNoticeAccepted,
 });
 typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<int> id,
@@ -5097,6 +5157,7 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
   Value<DateTime?> onboardedAt,
+  Value<bool> voiceNoticeAccepted,
 });
 
 class $$SettingsTableFilterComposer
@@ -5209,6 +5270,11 @@ class $$SettingsTableFilterComposer
     column: $table.onboardedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<bool> get voiceNoticeAccepted => $composableBuilder(
+    column: $table.voiceNoticeAccepted,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$SettingsTableOrderingComposer
@@ -5319,6 +5385,11 @@ class $$SettingsTableOrderingComposer
     column: $table.onboardedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get voiceNoticeAccepted => $composableBuilder(
+    column: $table.voiceNoticeAccepted,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SettingsTableAnnotationComposer
@@ -5419,6 +5490,11 @@ class $$SettingsTableAnnotationComposer
     column: $table.onboardedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get voiceNoticeAccepted => $composableBuilder(
+    column: $table.voiceNoticeAccepted,
+    builder: (column) => column,
+  );
 }
 
 class $$SettingsTableTableManager
@@ -5472,6 +5548,7 @@ class $$SettingsTableTableManager
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<bool> voiceNoticeAccepted = const Value.absent(),
               }) => SettingsCompanion(
                 id: id,
                 ageGroup: ageGroup,
@@ -5493,6 +5570,7 @@ class $$SettingsTableTableManager
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
                 onboardedAt: onboardedAt,
+                voiceNoticeAccepted: voiceNoticeAccepted,
               ),
           createCompanionCallback:
               ({
@@ -5516,6 +5594,7 @@ class $$SettingsTableTableManager
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<bool> voiceNoticeAccepted = const Value.absent(),
               }) => SettingsCompanion.insert(
                 id: id,
                 ageGroup: ageGroup,
@@ -5537,6 +5616,7 @@ class $$SettingsTableTableManager
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
                 onboardedAt: onboardedAt,
+                voiceNoticeAccepted: voiceNoticeAccepted,
               ),
           withReferenceMapper: (p0) => p0
               .map(

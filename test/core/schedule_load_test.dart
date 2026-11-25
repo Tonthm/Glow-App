@@ -118,7 +118,13 @@ void main() {
       final result = classifyEveningLoad(
         entriesForEveningDate: entries,
         plannedBedtime: d(2026, 11, 23, 21, 50),
-        plannedWakeTime: d(2026, 11, 24, 5, 0), // only 7h30m after arriving home
+        plannedWakeTime: d(
+          2026,
+          11,
+          24,
+          5,
+          0,
+        ), // only 7h30m after arriving home
         isPreExamNight: false,
         settings: settings,
       );

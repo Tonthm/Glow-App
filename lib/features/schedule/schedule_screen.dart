@@ -8,6 +8,7 @@ import '../calendar_import/calendar_import_screen.dart';
 import '../shared/settings_button.dart';
 import 'add_item_sheet.dart';
 import 'one_time_item_form.dart';
+import 'voice_input_screen.dart';
 import 'week_grid.dart';
 import 'weekly_item_form.dart';
 
@@ -78,6 +79,9 @@ class ScheduleScreen extends ConsumerWidget {
     switch (choice) {
       case AddMethod.type:
         await showTypedEntryChooser(context);
+      case AddMethod.voice:
+        await Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const VoiceInputScreen()));
       case AddMethod.calendar:
         await Navigator.of(
           context,

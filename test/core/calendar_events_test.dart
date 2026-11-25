@@ -36,10 +36,7 @@ void main() {
         guessEventKind(event('1', 'คณิต', monday, repeatsWeekly: true)),
         ImportKind.classSession,
       );
-      expect(
-        guessEventKind(event('1', 'ดูหนัง', monday)),
-        ImportKind.activity,
-      );
+      expect(guessEventKind(event('1', 'ดูหนัง', monday)), ImportKind.activity);
     });
   });
 

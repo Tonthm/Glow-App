@@ -118,21 +118,27 @@ void main() {
       );
     });
 
-    test('one missed pre-exam night in the period breaks the all-complete reward', () {
-      final period = [d(2026, 11, 22), d(2026, 11, 26)];
-      bool isComplete(DateTime wakeDate) => wakeDate != d(2026, 11, 26);
-      expect(
-        examPeriodAllNightsComplete(
-          examDatesInPeriod: period,
-          isNightComplete: isComplete,
-        ),
-        isFalse,
-      );
-      expect(
-        examPeriodCoins(examDatesInPeriod: period, isNightComplete: isComplete),
-        EconomyConfig.preExamNightCoins,
-      );
-    });
+    test(
+      'one missed pre-exam night in the period breaks the all-complete reward',
+      () {
+        final period = [d(2026, 11, 22), d(2026, 11, 26)];
+        bool isComplete(DateTime wakeDate) => wakeDate != d(2026, 11, 26);
+        expect(
+          examPeriodAllNightsComplete(
+            examDatesInPeriod: period,
+            isNightComplete: isComplete,
+          ),
+          isFalse,
+        );
+        expect(
+          examPeriodCoins(
+            examDatesInPeriod: period,
+            isNightComplete: isComplete,
+          ),
+          EconomyConfig.preExamNightCoins,
+        );
+      },
+    );
 
     test('two exams on the same day share one pre-exam night', () {
       final period = [d(2026, 11, 22), d(2026, 11, 22)];
@@ -141,6 +147,7 @@ void main() {
         callCount++;
         return true;
       }
+
       expect(
         examPeriodCoins(examDatesInPeriod: period, isNightComplete: isComplete),
         EconomyConfig.preExamNightCoins,

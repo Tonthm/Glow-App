@@ -4,7 +4,7 @@ import '../../theme/widgets/glow_bottom_sheet.dart';
 import 'one_time_item_form.dart';
 import 'weekly_item_form.dart';
 
-enum AddMethod { type, calendar }
+enum AddMethod { type, voice, calendar }
 
 Future<AddMethod?> showAddMethodSheet(BuildContext context) {
   return showGlowBottomSheet<AddMethod>(
@@ -16,6 +16,11 @@ Future<AddMethod?> showAddMethodSheet(BuildContext context) {
           leading: const Icon(Icons.keyboard_outlined),
           title: const Text('พิมพ์'),
           onTap: () => Navigator.of(context).pop(AddMethod.type),
+        ),
+        ListTile(
+          leading: const Icon(Icons.mic_none_outlined),
+          title: const Text('พูด'),
+          onTap: () => Navigator.of(context).pop(AddMethod.voice),
         ),
         ListTile(
           leading: const Icon(Icons.calendar_month_outlined),

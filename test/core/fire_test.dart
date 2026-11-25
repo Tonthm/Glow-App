@@ -117,26 +117,35 @@ void main() {
     });
 
     test('dropping from level 0 (ถ่าน) stays at level 0', () {
-      final state = applyNightFireEffect(FireState.initial, NightFireEffect.missed);
+      final state = applyNightFireEffect(
+        FireState.initial,
+        NightFireEffect.missed,
+      );
       expect(state.level, 0);
       expect(state.points, 0);
     });
   });
 
   group('shields', () {
-    test('a missed night with a shield held consumes it instead of dropping', () {
-      var state = FireState.initial.copyWith(
-        points: 7,
-        level: 3,
-        shields: 1,
-        currentStreak: 5,
-      );
-      state = applyNightFireEffect(state, NightFireEffect.missed);
-      expect(state.shields, 0);
-      expect(state.level, 3);
-      expect(state.points, 7);
-      expect(state.currentStreak, 5); // streak untouched when shield absorbs it
-    });
+    test(
+      'a missed night with a shield held consumes it instead of dropping',
+      () {
+        var state = FireState.initial.copyWith(
+          points: 7,
+          level: 3,
+          shields: 1,
+          currentStreak: 5,
+        );
+        state = applyNightFireEffect(state, NightFireEffect.missed);
+        expect(state.shields, 0);
+        expect(state.level, 3);
+        expect(state.points, 7);
+        expect(
+          state.currentStreak,
+          5,
+        ); // streak untouched when shield absorbs it
+      },
+    );
 
     test('using a shield twice in one week drains down to a real drop', () {
       var state = FireState.initial.copyWith(points: 7, level: 3, shields: 2);

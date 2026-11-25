@@ -58,6 +58,11 @@ class Settings extends Table {
   /// counted as missed check-ins.
   DateTimeColumn get onboardedAt => dateTime().nullable()();
 
+  /// The "your voice may be sent to Google" notice, shown before the first
+  /// recording only.
+  BoolColumn get voiceNoticeAccepted =>
+      boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -236,7 +241,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -290,6 +295,9 @@ class AppDatabase extends _$AppDatabase {
         await _addColumnIfMissing(m, settings, settings.onboardedAt);
         await _addColumnIfMissing(m, nightPlans, nightPlans.inBedAt);
         await _addColumnIfMissing(m, nightPlans, nightPlans.usedShield);
+      }
+      if (from < 10) {
+        await _addColumnIfMissing(m, settings, settings.voiceNoticeAccepted);
       }
     },
   );

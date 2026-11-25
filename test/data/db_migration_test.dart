@@ -9,6 +9,7 @@ const _rewindToV2 = [
   'ALTER TABLE settings DROP COLUMN theme_mode',
   'ALTER TABLE settings DROP COLUMN notify_check_in',
   'ALTER TABLE settings DROP COLUMN onboarded_at',
+  'ALTER TABLE settings DROP COLUMN voice_notice_accepted',
   'ALTER TABLE night_plans DROP COLUMN in_bed_at',
   'ALTER TABLE night_plans DROP COLUMN used_shield',
   'ALTER TABLE night_plans DROP COLUMN fire_applied_at',

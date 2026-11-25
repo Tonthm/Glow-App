@@ -69,13 +69,16 @@ void main() {
     expect((await fire.get()).shields, 0);
   });
 
-  test('"in bed" survives and keeps the night unlocked until its time', () async {
-    final tomorrow = DateTime(2026, 11, 26);
-    await planning.markInBed(tomorrow, onboarding);
-    final row = await planning.getPlanRow(tomorrow);
-    expect(row!.inBedAt, onboarding);
-    expect(row.isLocked, isFalse);
-  });
+  test(
+    '"in bed" survives and keeps the night unlocked until its time',
+    () async {
+      final tomorrow = DateTime(2026, 11, 26);
+      await planning.markInBed(tomorrow, onboarding);
+      final row = await planning.getPlanRow(tomorrow);
+      expect(row!.inBedAt, onboarding);
+      expect(row.isLocked, isFalse);
+    },
+  );
 
   test('backup and restore keeps check-ins, fire, and coins', () async {
     final morning = DateTime(2026, 11, 26, 8);

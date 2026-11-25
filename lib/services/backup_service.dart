@@ -98,6 +98,7 @@ class BackupService {
               SettingsRow.fromJson({
                 'notifyCheckIn': true,
                 'themeMode': 0,
+                'voiceNoticeAccepted': false,
                 ...settingsJson,
               }).toCompanion(false),
               mode: InsertMode.insertOrReplace,
