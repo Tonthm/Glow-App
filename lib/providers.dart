@@ -5,9 +5,12 @@ import 'data/check_in_repository.dart';
 import 'data/database.dart';
 import 'data/fire_repository.dart';
 import 'data/night_planning_repository.dart';
+import 'data/quest_repository.dart';
 import 'data/schedule_repository.dart';
 import 'data/settings_repository.dart';
+import 'data/shop_repository.dart';
 import 'data/stats_repository.dart';
+import 'data/wallet_repository.dart';
 import 'services/backup_service.dart';
 import 'services/calendar_import_service.dart';
 import 'services/debug_sample_data_service.dart';
@@ -42,17 +45,41 @@ final fireRepositoryProvider = Provider<FireRepository>((ref) {
   return FireRepository(ref.watch(databaseProvider));
 });
 
+final walletRepositoryProvider = Provider<WalletRepository>((ref) {
+  return WalletRepository(ref.watch(databaseProvider));
+});
+
 final checkInRepositoryProvider = Provider<CheckInRepository>((ref) {
   return CheckInRepository(
     ref.watch(databaseProvider),
     ref.watch(nightPlanningRepositoryProvider),
     ref.watch(fireRepositoryProvider),
     ref.watch(settingsRepositoryProvider),
+    ref.watch(walletRepositoryProvider),
+  );
+});
+
+final questRepositoryProvider = Provider<QuestRepository>((ref) {
+  return QuestRepository(
+    ref.watch(databaseProvider),
+    ref.watch(walletRepositoryProvider),
+    ref.watch(scheduleRepositoryProvider),
+  );
+});
+
+final shopRepositoryProvider = Provider<ShopRepository>((ref) {
+  return ShopRepository(
+    ref.watch(walletRepositoryProvider),
+    ref.watch(fireRepositoryProvider),
   );
 });
 
 final fireStateStreamProvider = StreamProvider<FireStateRow>((ref) {
   return ref.watch(fireRepositoryProvider).watch();
+});
+
+final walletStreamProvider = StreamProvider<WalletRow>((ref) {
+  return ref.watch(walletRepositoryProvider).watch();
 });
 
 final statsRepositoryProvider = Provider<StatsRepository>((ref) {

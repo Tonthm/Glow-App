@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/night_date.dart';
+import '../../core/quests.dart';
 import '../../core/schedule_load.dart';
 import '../../core/sleep_calculator.dart';
 import '../../data/check_in_repository.dart';
@@ -21,6 +22,7 @@ class TonightPlanData {
   final EveningLoadResult load;
   final ({OneTimeItem exam, int daysUntil})? examCountdown;
   final PendingCheckIn? pendingCheckIn;
+  final int weeklyOnTimeCount;
 
   const TonightPlanData({
     required this.wakeDate,
@@ -28,6 +30,7 @@ class TonightPlanData {
     required this.load,
     required this.examCountdown,
     required this.pendingCheckIn,
+    required this.weeklyOnTimeCount,
   });
 }
 
@@ -48,6 +51,9 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
 
   await ref.watch(fireRepositoryProvider).grantFreeShieldIfNewWeek(now);
   await ref.watch(checkInRepositoryProvider).sweepMissedNights(now);
+  final questRepo = ref.watch(questRepositoryProvider);
+  await questRepo.claimWeeklyRewardIfComplete(now);
+  await questRepo.claimExamPeriodRewardsIfComplete(now);
 
   if (settings != null) {
     final notificationService = ref.watch(notificationServiceProvider);
@@ -71,12 +77,14 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   final pendingCheckIn = await ref
       .watch(checkInRepositoryProvider)
       .findPendingCheckIn(now);
+  final weeklyOnTimeCount = await questRepo.currentWeekOnTimeCount(now);
   return TonightPlanData(
     wakeDate: wakeDate,
     draft: draft,
     load: load,
     examCountdown: examCountdown,
     pendingCheckIn: pendingCheckIn,
+    weeklyOnTimeCount: weeklyOnTimeCount,
   );
 });
 
@@ -137,14 +145,14 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                 data: (plan) => plan.pendingCheckIn != null
                     ? CheckInCard(
                         pending: plan.pendingCheckIn!,
-                        onSubmitted: (outcome, fireBefore, fireAfter) {
+                        onSubmitted: (result, fireBefore, fireAfter) {
                           ref.invalidate(tonightPlanProvider);
                           if (!context.mounted) return;
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => CheckInResultScreen(
                                 wakeDate: plan.pendingCheckIn!.wakeDate,
-                                outcome: outcome,
+                                result: result,
                                 fireBefore: fireBefore,
                                 fireAfter: fireAfter,
                               ),
@@ -255,10 +263,44 @@ class _PlanContent extends StatelessWidget {
             message: 'คืนนั้นนอนครบไม่ได้ตามตาราง ลองย้ายกิจกรรม, '
                 'ลดเวลาเตรียมตัววันนั้น, หรือเข้านอนเร็วขึ้นคืนก่อนหน้า',
           ),
+        const SizedBox(height: GlowSpacing.lg),
+        _QuestProgressDots(count: plan.weeklyOnTimeCount),
         const SizedBox(height: GlowSpacing.xl),
         GlowPrimaryButton(
           label: checkedIn ? 'เข้านอนแล้ว ✓' : 'เข้านอนแล้ว',
           onPressed: checkedIn ? null : onCheckIn,
+        ),
+      ],
+    );
+  }
+}
+
+/// ●●●○○ weekly "ตรงเวลา 5 ใน 7" quest progress (CLAUDE.md section 8).
+class _QuestProgressDots extends StatelessWidget {
+  final int count;
+  const _QuestProgressDots({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final target = weeklyOnTimeQuestTarget;
+    final filled = count.clamp(0, target);
+    final accent = Theme.of(context).colorScheme.primary;
+    final empty = Theme.of(context).dividerColor;
+    return Row(
+      children: [
+        for (var i = 0; i < target; i++)
+          Padding(
+            padding: const EdgeInsets.only(right: GlowSpacing.xs),
+            child: Icon(
+              Icons.circle,
+              size: 12,
+              color: i < filled ? accent : empty,
+            ),
+          ),
+        const SizedBox(width: GlowSpacing.xs),
+        Text(
+          'ตรงเวลา $count/$target สัปดาห์นี้',
+          style: Theme.of(context).textTheme.labelSmall,
         ),
       ],
     );

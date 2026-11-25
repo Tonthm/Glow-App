@@ -36,14 +36,14 @@ SleepResult _toSleepResult(CheckInRow row) {
 /// week's stats with a 7-day bar chart (CLAUDE.md section 6).
 class CheckInResultScreen extends ConsumerWidget {
   final DateTime wakeDate;
-  final CheckInOutcome outcome;
+  final CheckInRecordResult result;
   final FireStateRow fireBefore;
   final FireStateRow fireAfter;
 
   const CheckInResultScreen({
     super.key,
     required this.wakeDate,
-    required this.outcome,
+    required this.result,
     required this.fireBefore,
     required this.fireAfter,
   });
@@ -64,24 +64,29 @@ class CheckInResultScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     Text(
-                      _resultLabels[outcome.result]!,
+                      _resultLabels[result.outcome.result]!,
                       style: textTheme.displayLarge,
                     ),
                     const SizedBox(height: GlowSpacing.xs),
                     Text(
-                      outcome.onTime ? 'ตรงเวลา' : 'ไม่ตรงเวลา',
+                      result.outcome.onTime ? 'ตรงเวลา' : 'ไม่ตรงเวลา',
                       style: textTheme.bodyMedium,
                     ),
                     const SizedBox(height: GlowSpacing.xs),
                     Text(
-                      '${outcome.sleepDuration.inHours} ชม. '
-                      '${outcome.sleepDuration.inMinutes % 60} นาที',
+                      '${result.outcome.sleepDuration.inHours} ชม. '
+                      '${result.outcome.sleepDuration.inMinutes % 60} นาที',
                       style: textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: GlowSpacing.xs),
+                    Text(
+                      '+${result.coinsEarned} เหรียญ',
+                      style: textTheme.bodyMedium,
                     ),
                   ],
                 ),
               ),
-              if (outcome.result == CheckInResult.notEnough) ...[
+              if (result.outcome.result == CheckInResult.notEnough) ...[
                 const SizedBox(height: GlowSpacing.md),
                 Text(
                   'คืนนี้ลองปิดไฟเร็วขึ้น 20 นาที',

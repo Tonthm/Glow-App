@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/check_in.dart';
 import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
@@ -15,7 +14,7 @@ import '../../theme/widgets/glow_primary_button.dart';
 class CheckInCard extends ConsumerStatefulWidget {
   final PendingCheckIn pending;
   final void Function(
-    CheckInOutcome outcome,
+    CheckInRecordResult result,
     FireStateRow fireBefore,
     FireStateRow fireAfter,
   )
@@ -60,7 +59,7 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
       final now = DateTime.now();
 
       final fireBefore = await fireRepo.get();
-      final outcome = await checkInRepo.recordCheckIn(
+      final result = await checkInRepo.recordCheckIn(
         wakeDate: widget.pending.wakeDate,
         lightsOffAt: _lightsOffAt,
         actualWakeAt: _wakeAt,
@@ -72,7 +71,7 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
           .cancelCheckInNotification(widget.pending.wakeDate);
 
       if (!mounted) return;
-      widget.onSubmitted(outcome, fireBefore, fireAfter);
+      widget.onSubmitted(result, fireBefore, fireAfter);
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);

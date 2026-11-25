@@ -1,11 +1,14 @@
 import 'package:drift/drift.dart';
 
 import '../core/check_in.dart';
+import '../core/economy_config.dart';
 import '../core/fire.dart';
+import '../core/quests.dart';
 import 'database.dart';
 import 'fire_repository.dart';
 import 'night_planning_repository.dart';
 import 'settings_repository.dart';
+import 'wallet_repository.dart';
 
 DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
@@ -50,6 +53,13 @@ class WeekCheckInSummary {
   const WeekCheckInSummary({required this.wakeDate, required this.checkIn});
 }
 
+class CheckInRecordResult {
+  final CheckInOutcome outcome;
+  final int coinsEarned;
+
+  const CheckInRecordResult({required this.outcome, required this.coinsEarned});
+}
+
 /// Records morning check-ins and keeps fire in sync with them, per
 /// CLAUDE.md sections 6-7.
 class CheckInRepository {
@@ -57,12 +67,14 @@ class CheckInRepository {
   final NightPlanningRepository nightPlanningRepo;
   final FireRepository fireRepo;
   final SettingsRepository settingsRepo;
+  final WalletRepository walletRepo;
 
   CheckInRepository(
     this.db,
     this.nightPlanningRepo,
     this.fireRepo,
     this.settingsRepo,
+    this.walletRepo,
   );
 
   Future<CheckInRow?> getForWakeDate(DateTime wakeDate) {
@@ -82,7 +94,7 @@ class CheckInRepository {
   /// Records a check-in for [wakeDate] and applies its fire effect. The
   /// night's plan must already be locked (it will have been, by the time a
   /// user is checking in after waking up).
-  Future<CheckInOutcome> recordCheckIn({
+  Future<CheckInRecordResult> recordCheckIn({
     required DateTime wakeDate,
     required DateTime lightsOffAt,
     required DateTime actualWakeAt,
@@ -122,7 +134,22 @@ class CheckInRepository {
           .write(const CheckInsCompanion(usedShield: Value(true)));
     }
 
-    return outcome;
+    // Coins: the flat per-check-in amount, plus the daily quest (+bonus),
+    // plus the per-night pre-exam bonus — all granted exactly once since a
+    // night can only be checked in through this method once (section 8).
+    final nightInput = QuestNightInput(
+      wakeDate: target,
+      result: shieldConsumed ? null : outcome.result,
+      onTime: outcome.onTime,
+      usedShield: shieldConsumed,
+    );
+    var coinsEarned = EconomyConfig.checkInCoins + dailyQuestCoins(nightInput);
+    if (plan.isPreExamNight && nightPassesDaily(nightInput)) {
+      coinsEarned += EconomyConfig.preExamNightCoins;
+    }
+    await walletRepo.addCoins(coinsEarned);
+
+    return CheckInRecordResult(outcome: outcome, coinsEarned: coinsEarned);
   }
 
   /// The most recent locked night that's still waiting on a check-in and
@@ -209,14 +236,26 @@ class CheckInRepository {
       isRedNightFromSchedule: plan.isRedNight,
       result: result,
     );
-    final shieldsBefore = (await fireRepo.get()).shields;
+    final before = await fireRepo.get();
     final after = await fireRepo.applyEffect(effect);
     await (db.update(
       db.nightPlans,
     )..where((t) => t.id.equals(plan.id))).write(
       NightPlansCompanion(fireAppliedAt: Value(now)),
     );
-    return after.shields < shieldsBefore;
+
+    // One-time reward the first time fire ever reaches a new level
+    // (section 9: "...จากการถึงระดับไฟใหม่ครั้งแรก").
+    for (var level = before.maxLevelEverReached + 1;
+        level <= after.maxLevelEverReached;
+        level++) {
+      final blanket = EconomyConfig.fireLevelRewardBlankets[level];
+      if (blanket != null) {
+        await walletRepo.grantItem(blanket.id, now);
+      }
+    }
+
+    return after.shields < before.shields;
   }
 
   Future<NightPlan?> _getNightPlanRow(DateTime wakeDate) {

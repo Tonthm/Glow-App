@@ -75,4 +75,28 @@ class FireRepository {
       _toCompanion(next).copyWith(lastFreeShieldMonday: Value(thisMonday)),
     );
   }
+
+  /// Attempts to buy one shield with coins — the caller (ShopRepository)
+  /// only deducts coins if this returns [ShieldPurchaseOutcome.success].
+  /// Enforces both section 7 caps: max [core.maxShields] held, and at most
+  /// one purchase per calendar week.
+  Future<ShieldPurchaseOutcome> tryPurchaseShield(DateTime now) async {
+    final current = await get();
+    if (current.shields >= core.maxShields) {
+      return ShieldPurchaseOutcome.alreadyFull;
+    }
+    final thisMonday = mondayOfWeek(now);
+    if (current.lastShieldPurchaseMonday != null &&
+        !mondayOfWeek(current.lastShieldPurchaseMonday!).isBefore(thisMonday)) {
+      return ShieldPurchaseOutcome.alreadyPurchasedThisWeek;
+    }
+    final next = core.buyShield(_toCore(current));
+    if (next == null) return ShieldPurchaseOutcome.alreadyFull;
+    await (db.update(db.fireStates)..where((t) => t.id.equals(0))).write(
+      _toCompanion(next).copyWith(lastShieldPurchaseMonday: Value(thisMonday)),
+    );
+    return ShieldPurchaseOutcome.success;
+  }
 }
+
+enum ShieldPurchaseOutcome { success, alreadyFull, alreadyPurchasedThisWeek }

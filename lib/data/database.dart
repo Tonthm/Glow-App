@@ -149,13 +149,72 @@ class FireStates extends Table {
   /// Monday (date-only) the free weekly shield was last granted, so it's
   /// only granted once per week (section 7: "ได้ฟรี 1 อันทุกวันจันทร์").
   DateTimeColumn get lastFreeShieldMonday => dateTime().nullable()();
+  /// Monday (date-only) a shield was last bought with coins, so the shop
+  /// enforces "ซื้อเพิ่มด้วยเหรียญได้ 1 อันต่อสัปดาห์" (section 7).
+  DateTimeColumn get lastShieldPurchaseMonday => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
+/// Single-row table (id always 0) holding coins and the equipped blanket,
+/// per CLAUDE.md section 12.
+@DataClassName('WalletRow')
+class Wallets extends Table {
+  IntColumn get id => integer().withDefault(const Constant(0))();
+  IntColumn get coins => integer().withDefault(const Constant(0))();
+  TextColumn get equippedBlanketId =>
+      text().withDefault(const Constant('default'))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// One row per shop/reward item the player owns (section 9 blankets, plus
+/// the non-sellable fire-level and exam-period reward blankets).
+class OwnedItems extends Table {
+  TextColumn get itemId => text()();
+  DateTimeColumn get acquiredAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {itemId};
+}
+
+/// Tracks the weekly "ตรงเวลา 5 ใน 7" quest so its 50-coin reward is
+/// claimed at most once per week (section 8).
+class WeeklyQuestProgresses extends Table {
+  DateTimeColumn get weekStart => dateTime()();
+  BoolColumn get rewardClaimed =>
+      boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {weekStart};
+}
+
+/// Tracks the exam-period "ครบทุกคืนก่อนสอบ" reward so it's claimed at most
+/// once per exam period, identified by that period's first exam date
+/// (section 8) — independent of calendar weeks since a period can cross
+/// one.
+class ExamPeriodClaims extends Table {
+  DateTimeColumn get periodStartDate => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {periodStartDate};
+}
+
 @DriftDatabase(
-  tables: [Settings, WeeklyItems, OneTimeItems, NightPlans, CheckIns, FireStates],
+  tables: [
+    Settings,
+    WeeklyItems,
+    OneTimeItems,
+    NightPlans,
+    CheckIns,
+    FireStates,
+    Wallets,
+    OwnedItems,
+    WeeklyQuestProgresses,
+    ExamPeriodClaims,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'glow'));
@@ -163,7 +222,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -184,6 +243,15 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await m.addColumn(settings, settings.notifyCheckIn);
+      }
+      if (from < 7) {
+        await m.createTable(wallets);
+        await m.createTable(ownedItems);
+        await m.createTable(weeklyQuestProgresses);
+        await m.createTable(examPeriodClaims);
+      }
+      if (from < 8) {
+        await m.addColumn(fireStates, fireStates.lastShieldPurchaseMonday);
       }
     },
   );

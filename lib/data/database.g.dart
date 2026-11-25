@@ -3486,6 +3486,17 @@ class $FireStatesTable extends FireStates
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _lastShieldPurchaseMondayMeta =
+      const VerificationMeta('lastShieldPurchaseMonday');
+  @override
+  late final GeneratedColumn<DateTime> lastShieldPurchaseMonday =
+      GeneratedColumn<DateTime>(
+        'last_shield_purchase_monday',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3496,6 +3507,7 @@ class $FireStatesTable extends FireStates
     currentStreak,
     longestStreak,
     lastFreeShieldMonday,
+    lastShieldPurchaseMonday,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3566,6 +3578,15 @@ class $FireStatesTable extends FireStates
         ),
       );
     }
+    if (data.containsKey('last_shield_purchase_monday')) {
+      context.handle(
+        _lastShieldPurchaseMondayMeta,
+        lastShieldPurchaseMonday.isAcceptableOrUnknown(
+          data['last_shield_purchase_monday']!,
+          _lastShieldPurchaseMondayMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3607,6 +3628,10 @@ class $FireStatesTable extends FireStates
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_free_shield_monday'],
       ),
+      lastShieldPurchaseMonday: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_shield_purchase_monday'],
+      ),
     );
   }
 
@@ -3628,6 +3653,10 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
   /// Monday (date-only) the free weekly shield was last granted, so it's
   /// only granted once per week (section 7: "ได้ฟรี 1 อันทุกวันจันทร์").
   final DateTime? lastFreeShieldMonday;
+
+  /// Monday (date-only) a shield was last bought with coins, so the shop
+  /// enforces "ซื้อเพิ่มด้วยเหรียญได้ 1 อันต่อสัปดาห์" (section 7).
+  final DateTime? lastShieldPurchaseMonday;
   const FireStateRow({
     required this.id,
     required this.points,
@@ -3637,6 +3666,7 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
     required this.currentStreak,
     required this.longestStreak,
     this.lastFreeShieldMonday,
+    this.lastShieldPurchaseMonday,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3650,6 +3680,11 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
     map['longest_streak'] = Variable<int>(longestStreak);
     if (!nullToAbsent || lastFreeShieldMonday != null) {
       map['last_free_shield_monday'] = Variable<DateTime>(lastFreeShieldMonday);
+    }
+    if (!nullToAbsent || lastShieldPurchaseMonday != null) {
+      map['last_shield_purchase_monday'] = Variable<DateTime>(
+        lastShieldPurchaseMonday,
+      );
     }
     return map;
   }
@@ -3666,6 +3701,9 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
       lastFreeShieldMonday: lastFreeShieldMonday == null && nullToAbsent
           ? const Value.absent()
           : Value(lastFreeShieldMonday),
+      lastShieldPurchaseMonday: lastShieldPurchaseMonday == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastShieldPurchaseMonday),
     );
   }
 
@@ -3687,6 +3725,9 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
       lastFreeShieldMonday: serializer.fromJson<DateTime?>(
         json['lastFreeShieldMonday'],
       ),
+      lastShieldPurchaseMonday: serializer.fromJson<DateTime?>(
+        json['lastShieldPurchaseMonday'],
+      ),
     );
   }
   @override
@@ -3703,6 +3744,9 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
       'lastFreeShieldMonday': serializer.toJson<DateTime?>(
         lastFreeShieldMonday,
       ),
+      'lastShieldPurchaseMonday': serializer.toJson<DateTime?>(
+        lastShieldPurchaseMonday,
+      ),
     };
   }
 
@@ -3715,6 +3759,7 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
     int? currentStreak,
     int? longestStreak,
     Value<DateTime?> lastFreeShieldMonday = const Value.absent(),
+    Value<DateTime?> lastShieldPurchaseMonday = const Value.absent(),
   }) => FireStateRow(
     id: id ?? this.id,
     points: points ?? this.points,
@@ -3726,6 +3771,9 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
     lastFreeShieldMonday: lastFreeShieldMonday.present
         ? lastFreeShieldMonday.value
         : this.lastFreeShieldMonday,
+    lastShieldPurchaseMonday: lastShieldPurchaseMonday.present
+        ? lastShieldPurchaseMonday.value
+        : this.lastShieldPurchaseMonday,
   );
   FireStateRow copyWithCompanion(FireStatesCompanion data) {
     return FireStateRow(
@@ -3745,6 +3793,9 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
       lastFreeShieldMonday: data.lastFreeShieldMonday.present
           ? data.lastFreeShieldMonday.value
           : this.lastFreeShieldMonday,
+      lastShieldPurchaseMonday: data.lastShieldPurchaseMonday.present
+          ? data.lastShieldPurchaseMonday.value
+          : this.lastShieldPurchaseMonday,
     );
   }
 
@@ -3758,7 +3809,8 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
           ..write('maxLevelEverReached: $maxLevelEverReached, ')
           ..write('currentStreak: $currentStreak, ')
           ..write('longestStreak: $longestStreak, ')
-          ..write('lastFreeShieldMonday: $lastFreeShieldMonday')
+          ..write('lastFreeShieldMonday: $lastFreeShieldMonday, ')
+          ..write('lastShieldPurchaseMonday: $lastShieldPurchaseMonday')
           ..write(')'))
         .toString();
   }
@@ -3773,6 +3825,7 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
     currentStreak,
     longestStreak,
     lastFreeShieldMonday,
+    lastShieldPurchaseMonday,
   );
   @override
   bool operator ==(Object other) =>
@@ -3785,7 +3838,8 @@ class FireStateRow extends DataClass implements Insertable<FireStateRow> {
           other.maxLevelEverReached == this.maxLevelEverReached &&
           other.currentStreak == this.currentStreak &&
           other.longestStreak == this.longestStreak &&
-          other.lastFreeShieldMonday == this.lastFreeShieldMonday);
+          other.lastFreeShieldMonday == this.lastFreeShieldMonday &&
+          other.lastShieldPurchaseMonday == this.lastShieldPurchaseMonday);
 }
 
 class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
@@ -3797,6 +3851,7 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
   final Value<int> currentStreak;
   final Value<int> longestStreak;
   final Value<DateTime?> lastFreeShieldMonday;
+  final Value<DateTime?> lastShieldPurchaseMonday;
   const FireStatesCompanion({
     this.id = const Value.absent(),
     this.points = const Value.absent(),
@@ -3806,6 +3861,7 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
     this.currentStreak = const Value.absent(),
     this.longestStreak = const Value.absent(),
     this.lastFreeShieldMonday = const Value.absent(),
+    this.lastShieldPurchaseMonday = const Value.absent(),
   });
   FireStatesCompanion.insert({
     this.id = const Value.absent(),
@@ -3816,6 +3872,7 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
     this.currentStreak = const Value.absent(),
     this.longestStreak = const Value.absent(),
     this.lastFreeShieldMonday = const Value.absent(),
+    this.lastShieldPurchaseMonday = const Value.absent(),
   });
   static Insertable<FireStateRow> custom({
     Expression<int>? id,
@@ -3826,6 +3883,7 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
     Expression<int>? currentStreak,
     Expression<int>? longestStreak,
     Expression<DateTime>? lastFreeShieldMonday,
+    Expression<DateTime>? lastShieldPurchaseMonday,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3838,6 +3896,8 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
       if (longestStreak != null) 'longest_streak': longestStreak,
       if (lastFreeShieldMonday != null)
         'last_free_shield_monday': lastFreeShieldMonday,
+      if (lastShieldPurchaseMonday != null)
+        'last_shield_purchase_monday': lastShieldPurchaseMonday,
     });
   }
 
@@ -3850,6 +3910,7 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
     Value<int>? currentStreak,
     Value<int>? longestStreak,
     Value<DateTime?>? lastFreeShieldMonday,
+    Value<DateTime?>? lastShieldPurchaseMonday,
   }) {
     return FireStatesCompanion(
       id: id ?? this.id,
@@ -3860,6 +3921,8 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
       currentStreak: currentStreak ?? this.currentStreak,
       longestStreak: longestStreak ?? this.longestStreak,
       lastFreeShieldMonday: lastFreeShieldMonday ?? this.lastFreeShieldMonday,
+      lastShieldPurchaseMonday:
+          lastShieldPurchaseMonday ?? this.lastShieldPurchaseMonday,
     );
   }
 
@@ -3892,6 +3955,11 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
         lastFreeShieldMonday.value,
       );
     }
+    if (lastShieldPurchaseMonday.present) {
+      map['last_shield_purchase_monday'] = Variable<DateTime>(
+        lastShieldPurchaseMonday.value,
+      );
+    }
     return map;
   }
 
@@ -3905,7 +3973,885 @@ class FireStatesCompanion extends UpdateCompanion<FireStateRow> {
           ..write('maxLevelEverReached: $maxLevelEverReached, ')
           ..write('currentStreak: $currentStreak, ')
           ..write('longestStreak: $longestStreak, ')
-          ..write('lastFreeShieldMonday: $lastFreeShieldMonday')
+          ..write('lastFreeShieldMonday: $lastFreeShieldMonday, ')
+          ..write('lastShieldPurchaseMonday: $lastShieldPurchaseMonday')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WalletsTable extends Wallets with TableInfo<$WalletsTable, WalletRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WalletsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _coinsMeta = const VerificationMeta('coins');
+  @override
+  late final GeneratedColumn<int> coins = GeneratedColumn<int>(
+    'coins',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _equippedBlanketIdMeta = const VerificationMeta(
+    'equippedBlanketId',
+  );
+  @override
+  late final GeneratedColumn<String> equippedBlanketId =
+      GeneratedColumn<String>(
+        'equipped_blanket_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('default'),
+      );
+  @override
+  List<GeneratedColumn> get $columns => [id, coins, equippedBlanketId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'wallets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WalletRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('coins')) {
+      context.handle(
+        _coinsMeta,
+        coins.isAcceptableOrUnknown(data['coins']!, _coinsMeta),
+      );
+    }
+    if (data.containsKey('equipped_blanket_id')) {
+      context.handle(
+        _equippedBlanketIdMeta,
+        equippedBlanketId.isAcceptableOrUnknown(
+          data['equipped_blanket_id']!,
+          _equippedBlanketIdMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WalletRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WalletRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      coins: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}coins'],
+      )!,
+      equippedBlanketId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}equipped_blanket_id'],
+      )!,
+    );
+  }
+
+  @override
+  $WalletsTable createAlias(String alias) {
+    return $WalletsTable(attachedDatabase, alias);
+  }
+}
+
+class WalletRow extends DataClass implements Insertable<WalletRow> {
+  final int id;
+  final int coins;
+  final String equippedBlanketId;
+  const WalletRow({
+    required this.id,
+    required this.coins,
+    required this.equippedBlanketId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['coins'] = Variable<int>(coins);
+    map['equipped_blanket_id'] = Variable<String>(equippedBlanketId);
+    return map;
+  }
+
+  WalletsCompanion toCompanion(bool nullToAbsent) {
+    return WalletsCompanion(
+      id: Value(id),
+      coins: Value(coins),
+      equippedBlanketId: Value(equippedBlanketId),
+    );
+  }
+
+  factory WalletRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WalletRow(
+      id: serializer.fromJson<int>(json['id']),
+      coins: serializer.fromJson<int>(json['coins']),
+      equippedBlanketId: serializer.fromJson<String>(json['equippedBlanketId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'coins': serializer.toJson<int>(coins),
+      'equippedBlanketId': serializer.toJson<String>(equippedBlanketId),
+    };
+  }
+
+  WalletRow copyWith({int? id, int? coins, String? equippedBlanketId}) =>
+      WalletRow(
+        id: id ?? this.id,
+        coins: coins ?? this.coins,
+        equippedBlanketId: equippedBlanketId ?? this.equippedBlanketId,
+      );
+  WalletRow copyWithCompanion(WalletsCompanion data) {
+    return WalletRow(
+      id: data.id.present ? data.id.value : this.id,
+      coins: data.coins.present ? data.coins.value : this.coins,
+      equippedBlanketId: data.equippedBlanketId.present
+          ? data.equippedBlanketId.value
+          : this.equippedBlanketId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WalletRow(')
+          ..write('id: $id, ')
+          ..write('coins: $coins, ')
+          ..write('equippedBlanketId: $equippedBlanketId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, coins, equippedBlanketId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WalletRow &&
+          other.id == this.id &&
+          other.coins == this.coins &&
+          other.equippedBlanketId == this.equippedBlanketId);
+}
+
+class WalletsCompanion extends UpdateCompanion<WalletRow> {
+  final Value<int> id;
+  final Value<int> coins;
+  final Value<String> equippedBlanketId;
+  const WalletsCompanion({
+    this.id = const Value.absent(),
+    this.coins = const Value.absent(),
+    this.equippedBlanketId = const Value.absent(),
+  });
+  WalletsCompanion.insert({
+    this.id = const Value.absent(),
+    this.coins = const Value.absent(),
+    this.equippedBlanketId = const Value.absent(),
+  });
+  static Insertable<WalletRow> custom({
+    Expression<int>? id,
+    Expression<int>? coins,
+    Expression<String>? equippedBlanketId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (coins != null) 'coins': coins,
+      if (equippedBlanketId != null) 'equipped_blanket_id': equippedBlanketId,
+    });
+  }
+
+  WalletsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? coins,
+    Value<String>? equippedBlanketId,
+  }) {
+    return WalletsCompanion(
+      id: id ?? this.id,
+      coins: coins ?? this.coins,
+      equippedBlanketId: equippedBlanketId ?? this.equippedBlanketId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (coins.present) {
+      map['coins'] = Variable<int>(coins.value);
+    }
+    if (equippedBlanketId.present) {
+      map['equipped_blanket_id'] = Variable<String>(equippedBlanketId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WalletsCompanion(')
+          ..write('id: $id, ')
+          ..write('coins: $coins, ')
+          ..write('equippedBlanketId: $equippedBlanketId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $OwnedItemsTable extends OwnedItems
+    with TableInfo<$OwnedItemsTable, OwnedItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OwnedItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<String> itemId = GeneratedColumn<String>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _acquiredAtMeta = const VerificationMeta(
+    'acquiredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> acquiredAt = GeneratedColumn<DateTime>(
+    'acquired_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [itemId, acquiredAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'owned_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OwnedItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('acquired_at')) {
+      context.handle(
+        _acquiredAtMeta,
+        acquiredAt.isAcceptableOrUnknown(data['acquired_at']!, _acquiredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_acquiredAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {itemId};
+  @override
+  OwnedItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OwnedItem(
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_id'],
+      )!,
+      acquiredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}acquired_at'],
+      )!,
+    );
+  }
+
+  @override
+  $OwnedItemsTable createAlias(String alias) {
+    return $OwnedItemsTable(attachedDatabase, alias);
+  }
+}
+
+class OwnedItem extends DataClass implements Insertable<OwnedItem> {
+  final String itemId;
+  final DateTime acquiredAt;
+  const OwnedItem({required this.itemId, required this.acquiredAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['item_id'] = Variable<String>(itemId);
+    map['acquired_at'] = Variable<DateTime>(acquiredAt);
+    return map;
+  }
+
+  OwnedItemsCompanion toCompanion(bool nullToAbsent) {
+    return OwnedItemsCompanion(
+      itemId: Value(itemId),
+      acquiredAt: Value(acquiredAt),
+    );
+  }
+
+  factory OwnedItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OwnedItem(
+      itemId: serializer.fromJson<String>(json['itemId']),
+      acquiredAt: serializer.fromJson<DateTime>(json['acquiredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'itemId': serializer.toJson<String>(itemId),
+      'acquiredAt': serializer.toJson<DateTime>(acquiredAt),
+    };
+  }
+
+  OwnedItem copyWith({String? itemId, DateTime? acquiredAt}) => OwnedItem(
+    itemId: itemId ?? this.itemId,
+    acquiredAt: acquiredAt ?? this.acquiredAt,
+  );
+  OwnedItem copyWithCompanion(OwnedItemsCompanion data) {
+    return OwnedItem(
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      acquiredAt: data.acquiredAt.present
+          ? data.acquiredAt.value
+          : this.acquiredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OwnedItem(')
+          ..write('itemId: $itemId, ')
+          ..write('acquiredAt: $acquiredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(itemId, acquiredAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OwnedItem &&
+          other.itemId == this.itemId &&
+          other.acquiredAt == this.acquiredAt);
+}
+
+class OwnedItemsCompanion extends UpdateCompanion<OwnedItem> {
+  final Value<String> itemId;
+  final Value<DateTime> acquiredAt;
+  final Value<int> rowid;
+  const OwnedItemsCompanion({
+    this.itemId = const Value.absent(),
+    this.acquiredAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OwnedItemsCompanion.insert({
+    required String itemId,
+    required DateTime acquiredAt,
+    this.rowid = const Value.absent(),
+  }) : itemId = Value(itemId),
+       acquiredAt = Value(acquiredAt);
+  static Insertable<OwnedItem> custom({
+    Expression<String>? itemId,
+    Expression<DateTime>? acquiredAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (itemId != null) 'item_id': itemId,
+      if (acquiredAt != null) 'acquired_at': acquiredAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OwnedItemsCompanion copyWith({
+    Value<String>? itemId,
+    Value<DateTime>? acquiredAt,
+    Value<int>? rowid,
+  }) {
+    return OwnedItemsCompanion(
+      itemId: itemId ?? this.itemId,
+      acquiredAt: acquiredAt ?? this.acquiredAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (itemId.present) {
+      map['item_id'] = Variable<String>(itemId.value);
+    }
+    if (acquiredAt.present) {
+      map['acquired_at'] = Variable<DateTime>(acquiredAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OwnedItemsCompanion(')
+          ..write('itemId: $itemId, ')
+          ..write('acquiredAt: $acquiredAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WeeklyQuestProgressesTable extends WeeklyQuestProgresses
+    with TableInfo<$WeeklyQuestProgressesTable, WeeklyQuestProgressesData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WeeklyQuestProgressesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _weekStartMeta = const VerificationMeta(
+    'weekStart',
+  );
+  @override
+  late final GeneratedColumn<DateTime> weekStart = GeneratedColumn<DateTime>(
+    'week_start',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rewardClaimedMeta = const VerificationMeta(
+    'rewardClaimed',
+  );
+  @override
+  late final GeneratedColumn<bool> rewardClaimed = GeneratedColumn<bool>(
+    'reward_claimed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("reward_claimed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [weekStart, rewardClaimed];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'weekly_quest_progresses';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WeeklyQuestProgressesData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('week_start')) {
+      context.handle(
+        _weekStartMeta,
+        weekStart.isAcceptableOrUnknown(data['week_start']!, _weekStartMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_weekStartMeta);
+    }
+    if (data.containsKey('reward_claimed')) {
+      context.handle(
+        _rewardClaimedMeta,
+        rewardClaimed.isAcceptableOrUnknown(
+          data['reward_claimed']!,
+          _rewardClaimedMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {weekStart};
+  @override
+  WeeklyQuestProgressesData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WeeklyQuestProgressesData(
+      weekStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}week_start'],
+      )!,
+      rewardClaimed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}reward_claimed'],
+      )!,
+    );
+  }
+
+  @override
+  $WeeklyQuestProgressesTable createAlias(String alias) {
+    return $WeeklyQuestProgressesTable(attachedDatabase, alias);
+  }
+}
+
+class WeeklyQuestProgressesData extends DataClass
+    implements Insertable<WeeklyQuestProgressesData> {
+  final DateTime weekStart;
+  final bool rewardClaimed;
+  const WeeklyQuestProgressesData({
+    required this.weekStart,
+    required this.rewardClaimed,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['week_start'] = Variable<DateTime>(weekStart);
+    map['reward_claimed'] = Variable<bool>(rewardClaimed);
+    return map;
+  }
+
+  WeeklyQuestProgressesCompanion toCompanion(bool nullToAbsent) {
+    return WeeklyQuestProgressesCompanion(
+      weekStart: Value(weekStart),
+      rewardClaimed: Value(rewardClaimed),
+    );
+  }
+
+  factory WeeklyQuestProgressesData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WeeklyQuestProgressesData(
+      weekStart: serializer.fromJson<DateTime>(json['weekStart']),
+      rewardClaimed: serializer.fromJson<bool>(json['rewardClaimed']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'weekStart': serializer.toJson<DateTime>(weekStart),
+      'rewardClaimed': serializer.toJson<bool>(rewardClaimed),
+    };
+  }
+
+  WeeklyQuestProgressesData copyWith({
+    DateTime? weekStart,
+    bool? rewardClaimed,
+  }) => WeeklyQuestProgressesData(
+    weekStart: weekStart ?? this.weekStart,
+    rewardClaimed: rewardClaimed ?? this.rewardClaimed,
+  );
+  WeeklyQuestProgressesData copyWithCompanion(
+    WeeklyQuestProgressesCompanion data,
+  ) {
+    return WeeklyQuestProgressesData(
+      weekStart: data.weekStart.present ? data.weekStart.value : this.weekStart,
+      rewardClaimed: data.rewardClaimed.present
+          ? data.rewardClaimed.value
+          : this.rewardClaimed,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeeklyQuestProgressesData(')
+          ..write('weekStart: $weekStart, ')
+          ..write('rewardClaimed: $rewardClaimed')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(weekStart, rewardClaimed);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WeeklyQuestProgressesData &&
+          other.weekStart == this.weekStart &&
+          other.rewardClaimed == this.rewardClaimed);
+}
+
+class WeeklyQuestProgressesCompanion
+    extends UpdateCompanion<WeeklyQuestProgressesData> {
+  final Value<DateTime> weekStart;
+  final Value<bool> rewardClaimed;
+  final Value<int> rowid;
+  const WeeklyQuestProgressesCompanion({
+    this.weekStart = const Value.absent(),
+    this.rewardClaimed = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WeeklyQuestProgressesCompanion.insert({
+    required DateTime weekStart,
+    this.rewardClaimed = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : weekStart = Value(weekStart);
+  static Insertable<WeeklyQuestProgressesData> custom({
+    Expression<DateTime>? weekStart,
+    Expression<bool>? rewardClaimed,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (weekStart != null) 'week_start': weekStart,
+      if (rewardClaimed != null) 'reward_claimed': rewardClaimed,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WeeklyQuestProgressesCompanion copyWith({
+    Value<DateTime>? weekStart,
+    Value<bool>? rewardClaimed,
+    Value<int>? rowid,
+  }) {
+    return WeeklyQuestProgressesCompanion(
+      weekStart: weekStart ?? this.weekStart,
+      rewardClaimed: rewardClaimed ?? this.rewardClaimed,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (weekStart.present) {
+      map['week_start'] = Variable<DateTime>(weekStart.value);
+    }
+    if (rewardClaimed.present) {
+      map['reward_claimed'] = Variable<bool>(rewardClaimed.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeeklyQuestProgressesCompanion(')
+          ..write('weekStart: $weekStart, ')
+          ..write('rewardClaimed: $rewardClaimed, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ExamPeriodClaimsTable extends ExamPeriodClaims
+    with TableInfo<$ExamPeriodClaimsTable, ExamPeriodClaim> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExamPeriodClaimsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _periodStartDateMeta = const VerificationMeta(
+    'periodStartDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> periodStartDate =
+      GeneratedColumn<DateTime>(
+        'period_start_date',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [periodStartDate];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'exam_period_claims';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExamPeriodClaim> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('period_start_date')) {
+      context.handle(
+        _periodStartDateMeta,
+        periodStartDate.isAcceptableOrUnknown(
+          data['period_start_date']!,
+          _periodStartDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_periodStartDateMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {periodStartDate};
+  @override
+  ExamPeriodClaim map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExamPeriodClaim(
+      periodStartDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}period_start_date'],
+      )!,
+    );
+  }
+
+  @override
+  $ExamPeriodClaimsTable createAlias(String alias) {
+    return $ExamPeriodClaimsTable(attachedDatabase, alias);
+  }
+}
+
+class ExamPeriodClaim extends DataClass implements Insertable<ExamPeriodClaim> {
+  final DateTime periodStartDate;
+  const ExamPeriodClaim({required this.periodStartDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['period_start_date'] = Variable<DateTime>(periodStartDate);
+    return map;
+  }
+
+  ExamPeriodClaimsCompanion toCompanion(bool nullToAbsent) {
+    return ExamPeriodClaimsCompanion(periodStartDate: Value(periodStartDate));
+  }
+
+  factory ExamPeriodClaim.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExamPeriodClaim(
+      periodStartDate: serializer.fromJson<DateTime>(json['periodStartDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'periodStartDate': serializer.toJson<DateTime>(periodStartDate),
+    };
+  }
+
+  ExamPeriodClaim copyWith({DateTime? periodStartDate}) =>
+      ExamPeriodClaim(periodStartDate: periodStartDate ?? this.periodStartDate);
+  ExamPeriodClaim copyWithCompanion(ExamPeriodClaimsCompanion data) {
+    return ExamPeriodClaim(
+      periodStartDate: data.periodStartDate.present
+          ? data.periodStartDate.value
+          : this.periodStartDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExamPeriodClaim(')
+          ..write('periodStartDate: $periodStartDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => periodStartDate.hashCode;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExamPeriodClaim &&
+          other.periodStartDate == this.periodStartDate);
+}
+
+class ExamPeriodClaimsCompanion extends UpdateCompanion<ExamPeriodClaim> {
+  final Value<DateTime> periodStartDate;
+  final Value<int> rowid;
+  const ExamPeriodClaimsCompanion({
+    this.periodStartDate = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExamPeriodClaimsCompanion.insert({
+    required DateTime periodStartDate,
+    this.rowid = const Value.absent(),
+  }) : periodStartDate = Value(periodStartDate);
+  static Insertable<ExamPeriodClaim> custom({
+    Expression<DateTime>? periodStartDate,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (periodStartDate != null) 'period_start_date': periodStartDate,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExamPeriodClaimsCompanion copyWith({
+    Value<DateTime>? periodStartDate,
+    Value<int>? rowid,
+  }) {
+    return ExamPeriodClaimsCompanion(
+      periodStartDate: periodStartDate ?? this.periodStartDate,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (periodStartDate.present) {
+      map['period_start_date'] = Variable<DateTime>(periodStartDate.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExamPeriodClaimsCompanion(')
+          ..write('periodStartDate: $periodStartDate, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -3920,6 +4866,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $NightPlansTable nightPlans = $NightPlansTable(this);
   late final $CheckInsTable checkIns = $CheckInsTable(this);
   late final $FireStatesTable fireStates = $FireStatesTable(this);
+  late final $WalletsTable wallets = $WalletsTable(this);
+  late final $OwnedItemsTable ownedItems = $OwnedItemsTable(this);
+  late final $WeeklyQuestProgressesTable weeklyQuestProgresses =
+      $WeeklyQuestProgressesTable(this);
+  late final $ExamPeriodClaimsTable examPeriodClaims = $ExamPeriodClaimsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3931,6 +4884,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     nightPlans,
     checkIns,
     fireStates,
+    wallets,
+    ownedItems,
+    weeklyQuestProgresses,
+    examPeriodClaims,
   ];
 }
 
@@ -5563,6 +6520,7 @@ typedef $$FireStatesTableCreateCompanionBuilder = FireStatesCompanion Function({
   Value<int> currentStreak,
   Value<int> longestStreak,
   Value<DateTime?> lastFreeShieldMonday,
+  Value<DateTime?> lastShieldPurchaseMonday,
 });
 typedef $$FireStatesTableUpdateCompanionBuilder = FireStatesCompanion Function({
   Value<int> id,
@@ -5573,6 +6531,7 @@ typedef $$FireStatesTableUpdateCompanionBuilder = FireStatesCompanion Function({
   Value<int> currentStreak,
   Value<int> longestStreak,
   Value<DateTime?> lastFreeShieldMonday,
+  Value<DateTime?> lastShieldPurchaseMonday,
 });
 
 class $$FireStatesTableFilterComposer
@@ -5621,6 +6580,11 @@ class $$FireStatesTableFilterComposer
 
   ColumnFilters<DateTime> get lastFreeShieldMonday => $composableBuilder(
     column: $table.lastFreeShieldMonday,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastShieldPurchaseMonday => $composableBuilder(
+    column: $table.lastShieldPurchaseMonday,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -5673,6 +6637,11 @@ class $$FireStatesTableOrderingComposer
     column: $table.lastFreeShieldMonday,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get lastShieldPurchaseMonday => $composableBuilder(
+    column: $table.lastShieldPurchaseMonday,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$FireStatesTableAnnotationComposer
@@ -5713,6 +6682,11 @@ class $$FireStatesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastFreeShieldMonday => $composableBuilder(
     column: $table.lastFreeShieldMonday,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastShieldPurchaseMonday => $composableBuilder(
+    column: $table.lastShieldPurchaseMonday,
     builder: (column) => column,
   );
 }
@@ -5756,6 +6730,8 @@ class $$FireStatesTableTableManager
                 Value<int> currentStreak = const Value.absent(),
                 Value<int> longestStreak = const Value.absent(),
                 Value<DateTime?> lastFreeShieldMonday = const Value.absent(),
+                Value<DateTime?> lastShieldPurchaseMonday =
+                    const Value.absent(),
               }) => FireStatesCompanion(
                 id: id,
                 points: points,
@@ -5765,6 +6741,7 @@ class $$FireStatesTableTableManager
                 currentStreak: currentStreak,
                 longestStreak: longestStreak,
                 lastFreeShieldMonday: lastFreeShieldMonday,
+                lastShieldPurchaseMonday: lastShieldPurchaseMonday,
               ),
           createCompanionCallback:
               ({
@@ -5776,6 +6753,8 @@ class $$FireStatesTableTableManager
                 Value<int> currentStreak = const Value.absent(),
                 Value<int> longestStreak = const Value.absent(),
                 Value<DateTime?> lastFreeShieldMonday = const Value.absent(),
+                Value<DateTime?> lastShieldPurchaseMonday =
+                    const Value.absent(),
               }) => FireStatesCompanion.insert(
                 id: id,
                 points: points,
@@ -5785,6 +6764,7 @@ class $$FireStatesTableTableManager
                 currentStreak: currentStreak,
                 longestStreak: longestStreak,
                 lastFreeShieldMonday: lastFreeShieldMonday,
+                lastShieldPurchaseMonday: lastShieldPurchaseMonday,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -5820,6 +6800,631 @@ typedef $$FireStatesTableProcessedTableManager =
       FireStateRow,
       PrefetchHooks Function()
     >;
+typedef $$WalletsTableCreateCompanionBuilder = WalletsCompanion Function({
+  Value<int> id,
+  Value<int> coins,
+  Value<String> equippedBlanketId,
+});
+typedef $$WalletsTableUpdateCompanionBuilder = WalletsCompanion Function({
+  Value<int> id,
+  Value<int> coins,
+  Value<String> equippedBlanketId,
+});
+
+class $$WalletsTableFilterComposer
+    extends Composer<_$AppDatabase, $WalletsTable> {
+  $$WalletsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get coins => $composableBuilder(
+    column: $table.coins,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get equippedBlanketId => $composableBuilder(
+    column: $table.equippedBlanketId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WalletsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WalletsTable> {
+  $$WalletsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get coins => $composableBuilder(
+    column: $table.coins,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get equippedBlanketId => $composableBuilder(
+    column: $table.equippedBlanketId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WalletsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WalletsTable> {
+  $$WalletsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get coins =>
+      $composableBuilder(column: $table.coins, builder: (column) => column);
+
+  GeneratedColumn<String> get equippedBlanketId => $composableBuilder(
+    column: $table.equippedBlanketId,
+    builder: (column) => column,
+  );
+}
+
+class $$WalletsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WalletsTable,
+          WalletRow,
+          $$WalletsTableFilterComposer,
+          $$WalletsTableOrderingComposer,
+          $$WalletsTableAnnotationComposer,
+          $$WalletsTableCreateCompanionBuilder,
+          $$WalletsTableUpdateCompanionBuilder,
+          (WalletRow, BaseReferences<_$AppDatabase, $WalletsTable, WalletRow>),
+          WalletRow,
+          PrefetchHooks Function()
+        > {
+  $$WalletsTableTableManager(_$AppDatabase db, $WalletsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WalletsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WalletsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WalletsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> coins = const Value.absent(),
+                Value<String> equippedBlanketId = const Value.absent(),
+              }) => WalletsCompanion(
+                id: id,
+                coins: coins,
+                equippedBlanketId: equippedBlanketId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> coins = const Value.absent(),
+                Value<String> equippedBlanketId = const Value.absent(),
+              }) => WalletsCompanion.insert(
+                id: id,
+                coins: coins,
+                equippedBlanketId: equippedBlanketId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$WalletsTable, WalletRow>(table),
+                  BaseReferences<_$AppDatabase, $WalletsTable, WalletRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WalletsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WalletsTable,
+      WalletRow,
+      $$WalletsTableFilterComposer,
+      $$WalletsTableOrderingComposer,
+      $$WalletsTableAnnotationComposer,
+      $$WalletsTableCreateCompanionBuilder,
+      $$WalletsTableUpdateCompanionBuilder,
+      (WalletRow, BaseReferences<_$AppDatabase, $WalletsTable, WalletRow>),
+      WalletRow,
+      PrefetchHooks Function()
+    >;
+typedef $$OwnedItemsTableCreateCompanionBuilder = OwnedItemsCompanion Function({
+  required String itemId,
+  required DateTime acquiredAt,
+  Value<int> rowid,
+});
+typedef $$OwnedItemsTableUpdateCompanionBuilder = OwnedItemsCompanion Function({
+  Value<String> itemId,
+  Value<DateTime> acquiredAt,
+  Value<int> rowid,
+});
+
+class $$OwnedItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $OwnedItemsTable> {
+  $$OwnedItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OwnedItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $OwnedItemsTable> {
+  $$OwnedItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OwnedItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OwnedItemsTable> {
+  $$OwnedItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get itemId =>
+      $composableBuilder(column: $table.itemId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => column,
+  );
+}
+
+class $$OwnedItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OwnedItemsTable,
+          OwnedItem,
+          $$OwnedItemsTableFilterComposer,
+          $$OwnedItemsTableOrderingComposer,
+          $$OwnedItemsTableAnnotationComposer,
+          $$OwnedItemsTableCreateCompanionBuilder,
+          $$OwnedItemsTableUpdateCompanionBuilder,
+          (
+            OwnedItem,
+            BaseReferences<_$AppDatabase, $OwnedItemsTable, OwnedItem>,
+          ),
+          OwnedItem,
+          PrefetchHooks Function()
+        > {
+  $$OwnedItemsTableTableManager(_$AppDatabase db, $OwnedItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OwnedItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OwnedItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OwnedItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> itemId = const Value.absent(),
+                Value<DateTime> acquiredAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OwnedItemsCompanion(
+                itemId: itemId,
+                acquiredAt: acquiredAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String itemId,
+                required DateTime acquiredAt,
+                Value<int> rowid = const Value.absent(),
+              }) => OwnedItemsCompanion.insert(
+                itemId: itemId,
+                acquiredAt: acquiredAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$OwnedItemsTable, OwnedItem>(table),
+                  BaseReferences<_$AppDatabase, $OwnedItemsTable, OwnedItem>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OwnedItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OwnedItemsTable,
+      OwnedItem,
+      $$OwnedItemsTableFilterComposer,
+      $$OwnedItemsTableOrderingComposer,
+      $$OwnedItemsTableAnnotationComposer,
+      $$OwnedItemsTableCreateCompanionBuilder,
+      $$OwnedItemsTableUpdateCompanionBuilder,
+      (OwnedItem, BaseReferences<_$AppDatabase, $OwnedItemsTable, OwnedItem>),
+      OwnedItem,
+      PrefetchHooks Function()
+    >;
+typedef $$WeeklyQuestProgressesTableCreateCompanionBuilder =
+    WeeklyQuestProgressesCompanion Function({
+      required DateTime weekStart,
+      Value<bool> rewardClaimed,
+      Value<int> rowid,
+    });
+typedef $$WeeklyQuestProgressesTableUpdateCompanionBuilder =
+    WeeklyQuestProgressesCompanion Function({
+      Value<DateTime> weekStart,
+      Value<bool> rewardClaimed,
+      Value<int> rowid,
+    });
+
+class $$WeeklyQuestProgressesTableFilterComposer
+    extends Composer<_$AppDatabase, $WeeklyQuestProgressesTable> {
+  $$WeeklyQuestProgressesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<DateTime> get weekStart => $composableBuilder(
+    column: $table.weekStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get rewardClaimed => $composableBuilder(
+    column: $table.rewardClaimed,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WeeklyQuestProgressesTableOrderingComposer
+    extends Composer<_$AppDatabase, $WeeklyQuestProgressesTable> {
+  $$WeeklyQuestProgressesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<DateTime> get weekStart => $composableBuilder(
+    column: $table.weekStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get rewardClaimed => $composableBuilder(
+    column: $table.rewardClaimed,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WeeklyQuestProgressesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WeeklyQuestProgressesTable> {
+  $$WeeklyQuestProgressesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<DateTime> get weekStart =>
+      $composableBuilder(column: $table.weekStart, builder: (column) => column);
+
+  GeneratedColumn<bool> get rewardClaimed => $composableBuilder(
+    column: $table.rewardClaimed,
+    builder: (column) => column,
+  );
+}
+
+class $$WeeklyQuestProgressesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WeeklyQuestProgressesTable,
+          WeeklyQuestProgressesData,
+          $$WeeklyQuestProgressesTableFilterComposer,
+          $$WeeklyQuestProgressesTableOrderingComposer,
+          $$WeeklyQuestProgressesTableAnnotationComposer,
+          $$WeeklyQuestProgressesTableCreateCompanionBuilder,
+          $$WeeklyQuestProgressesTableUpdateCompanionBuilder,
+          (
+            WeeklyQuestProgressesData,
+            BaseReferences<
+              _$AppDatabase,
+              $WeeklyQuestProgressesTable,
+              WeeklyQuestProgressesData
+            >,
+          ),
+          WeeklyQuestProgressesData,
+          PrefetchHooks Function()
+        > {
+  $$WeeklyQuestProgressesTableTableManager(
+    _$AppDatabase db,
+    $WeeklyQuestProgressesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WeeklyQuestProgressesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WeeklyQuestProgressesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WeeklyQuestProgressesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<DateTime> weekStart = const Value.absent(),
+                Value<bool> rewardClaimed = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WeeklyQuestProgressesCompanion(
+                weekStart: weekStart,
+                rewardClaimed: rewardClaimed,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required DateTime weekStart,
+                Value<bool> rewardClaimed = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WeeklyQuestProgressesCompanion.insert(
+                weekStart: weekStart,
+                rewardClaimed: rewardClaimed,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $WeeklyQuestProgressesTable,
+                    WeeklyQuestProgressesData
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $WeeklyQuestProgressesTable,
+                    WeeklyQuestProgressesData
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WeeklyQuestProgressesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WeeklyQuestProgressesTable,
+      WeeklyQuestProgressesData,
+      $$WeeklyQuestProgressesTableFilterComposer,
+      $$WeeklyQuestProgressesTableOrderingComposer,
+      $$WeeklyQuestProgressesTableAnnotationComposer,
+      $$WeeklyQuestProgressesTableCreateCompanionBuilder,
+      $$WeeklyQuestProgressesTableUpdateCompanionBuilder,
+      (
+        WeeklyQuestProgressesData,
+        BaseReferences<
+          _$AppDatabase,
+          $WeeklyQuestProgressesTable,
+          WeeklyQuestProgressesData
+        >,
+      ),
+      WeeklyQuestProgressesData,
+      PrefetchHooks Function()
+    >;
+typedef $$ExamPeriodClaimsTableCreateCompanionBuilder =
+    ExamPeriodClaimsCompanion Function({
+      required DateTime periodStartDate,
+      Value<int> rowid,
+    });
+typedef $$ExamPeriodClaimsTableUpdateCompanionBuilder =
+    ExamPeriodClaimsCompanion Function({
+      Value<DateTime> periodStartDate,
+      Value<int> rowid,
+    });
+
+class $$ExamPeriodClaimsTableFilterComposer
+    extends Composer<_$AppDatabase, $ExamPeriodClaimsTable> {
+  $$ExamPeriodClaimsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<DateTime> get periodStartDate => $composableBuilder(
+    column: $table.periodStartDate,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExamPeriodClaimsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExamPeriodClaimsTable> {
+  $$ExamPeriodClaimsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<DateTime> get periodStartDate => $composableBuilder(
+    column: $table.periodStartDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExamPeriodClaimsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExamPeriodClaimsTable> {
+  $$ExamPeriodClaimsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<DateTime> get periodStartDate => $composableBuilder(
+    column: $table.periodStartDate,
+    builder: (column) => column,
+  );
+}
+
+class $$ExamPeriodClaimsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExamPeriodClaimsTable,
+          ExamPeriodClaim,
+          $$ExamPeriodClaimsTableFilterComposer,
+          $$ExamPeriodClaimsTableOrderingComposer,
+          $$ExamPeriodClaimsTableAnnotationComposer,
+          $$ExamPeriodClaimsTableCreateCompanionBuilder,
+          $$ExamPeriodClaimsTableUpdateCompanionBuilder,
+          (
+            ExamPeriodClaim,
+            BaseReferences<
+              _$AppDatabase,
+              $ExamPeriodClaimsTable,
+              ExamPeriodClaim
+            >,
+          ),
+          ExamPeriodClaim,
+          PrefetchHooks Function()
+        > {
+  $$ExamPeriodClaimsTableTableManager(
+    _$AppDatabase db,
+    $ExamPeriodClaimsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExamPeriodClaimsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExamPeriodClaimsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExamPeriodClaimsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<DateTime> periodStartDate = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExamPeriodClaimsCompanion(
+                periodStartDate: periodStartDate,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required DateTime periodStartDate,
+                Value<int> rowid = const Value.absent(),
+              }) => ExamPeriodClaimsCompanion.insert(
+                periodStartDate: periodStartDate,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ExamPeriodClaimsTable, ExamPeriodClaim>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $ExamPeriodClaimsTable,
+                    ExamPeriodClaim
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExamPeriodClaimsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExamPeriodClaimsTable,
+      ExamPeriodClaim,
+      $$ExamPeriodClaimsTableFilterComposer,
+      $$ExamPeriodClaimsTableOrderingComposer,
+      $$ExamPeriodClaimsTableAnnotationComposer,
+      $$ExamPeriodClaimsTableCreateCompanionBuilder,
+      $$ExamPeriodClaimsTableUpdateCompanionBuilder,
+      (
+        ExamPeriodClaim,
+        BaseReferences<_$AppDatabase, $ExamPeriodClaimsTable, ExamPeriodClaim>,
+      ),
+      ExamPeriodClaim,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5836,4 +7441,12 @@ class $AppDatabaseManager {
       $$CheckInsTableTableManager(_db, _db.checkIns);
   $$FireStatesTableTableManager get fireStates =>
       $$FireStatesTableTableManager(_db, _db.fireStates);
+  $$WalletsTableTableManager get wallets =>
+      $$WalletsTableTableManager(_db, _db.wallets);
+  $$OwnedItemsTableTableManager get ownedItems =>
+      $$OwnedItemsTableTableManager(_db, _db.ownedItems);
+  $$WeeklyQuestProgressesTableTableManager get weeklyQuestProgresses =>
+      $$WeeklyQuestProgressesTableTableManager(_db, _db.weeklyQuestProgresses);
+  $$ExamPeriodClaimsTableTableManager get examPeriodClaims =>
+      $$ExamPeriodClaimsTableTableManager(_db, _db.examPeriodClaims);
 }
