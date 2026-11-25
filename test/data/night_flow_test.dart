@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:glow/core/quests.dart';
 import 'package:glow/data/check_in_repository.dart';
 import 'package:glow/data/database.dart';
 import 'package:glow/data/fire_repository.dart';
@@ -36,6 +37,27 @@ void main() {
   });
 
   tearDown(() => db.close());
+
+  test(
+    'วันนี้หมดแรง: once a week, refunded on cancel, closed by lock',
+    () async {
+      final noon = DateTime(2026, 11, 25, 12);
+      final thursday = DateTime(2026, 11, 26);
+      final friday = DateTime(2026, 11, 27);
+
+      expect(await planning.setLowEnergy(thursday, true, now: noon), isTrue);
+      expect(await planning.setLowEnergy(friday, true, now: noon), isFalse);
+      expect(await planning.setLowEnergy(thursday, false, now: noon), isTrue);
+      expect(await planning.setLowEnergy(friday, true, now: noon), isTrue);
+
+      // Once the plan has locked, the choice is final and so is the mode.
+      final late = DateTime(2026, 11, 26, 23);
+      final draft = await planning.getOrLockPlan(friday, now: late);
+      expect(await planning.setLowEnergy(friday, false, now: late), isFalse);
+      expect(await planning.questModeFor(draft), QuestMode.minimum);
+      expect((await planning.getPlanRow(friday))!.isRedNight, isFalse);
+    },
+  );
 
   test('two screens loading at once lock a night only once', () async {
     final evening = DateTime(2026, 11, 25, 23);
