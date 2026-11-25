@@ -6,6 +6,7 @@ import '../../data/database.dart';
 import '../../providers.dart';
 import '../shared/time_of_day_field.dart';
 import '../shared/title_autocomplete_field.dart';
+import '../../services/app_clock.dart';
 
 Future<void> showOneTimeItemForm(
   BuildContext context, {
@@ -44,7 +45,7 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
     super.initState();
     final existing = widget.existing;
     _title = existing?.title ?? '';
-    _date = existing?.date ?? widget.initialDate ?? DateTime.now();
+    _date = existing?.date ?? widget.initialDate ?? ref.read(clockProvider)();
     _type = existing?.type ?? OneTimeItemType.exam;
     _hasTime = existing == null ? true : existing.startMinutes != null;
     _start = _minutesToTimeOfDay(existing?.startMinutes ?? 9 * 60);
@@ -123,8 +124,12 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
                 final picked = await showDatePicker(
                   context: context,
                   initialDate: _date,
-                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                  firstDate: ref
+                      .read(clockProvider)()
+                      .subtract(const Duration(days: 365)),
+                  lastDate: ref
+                      .read(clockProvider)()
+                      .add(const Duration(days: 365 * 2)),
                 );
                 if (picked != null) setState(() => _date = picked);
               },

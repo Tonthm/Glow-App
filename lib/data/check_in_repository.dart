@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../core/bed_press.dart';
 import '../core/check_in.dart';
 import '../core/economy_config.dart';
 import '../core/fire.dart';
@@ -38,11 +39,24 @@ class PendingCheckIn {
   final DateTime plannedBedtime;
   final DateTime plannedWakeTime;
 
+  /// When "เข้านอนแล้ว" was pressed, if it was.
+  final DateTime? pressedAt;
+
+  /// True when pressed, or on a night from before the button mattered.
+  final bool countsAsPressed;
+
   const PendingCheckIn({
     required this.wakeDate,
     required this.plannedBedtime,
     required this.plannedWakeTime,
+    required this.countsAsPressed,
+    this.pressedAt,
   });
+
+  /// What the card fills in: the press time if there is one, else the plan.
+  DateTime get defaultLightsOff => pressedAt ?? plannedBedtime;
+  LightsOffSource get defaultSource =>
+      pressedAt == null ? LightsOffSource.plan : LightsOffSource.button;
 }
 
 /// One night's worth of data for the 7-day bar chart / weekly summary.
@@ -110,6 +124,7 @@ class CheckInRepository {
     required DateTime lightsOffAt,
     required DateTime actualWakeAt,
     required DateTime now,
+    LightsOffSource source = LightsOffSource.edited,
   }) {
     // One transaction, so a crash or a second tap can't grant coins or fire
     // for a half-recorded night.
@@ -119,6 +134,7 @@ class CheckInRepository {
         lightsOffAt: lightsOffAt,
         actualWakeAt: actualWakeAt,
         now: now,
+        source: source,
       ),
     );
   }
@@ -128,12 +144,17 @@ class CheckInRepository {
     required DateTime lightsOffAt,
     required DateTime actualWakeAt,
     required DateTime now,
+    required LightsOffSource source,
   }) async {
     final target = _dateOnly(wakeDate);
     final plan = await nightPlanningRepo.getOrLockPlan(target, now: now);
     final settings = toSleepSettings(await settingsRepo.get());
+    final planRow = await _getNightPlanRow(target);
+    final pressed = NightPlanningRepository.countsAsPressed(planRow);
+    final mode = QuestMode.values[planRow?.questMode ?? QuestMode.normal.index];
 
     final outcome = classifyCheckIn(
+      pressedInBed: pressed,
       lightsOffAt: lightsOffAt,
       actualWakeAt: actualWakeAt,
       plannedBedtime: plan.bedtime,
@@ -150,6 +171,8 @@ class CheckInRepository {
             result: _toDbResult(outcome.result),
             onTime: outcome.onTime,
             checkedInAt: now,
+            pressedInBed: Value(pressed),
+            lightsOffSource: Value(source.index),
           ),
         );
 
@@ -168,12 +191,13 @@ class CheckInRepository {
     // night can only be checked in through this method once (section 8).
     final nightInput = QuestNightInput(
       wakeDate: target,
-      result: shieldConsumed ? null : outcome.result,
+      result: outcome.result,
       onTime: outcome.onTime,
       usedShield: shieldConsumed,
+      mode: mode,
     );
     var coinsEarned = EconomyConfig.checkInCoins + dailyQuestCoins(nightInput);
-    if (plan.isPreExamNight && nightPassesDaily(nightInput)) {
+    if (plan.isPreExamNight && nightPasses(nightInput)) {
       coinsEarned += EconomyConfig.preExamNightCoins;
     }
     await walletRepo.addCoins(coinsEarned);
@@ -198,6 +222,8 @@ class CheckInRepository {
         wakeDate: wakeDate,
         plannedBedtime: plan.plannedBedtimeAt,
         plannedWakeTime: plan.plannedWakeAt,
+        pressedAt: plan.inBedAt,
+        countsAsPressed: NightPlanningRepository.countsAsPressed(plan),
       );
     }
     return null;
@@ -259,6 +285,7 @@ class CheckInRepository {
 
     final effect = determineFireEffect(
       isRedNightFromSchedule: plan.isRedNight,
+      pressedInBed: NightPlanningRepository.countsAsPressed(plan),
       result: result,
     );
     final before = await fireRepo.get();

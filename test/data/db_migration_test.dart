@@ -4,12 +4,25 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
+/// What schema 11 added to tables that existed before it. The check_ins
+/// columns are only listed for rewinds that keep that table.
+const _rewindFrom11 = [
+  'ALTER TABLE settings DROP COLUMN routine_enabled',
+  'ALTER TABLE settings DROP COLUMN hidden_pose_ids',
+  'ALTER TABLE night_plans DROP COLUMN legacy_bed_press',
+  'ALTER TABLE night_plans DROP COLUMN quest_mode',
+  'ALTER TABLE night_plans DROP COLUMN low_energy',
+  'DROP TABLE day_activities',
+  'DROP TABLE routine_logs',
+];
+
 /// Rewinds a freshly created database to what schema version 2 looked like.
 const _rewindToV2 = [
   'ALTER TABLE settings DROP COLUMN theme_mode',
   'ALTER TABLE settings DROP COLUMN notify_check_in',
   'ALTER TABLE settings DROP COLUMN onboarded_at',
   'ALTER TABLE settings DROP COLUMN voice_notice_accepted',
+  ..._rewindFrom11,
   'ALTER TABLE night_plans DROP COLUMN in_bed_at',
   'ALTER TABLE night_plans DROP COLUMN used_shield',
   'ALTER TABLE night_plans DROP COLUMN fire_applied_at',
@@ -53,6 +66,36 @@ void main() {
 
   test('upgrades a version 2 database to the latest schema', () async {
     await prepare([..._rewindToV2, 'PRAGMA user_version = 2']);
+    await expectUsable();
+  });
+
+  test('version 10 data survives, and old nights count as pressed', () async {
+    await prepare([
+      'INSERT INTO night_plans (wake_date, planned_wake_at, planned_bedtime_at,'
+          ' is_locked) VALUES (1795478400, 1795502100, 1795470600, 1)',
+      'INSERT INTO check_ins (wake_date, lights_off_at, actual_wake_at,'
+          ' result, on_time, checked_in_at)'
+          ' VALUES (1795478400, 1795470600, 1795502100, 0, 1, 1795503000)',
+      ..._rewindFrom11,
+      'ALTER TABLE check_ins DROP COLUMN pressed_in_bed',
+      'ALTER TABLE check_ins DROP COLUMN lights_off_source',
+      'PRAGMA user_version = 10',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    final plan = await db.select(db.nightPlans).getSingle();
+    expect(plan.legacyBedPress, isTrue);
+    expect(plan.questMode, isNull);
+    final checkIn = await db.select(db.checkIns).getSingle();
+    expect(checkIn.pressedInBed, isTrue);
+    expect(checkIn.onTime, isTrue);
+    expect(await db.select(db.dayActivities).get(), isEmpty);
+    await db.close();
+  });
+
+  test('repairs a database left half-migrated at version 10', () async {
+    // Everything already added, but the version never moved on.
+    await prepare(['PRAGMA user_version = 10']);
     await expectUsable();
   });
 

@@ -13,6 +13,7 @@ import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/stat_tile.dart';
 import '../shared/settings_button.dart';
+import '../../services/app_clock.dart';
 
 final _ownedItemsStreamProvider = StreamProvider.autoDispose<Set<String>>((
   ref,
@@ -240,7 +241,10 @@ class _ShopGrid extends ConsumerWidget {
                 )) {
                   return;
                 }
-                final result = await shop.buyBlanket(blanket, DateTime.now());
+                final result = await shop.buyBlanket(
+                  blanket,
+                  ref.read(clockProvider)(),
+                );
                 if (context.mounted) _showPurchaseSnackBar(context, result);
               },
             );
@@ -266,7 +270,7 @@ class _ShieldShopCell extends ConsumerWidget {
         )) {
           return;
         }
-        final result = await shop.buyShield(DateTime.now());
+        final result = await shop.buyShield(ref.read(clockProvider)());
         if (context.mounted) _showPurchaseSnackBar(context, result);
       },
       child: Container(

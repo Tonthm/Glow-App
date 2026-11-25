@@ -22,7 +22,7 @@ const int _onTimeToleranceMinutes = 45;
 
 /// Classifies a morning check-in, per CLAUDE.md section 6:
 /// - ชั่วโมงนอน = ตื่น − ปิดไฟ − เวลากว่าจะหลับ
-/// - ตรงเวลา = ปิดไฟห่างจากแผนไม่เกิน ±45 นาที
+/// - ตรงเวลา = กดเข้านอนแล้ว และปิดไฟห่างจากแผนไม่เกิน ±45 นาที
 /// - ครบ: within [min, max]; เกิน: > max; เกือบครบ: short of min by <= 60
 ///   min; ไม่ครบ: short of min by > 60 min.
 CheckInOutcome classifyCheckIn({
@@ -30,6 +30,7 @@ CheckInOutcome classifyCheckIn({
   required DateTime actualWakeAt,
   required DateTime plannedBedtime,
   required SleepSettings settings,
+  required bool pressedInBed,
 }) {
   final sleepDuration = actualSleepDuration(
     lightsOffAt: lightsOffAt,
@@ -49,9 +50,11 @@ CheckInOutcome classifyCheckIn({
     result = CheckInResult.notEnough;
   }
 
+  // On time also needs "เข้านอนแล้ว" to have been pressed (section 6).
   final onTime =
+      pressedInBed &&
       lightsOffAt.difference(plannedBedtime).inMinutes.abs() <=
-      _onTimeToleranceMinutes;
+          _onTimeToleranceMinutes;
 
   return CheckInOutcome(
     result: result,

@@ -10,6 +10,7 @@ import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../shared/time_of_day_field.dart';
 import 'add_item_sheet.dart';
+import '../../services/app_clock.dart';
 
 const _dayNames = [
   'จันทร์',
@@ -154,6 +155,7 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
           for (final draft in _drafts)
             _DraftCard(
               key: ObjectKey(draft),
+              now: ref.watch(clockProvider)(),
               draft: draft,
               onChanged: () => setState(() {}),
               onRemove: () => setState(() => _drafts.remove(draft)),
@@ -180,8 +182,11 @@ class _DraftCard extends StatelessWidget {
   final VoidCallback onChanged;
   final VoidCallback onRemove;
 
+  final DateTime now;
+
   const _DraftCard({
     super.key,
+    required this.now,
     required this.draft,
     required this.onChanged,
     required this.onRemove,
@@ -216,7 +221,6 @@ class _DraftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     TimeOfDay time(int minutes) =>
         TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);

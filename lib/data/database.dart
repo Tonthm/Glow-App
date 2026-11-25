@@ -58,6 +58,12 @@ class Settings extends Table {
   /// counted as missed check-ins.
   DateTimeColumn get onboardedAt => dateTime().nullable()();
 
+  BoolColumn get routineEnabled =>
+      boolean().withDefault(const Constant(true))();
+
+  /// Comma-separated pose ids the user doesn't want.
+  TextColumn get hiddenPoseIds => text().withDefault(const Constant(''))();
+
   /// The "your voice may be sent to Google" notice, shown before the first
   /// recording only.
   BoolColumn get voiceNoticeAccepted =>
@@ -123,6 +129,17 @@ class NightPlans extends Table {
   /// button stays pressed after an app restart.
   DateTimeColumn get inBedAt => dateTime().nullable()();
 
+  /// A night from before "เข้านอนแล้ว" counted for anything: treated as
+  /// pressed, so old fire is never held against the user.
+  BoolColumn get legacyBedPress =>
+      boolean().withDefault(const Constant(false))();
+
+  /// QuestMode index, fixed when the plan locks. Null on older nights.
+  IntColumn get questMode => integer().nullable()();
+
+  /// "วันนี้หมดแรง" was chosen for this night.
+  BoolColumn get lowEnergy => boolean().withDefault(const Constant(false))();
+
   /// A shield absorbed this night's miss. Kept on the plan because a missed
   /// night has no check-in row to mark.
   BoolColumn get usedShield => boolean().withDefault(const Constant(false))();
@@ -144,6 +161,13 @@ class CheckIns extends Table {
   BoolColumn get onTime => boolean()();
   BoolColumn get usedShield => boolean().withDefault(const Constant(false))();
   DateTimeColumn get checkedInAt => dateTime()();
+
+  /// Whether "เข้านอนแล้ว" was pressed. Rows from before this existed count
+  /// as pressed.
+  BoolColumn get pressedInBed => boolean().withDefault(const Constant(true))();
+
+  /// LightsOffSource index. Null on older rows.
+  IntColumn get lightsOffSource => integer().nullable()();
 
   @override
   List<Set<Column>> get uniqueKeys => [
@@ -221,6 +245,36 @@ class ExamPeriodClaims extends Table {
   Set<Column> get primaryKey => {periodStartDate};
 }
 
+/// What the user did that day (section 13), keyed by the night's wake date.
+class DayActivities extends Table {
+  DateTimeColumn get wakeDate => dateTime()();
+
+  /// Comma-separated DayActivityKind names.
+  TextColumn get activities => text()();
+
+  /// False when it is only the app's guess.
+  BoolColumn get confirmed => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {wakeDate};
+}
+
+/// One night's stretching routine.
+class RoutineLogs extends Table {
+  DateTimeColumn get wakeDate => dateTime()();
+
+  /// Comma-separated pose ids.
+  TextColumn get poseIds => text()();
+  TextColumn get skippedPoseIds => text().withDefault(const Constant(''))();
+  BoolColumn get completed => boolean().withDefault(const Constant(false))();
+
+  /// Coins already given, so repeating the routine can't earn them twice.
+  IntColumn get coinsAwarded => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {wakeDate};
+}
+
 @DriftDatabase(
   tables: [
     Settings,
@@ -233,6 +287,8 @@ class ExamPeriodClaims extends Table {
     OwnedItems,
     WeeklyQuestProgresses,
     ExamPeriodClaims,
+    DayActivities,
+    RoutineLogs,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -241,7 +297,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -298,6 +354,21 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 10) {
         await _addColumnIfMissing(m, settings, settings.voiceNoticeAccepted);
+      }
+      if (from < 11) {
+        await m.createTable(dayActivities);
+        await m.createTable(routineLogs);
+        await _addColumnIfMissing(m, settings, settings.routineEnabled);
+        await _addColumnIfMissing(m, settings, settings.hiddenPoseIds);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.legacyBedPress);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.questMode);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.lowEnergy);
+        // A check-in table created above already has these columns.
+        await _addColumnIfMissing(m, checkIns, checkIns.pressedInBed);
+        await _addColumnIfMissing(m, checkIns, checkIns.lightsOffSource);
+        // Every night planned before this version counts as pressed, so no
+        // fire or quest is judged by a button that didn't matter yet.
+        await customStatement('UPDATE night_plans SET legacy_bed_press = 1');
       }
     },
   );

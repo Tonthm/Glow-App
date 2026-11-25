@@ -82,6 +82,7 @@ void main() {
 
   test('backup and restore keeps check-ins, fire, and coins', () async {
     final morning = DateTime(2026, 11, 26, 8);
+    await planning.markInBed(DateTime(2026, 11, 26), onboarding);
     await planning.lockElapsedNights(morning);
     await checkIns.recordCheckIn(
       wakeDate: DateTime(2026, 11, 26),

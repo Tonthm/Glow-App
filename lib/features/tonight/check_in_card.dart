@@ -9,6 +9,7 @@ import '../../providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
+import '../../services/app_clock.dart';
 
 /// Morning check-in card shown in place of the main section (THEME.md
 /// "ตอนเช้า การ์ดเช็กอินขึ้นแทนส่วนหลัก" / CLAUDE.md section 6).
@@ -58,7 +59,7 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
     try {
       final fireRepo = ref.read(fireRepositoryProvider);
       final checkInRepo = ref.read(checkInRepositoryProvider);
-      final now = DateTime.now();
+      final now = ref.read(clockProvider)();
 
       final fireBefore = await fireRepo.get();
       final result = await checkInRepo.recordCheckIn(

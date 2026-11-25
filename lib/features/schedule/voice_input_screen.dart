@@ -10,6 +10,7 @@ import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import 'add_item_sheet.dart';
 import 'voice_review_screen.dart';
+import '../../services/app_clock.dart';
 
 const _example =
     'วันจันทร์ แปดโมงครึ่งถึงสิบโมง คณิต บ่ายโมงถึงบ่ายสาม ฟิสิกส์';
@@ -118,7 +119,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
     await _speech.stop();
     if (!mounted) return;
     FocusScope.of(context).unfocus();
-    final result = parseThaiSchedule(_text.text, now: DateTime.now());
+    final result = parseThaiSchedule(
+      _text.text,
+      now: ref.read(clockProvider)(),
+    );
     if (result.items.isEmpty) {
       setState(
         () => _message =

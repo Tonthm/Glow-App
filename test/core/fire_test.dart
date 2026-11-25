@@ -12,7 +12,11 @@ void main() {
         CheckInResult.over,
       ]) {
         expect(
-          determineFireEffect(isRedNightFromSchedule: true, result: result),
+          determineFireEffect(
+            isRedNightFromSchedule: true,
+            result: result,
+            pressedInBed: true,
+          ),
           NightFireEffect.unaffected,
         );
       }
@@ -23,6 +27,7 @@ void main() {
         determineFireEffect(
           isRedNightFromSchedule: false,
           result: CheckInResult.enough,
+          pressedInBed: true,
         ),
         NightFireEffect.enough,
       );
@@ -33,6 +38,7 @@ void main() {
         determineFireEffect(
           isRedNightFromSchedule: false,
           result: CheckInResult.almostEnough,
+          pressedInBed: true,
         ),
         NightFireEffect.unaffected,
       );
@@ -40,6 +46,7 @@ void main() {
         determineFireEffect(
           isRedNightFromSchedule: false,
           result: CheckInResult.over,
+          pressedInBed: true,
         ),
         NightFireEffect.unaffected,
       );
@@ -50,11 +57,46 @@ void main() {
         determineFireEffect(
           isRedNightFromSchedule: false,
           result: CheckInResult.notEnough,
+          pressedInBed: true,
         ),
         NightFireEffect.missed,
       );
       expect(
-        determineFireEffect(isRedNightFromSchedule: false, result: null),
+        determineFireEffect(
+          isRedNightFromSchedule: false,
+          result: null,
+          pressedInBed: true,
+        ),
+        NightFireEffect.missed,
+      );
+    });
+  });
+
+  group('pressing in bed', () {
+    NightFireEffect effect(CheckInResult? result, {required bool pressed}) =>
+        determineFireEffect(
+          isRedNightFromSchedule: false,
+          result: result,
+          pressedInBed: pressed,
+        );
+
+    test('enough and pressed adds a point', () {
+      expect(
+        effect(CheckInResult.enough, pressed: true),
+        NightFireEffect.enough,
+      );
+    });
+
+    test('enough without pressing leaves fire alone', () {
+      expect(
+        effect(CheckInResult.enough, pressed: false),
+        NightFireEffect.unaffected,
+      );
+    });
+
+    test('pressing does not rescue a night that was not enough', () {
+      expect(
+        effect(CheckInResult.notEnough, pressed: true),
         NightFireEffect.missed,
       );
     });
@@ -183,10 +225,15 @@ void main() {
   group('no check-in past the window', () {
     test('is treated the same as a not-enough check-in for fire purposes', () {
       expect(
-        determineFireEffect(isRedNightFromSchedule: false, result: null),
+        determineFireEffect(
+          isRedNightFromSchedule: false,
+          result: null,
+          pressedInBed: true,
+        ),
         determineFireEffect(
           isRedNightFromSchedule: false,
           result: CheckInResult.notEnough,
+          pressedInBed: true,
         ),
       );
     });

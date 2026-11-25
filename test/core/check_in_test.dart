@@ -20,6 +20,7 @@ void main() {
         actualWakeAt: d(2026, 11, 24, 6, 15),
         plannedBedtime: d(2026, 11, 23, 22, 0),
         settings: settings,
+        pressedInBed: true,
       );
       expect(outcome.result, CheckInResult.enough);
       expect(outcome.sleepDuration, const Duration(hours: 8));
@@ -33,6 +34,7 @@ void main() {
         actualWakeAt: d(2026, 11, 24, 6, 15),
         plannedBedtime: d(2026, 11, 23, 22, 0),
         settings: settings,
+        pressedInBed: true,
       );
       expect(outcome.result, CheckInResult.almostEnough);
     });
@@ -44,6 +46,7 @@ void main() {
         actualWakeAt: d(2026, 11, 24, 6, 15),
         plannedBedtime: d(2026, 11, 23, 22, 0),
         settings: settings,
+        pressedInBed: true,
       );
       expect(outcome.result, CheckInResult.notEnough);
     });
@@ -56,6 +59,7 @@ void main() {
         actualWakeAt: d(2026, 11, 24, 6, 31),
         plannedBedtime: d(2026, 11, 23, 21, 50),
         settings: settings,
+        pressedInBed: true,
       );
       expect(outcome.result, CheckInResult.over);
     });
@@ -66,6 +70,7 @@ void main() {
         actualWakeAt: d(2026, 11, 24, 6, 45),
         plannedBedtime: d(2026, 11, 23, 21, 50),
         settings: settings,
+        pressedInBed: true,
       );
       expect(outcome.onTime, isTrue);
     });
@@ -76,6 +81,7 @@ void main() {
         actualWakeAt: d(2026, 11, 24, 6, 51),
         plannedBedtime: d(2026, 11, 23, 21, 50),
         settings: settings,
+        pressedInBed: true,
       );
       expect(outcome.onTime, isFalse);
     });
@@ -87,10 +93,23 @@ void main() {
         actualWakeAt: d(2026, 11, 24, 8, 45),
         plannedBedtime: d(2026, 11, 24, 0, 30),
         settings: settings,
+        pressedInBed: true,
       );
       expect(outcome.result, CheckInResult.enough);
       expect(outcome.sleepDuration, const Duration(hours: 8));
     });
+  });
+
+  test('without pressing in bed, a night is never on time', () {
+    final outcome = classifyCheckIn(
+      lightsOffAt: d(2026, 11, 23, 22, 0),
+      actualWakeAt: d(2026, 11, 24, 6, 15),
+      plannedBedtime: d(2026, 11, 23, 22, 0),
+      settings: settings,
+      pressedInBed: false,
+    );
+    expect(outcome.result, CheckInResult.enough);
+    expect(outcome.onTime, isFalse);
   });
 
   group('check-in window', () {

@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
 import '../core/night_date.dart';
+import '../core/quests.dart' show QuestMode;
+import '../core/quests.dart' as quests;
 import '../core/schedule_load.dart';
 import '../core/schedule_models.dart';
 import '../core/schedule_resolver.dart';
@@ -108,6 +110,74 @@ class NightPlanningRepository {
   static DateTime _notifyTimeOf(NightPlanDraft draft) =>
       draft.bedtime.subtract(Duration(minutes: draft.isPreExamNight ? 90 : 60));
 
+  /// "กดเข้านอน" for fire and quests. Nights from before the button mattered
+  /// count as pressed.
+  static bool countsAsPressed(NightPlan? row) =>
+      row != null && (row.legacyBedPress || row.inBedAt != null);
+
+  /// When tonight's plan locks: the put-the-phone-down reminder.
+  static DateTime notifyTimeOf(NightPlanDraft draft) => _notifyTimeOf(draft);
+
+  /// The night's quest mode: fixed once the plan has locked, live before.
+  Future<QuestMode> questModeFor(NightPlanDraft draft) async {
+    final row = await getPlanRow(draft.wakeDate);
+    if (row != null && row.isLocked) {
+      return QuestMode.values[row.questMode ?? QuestMode.normal.index];
+    }
+    final load = await computeEveningLoad(draft);
+    return quests.questModeFor(
+      load: load.level,
+      lowEnergy: row?.lowEnergy ?? false,
+    );
+  }
+
+  /// "วันนี้หมดแรง" uses spent this week on nights other than [wakeDate].
+  Future<int> lowEnergyUsedElsewhere(DateTime wakeDate) async {
+    final target = _dateOnly(wakeDate);
+    final monday = mondayOfWeek(target);
+    final sunday = DateTime(monday.year, monday.month, monday.day + 6);
+    final rows =
+        await (db.select(db.nightPlans)..where(
+              (t) =>
+                  t.lowEnergy.equals(true) &
+                  t.wakeDate.isBiggerOrEqualValue(monday) &
+                  t.wakeDate.isSmallerOrEqualValue(sunday),
+            ))
+            .get();
+    return rows.where((r) => _dateOnly(r.wakeDate) != target).length;
+  }
+
+  /// Switches "วันนี้หมดแรง" if the rules allow it. Only quests change: the
+  /// bedtime plan and fire are untouched.
+  Future<bool> setLowEnergy(
+    DateTime wakeDate,
+    bool value, {
+    required DateTime now,
+  }) {
+    return db.transaction(() async {
+      final draft = await currentPlan(wakeDate);
+      final locked = (await getPlanRow(wakeDate))?.isLocked == true;
+      final allowed =
+          !locked &&
+          quests.canChangeLowEnergy(
+            now: now,
+            lockTime: _notifyTimeOf(draft),
+            usedOnOtherNightsThisWeek: await lowEnergyUsedElsewhere(wakeDate),
+          );
+      if (!allowed) return false;
+      await _upsertPlan(wakeDate, NightPlansCompanion(lowEnergy: Value(value)));
+      return true;
+    });
+  }
+
+  /// "ยังไม่นอน": forgets the press so it can be made again.
+  Future<void> undoInBed(DateTime wakeDate) {
+    return _upsertPlan(
+      wakeDate,
+      const NightPlansCompanion(inBedAt: Value(null)),
+    );
+  }
+
   Future<NightPlan?> getPlanRow(DateTime wakeDate) {
     final target = _dateOnly(wakeDate);
     return (db.select(
@@ -187,6 +257,10 @@ class NightPlanningRepository {
     final draft = await computeDraftForWakeDate(target);
     final load = await computeEveningLoad(draft);
     if (!now.isBefore(_notifyTimeOf(draft))) {
+      final mode = quests.questModeFor(
+        load: load.level,
+        lowEnergy: existing?.lowEnergy ?? false,
+      );
       final companion = NightPlansCompanion(
         wakeDate: Value(target),
         plannedWakeAt: Value(draft.wakeTime),
@@ -196,6 +270,7 @@ class NightPlanningRepository {
         isPreExamNight: Value(draft.isPreExamNight),
         isLocked: const Value(true),
         lockedAt: Value(now),
+        questMode: Value(mode.index),
       );
       if (existing != null) {
         await (db.update(

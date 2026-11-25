@@ -249,6 +249,33 @@ class $SettingsTable extends Settings
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _routineEnabledMeta = const VerificationMeta(
+    'routineEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> routineEnabled = GeneratedColumn<bool>(
+    'routine_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("routine_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _hiddenPoseIdsMeta = const VerificationMeta(
+    'hiddenPoseIds',
+  );
+  @override
+  late final GeneratedColumn<String> hiddenPoseIds = GeneratedColumn<String>(
+    'hidden_pose_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _voiceNoticeAcceptedMeta =
       const VerificationMeta('voiceNoticeAccepted');
   @override
@@ -285,6 +312,8 @@ class $SettingsTable extends Settings
     onboardingCompleted,
     themeMode,
     onboardedAt,
+    routineEnabled,
+    hiddenPoseIds,
     voiceNoticeAccepted,
   ];
   @override
@@ -449,6 +478,24 @@ class $SettingsTable extends Settings
         ),
       );
     }
+    if (data.containsKey('routine_enabled')) {
+      context.handle(
+        _routineEnabledMeta,
+        routineEnabled.isAcceptableOrUnknown(
+          data['routine_enabled']!,
+          _routineEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hidden_pose_ids')) {
+      context.handle(
+        _hiddenPoseIdsMeta,
+        hiddenPoseIds.isAcceptableOrUnknown(
+          data['hidden_pose_ids']!,
+          _hiddenPoseIdsMeta,
+        ),
+      );
+    }
     if (data.containsKey('voice_notice_accepted')) {
       context.handle(
         _voiceNoticeAcceptedMeta,
@@ -551,6 +598,14 @@ class $SettingsTable extends Settings
         DriftSqlType.dateTime,
         data['${effectivePrefix}onboarded_at'],
       ),
+      routineEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}routine_enabled'],
+      )!,
+      hiddenPoseIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hidden_pose_ids'],
+      )!,
       voiceNoticeAccepted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}voice_notice_accepted'],
@@ -593,6 +648,10 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   /// When onboarding finished. Nights that started before this are never
   /// counted as missed check-ins.
   final DateTime? onboardedAt;
+  final bool routineEnabled;
+
+  /// Comma-separated pose ids the user doesn't want.
+  final String hiddenPoseIds;
 
   /// The "your voice may be sent to Google" notice, shown before the first
   /// recording only.
@@ -618,6 +677,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.onboardingCompleted,
     required this.themeMode,
     this.onboardedAt,
+    required this.routineEnabled,
+    required this.hiddenPoseIds,
     required this.voiceNoticeAccepted,
   });
   @override
@@ -657,6 +718,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     if (!nullToAbsent || onboardedAt != null) {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt);
     }
+    map['routine_enabled'] = Variable<bool>(routineEnabled);
+    map['hidden_pose_ids'] = Variable<String>(hiddenPoseIds);
     map['voice_notice_accepted'] = Variable<bool>(voiceNoticeAccepted);
     return map;
   }
@@ -689,6 +752,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardedAt: onboardedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(onboardedAt),
+      routineEnabled: Value(routineEnabled),
+      hiddenPoseIds: Value(hiddenPoseIds),
       voiceNoticeAccepted: Value(voiceNoticeAccepted),
     );
   }
@@ -731,6 +796,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         serializer.fromJson<int>(json['themeMode']),
       ),
       onboardedAt: serializer.fromJson<DateTime?>(json['onboardedAt']),
+      routineEnabled: serializer.fromJson<bool>(json['routineEnabled']),
+      hiddenPoseIds: serializer.fromJson<String>(json['hiddenPoseIds']),
       voiceNoticeAccepted: serializer.fromJson<bool>(
         json['voiceNoticeAccepted'],
       ),
@@ -764,6 +831,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         $SettingsTable.$converterthemeMode.toJson(themeMode),
       ),
       'onboardedAt': serializer.toJson<DateTime?>(onboardedAt),
+      'routineEnabled': serializer.toJson<bool>(routineEnabled),
+      'hiddenPoseIds': serializer.toJson<String>(hiddenPoseIds),
       'voiceNoticeAccepted': serializer.toJson<bool>(voiceNoticeAccepted),
     };
   }
@@ -789,6 +858,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bool? onboardingCompleted,
     AppThemeMode? themeMode,
     Value<DateTime?> onboardedAt = const Value.absent(),
+    bool? routineEnabled,
+    String? hiddenPoseIds,
     bool? voiceNoticeAccepted,
   }) => SettingsRow(
     id: id ?? this.id,
@@ -811,6 +882,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
     themeMode: themeMode ?? this.themeMode,
     onboardedAt: onboardedAt.present ? onboardedAt.value : this.onboardedAt,
+    routineEnabled: routineEnabled ?? this.routineEnabled,
+    hiddenPoseIds: hiddenPoseIds ?? this.hiddenPoseIds,
     voiceNoticeAccepted: voiceNoticeAccepted ?? this.voiceNoticeAccepted,
   );
   SettingsRow copyWithCompanion(SettingsCompanion data) {
@@ -865,6 +938,12 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardedAt: data.onboardedAt.present
           ? data.onboardedAt.value
           : this.onboardedAt,
+      routineEnabled: data.routineEnabled.present
+          ? data.routineEnabled.value
+          : this.routineEnabled,
+      hiddenPoseIds: data.hiddenPoseIds.present
+          ? data.hiddenPoseIds.value
+          : this.hiddenPoseIds,
       voiceNoticeAccepted: data.voiceNoticeAccepted.present
           ? data.voiceNoticeAccepted.value
           : this.voiceNoticeAccepted,
@@ -894,6 +973,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode, ')
           ..write('onboardedAt: $onboardedAt, ')
+          ..write('routineEnabled: $routineEnabled, ')
+          ..write('hiddenPoseIds: $hiddenPoseIds, ')
           ..write('voiceNoticeAccepted: $voiceNoticeAccepted')
           ..write(')'))
         .toString();
@@ -921,6 +1002,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     onboardingCompleted,
     themeMode,
     onboardedAt,
+    routineEnabled,
+    hiddenPoseIds,
     voiceNoticeAccepted,
   ]);
   @override
@@ -947,6 +1030,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.onboardingCompleted == this.onboardingCompleted &&
           other.themeMode == this.themeMode &&
           other.onboardedAt == this.onboardedAt &&
+          other.routineEnabled == this.routineEnabled &&
+          other.hiddenPoseIds == this.hiddenPoseIds &&
           other.voiceNoticeAccepted == this.voiceNoticeAccepted);
 }
 
@@ -971,6 +1056,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<bool> onboardingCompleted;
   final Value<AppThemeMode> themeMode;
   final Value<DateTime?> onboardedAt;
+  final Value<bool> routineEnabled;
+  final Value<String> hiddenPoseIds;
   final Value<bool> voiceNoticeAccepted;
   const SettingsCompanion({
     this.id = const Value.absent(),
@@ -993,6 +1080,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.onboardedAt = const Value.absent(),
+    this.routineEnabled = const Value.absent(),
+    this.hiddenPoseIds = const Value.absent(),
     this.voiceNoticeAccepted = const Value.absent(),
   });
   SettingsCompanion.insert({
@@ -1016,6 +1105,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.onboardedAt = const Value.absent(),
+    this.routineEnabled = const Value.absent(),
+    this.hiddenPoseIds = const Value.absent(),
     this.voiceNoticeAccepted = const Value.absent(),
   });
   static Insertable<SettingsRow> custom({
@@ -1039,6 +1130,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<bool>? onboardingCompleted,
     Expression<int>? themeMode,
     Expression<DateTime>? onboardedAt,
+    Expression<bool>? routineEnabled,
+    Expression<String>? hiddenPoseIds,
     Expression<bool>? voiceNoticeAccepted,
   }) {
     return RawValuesInsertable({
@@ -1068,6 +1161,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
         'onboarding_completed': onboardingCompleted,
       if (themeMode != null) 'theme_mode': themeMode,
       if (onboardedAt != null) 'onboarded_at': onboardedAt,
+      if (routineEnabled != null) 'routine_enabled': routineEnabled,
+      if (hiddenPoseIds != null) 'hidden_pose_ids': hiddenPoseIds,
       if (voiceNoticeAccepted != null)
         'voice_notice_accepted': voiceNoticeAccepted,
     });
@@ -1094,6 +1189,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<bool>? onboardingCompleted,
     Value<AppThemeMode>? themeMode,
     Value<DateTime?>? onboardedAt,
+    Value<bool>? routineEnabled,
+    Value<String>? hiddenPoseIds,
     Value<bool>? voiceNoticeAccepted,
   }) {
     return SettingsCompanion(
@@ -1117,6 +1214,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       themeMode: themeMode ?? this.themeMode,
       onboardedAt: onboardedAt ?? this.onboardedAt,
+      routineEnabled: routineEnabled ?? this.routineEnabled,
+      hiddenPoseIds: hiddenPoseIds ?? this.hiddenPoseIds,
       voiceNoticeAccepted: voiceNoticeAccepted ?? this.voiceNoticeAccepted,
     );
   }
@@ -1188,6 +1287,12 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     if (onboardedAt.present) {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt.value);
     }
+    if (routineEnabled.present) {
+      map['routine_enabled'] = Variable<bool>(routineEnabled.value);
+    }
+    if (hiddenPoseIds.present) {
+      map['hidden_pose_ids'] = Variable<String>(hiddenPoseIds.value);
+    }
     if (voiceNoticeAccepted.present) {
       map['voice_notice_accepted'] = Variable<bool>(voiceNoticeAccepted.value);
     }
@@ -1217,6 +1322,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode, ')
           ..write('onboardedAt: $onboardedAt, ')
+          ..write('routineEnabled: $routineEnabled, ')
+          ..write('hiddenPoseIds: $hiddenPoseIds, ')
           ..write('voiceNoticeAccepted: $voiceNoticeAccepted')
           ..write(')'))
         .toString();
@@ -2431,6 +2538,47 @@ class $NightPlansTable extends NightPlans
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _legacyBedPressMeta = const VerificationMeta(
+    'legacyBedPress',
+  );
+  @override
+  late final GeneratedColumn<bool> legacyBedPress = GeneratedColumn<bool>(
+    'legacy_bed_press',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("legacy_bed_press" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _questModeMeta = const VerificationMeta(
+    'questMode',
+  );
+  @override
+  late final GeneratedColumn<int> questMode = GeneratedColumn<int>(
+    'quest_mode',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lowEnergyMeta = const VerificationMeta(
+    'lowEnergy',
+  );
+  @override
+  late final GeneratedColumn<bool> lowEnergy = GeneratedColumn<bool>(
+    'low_energy',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("low_energy" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _usedShieldMeta = const VerificationMeta(
     'usedShield',
   );
@@ -2460,6 +2608,9 @@ class $NightPlansTable extends NightPlans
     redAlertSentAt,
     fireAppliedAt,
     inBedAt,
+    legacyBedPress,
+    questMode,
+    lowEnergy,
     usedShield,
   ];
   @override
@@ -2570,6 +2721,27 @@ class $NightPlansTable extends NightPlans
         inBedAt.isAcceptableOrUnknown(data['in_bed_at']!, _inBedAtMeta),
       );
     }
+    if (data.containsKey('legacy_bed_press')) {
+      context.handle(
+        _legacyBedPressMeta,
+        legacyBedPress.isAcceptableOrUnknown(
+          data['legacy_bed_press']!,
+          _legacyBedPressMeta,
+        ),
+      );
+    }
+    if (data.containsKey('quest_mode')) {
+      context.handle(
+        _questModeMeta,
+        questMode.isAcceptableOrUnknown(data['quest_mode']!, _questModeMeta),
+      );
+    }
+    if (data.containsKey('low_energy')) {
+      context.handle(
+        _lowEnergyMeta,
+        lowEnergy.isAcceptableOrUnknown(data['low_energy']!, _lowEnergyMeta),
+      );
+    }
     if (data.containsKey('used_shield')) {
       context.handle(
         _usedShieldMeta,
@@ -2637,6 +2809,18 @@ class $NightPlansTable extends NightPlans
         DriftSqlType.dateTime,
         data['${effectivePrefix}in_bed_at'],
       ),
+      legacyBedPress: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}legacy_bed_press'],
+      )!,
+      questMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}quest_mode'],
+      ),
+      lowEnergy: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}low_energy'],
+      )!,
       usedShield: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}used_shield'],
@@ -2674,6 +2858,16 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
   /// button stays pressed after an app restart.
   final DateTime? inBedAt;
 
+  /// A night from before "เข้านอนแล้ว" counted for anything: treated as
+  /// pressed, so old fire is never held against the user.
+  final bool legacyBedPress;
+
+  /// QuestMode index, fixed when the plan locks. Null on older nights.
+  final int? questMode;
+
+  /// "วันนี้หมดแรง" was chosen for this night.
+  final bool lowEnergy;
+
   /// A shield absorbed this night's miss. Kept on the plan because a missed
   /// night has no check-in row to mark.
   final bool usedShield;
@@ -2690,6 +2884,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     this.redAlertSentAt,
     this.fireAppliedAt,
     this.inBedAt,
+    required this.legacyBedPress,
+    this.questMode,
+    required this.lowEnergy,
     required this.usedShield,
   });
   @override
@@ -2715,6 +2912,11 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     if (!nullToAbsent || inBedAt != null) {
       map['in_bed_at'] = Variable<DateTime>(inBedAt);
     }
+    map['legacy_bed_press'] = Variable<bool>(legacyBedPress);
+    if (!nullToAbsent || questMode != null) {
+      map['quest_mode'] = Variable<int>(questMode);
+    }
+    map['low_energy'] = Variable<bool>(lowEnergy);
     map['used_shield'] = Variable<bool>(usedShield);
     return map;
   }
@@ -2741,6 +2943,11 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       inBedAt: inBedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(inBedAt),
+      legacyBedPress: Value(legacyBedPress),
+      questMode: questMode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(questMode),
+      lowEnergy: Value(lowEnergy),
       usedShield: Value(usedShield),
     );
   }
@@ -2763,6 +2970,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       redAlertSentAt: serializer.fromJson<DateTime?>(json['redAlertSentAt']),
       fireAppliedAt: serializer.fromJson<DateTime?>(json['fireAppliedAt']),
       inBedAt: serializer.fromJson<DateTime?>(json['inBedAt']),
+      legacyBedPress: serializer.fromJson<bool>(json['legacyBedPress']),
+      questMode: serializer.fromJson<int?>(json['questMode']),
+      lowEnergy: serializer.fromJson<bool>(json['lowEnergy']),
       usedShield: serializer.fromJson<bool>(json['usedShield']),
     );
   }
@@ -2782,6 +2992,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       'redAlertSentAt': serializer.toJson<DateTime?>(redAlertSentAt),
       'fireAppliedAt': serializer.toJson<DateTime?>(fireAppliedAt),
       'inBedAt': serializer.toJson<DateTime?>(inBedAt),
+      'legacyBedPress': serializer.toJson<bool>(legacyBedPress),
+      'questMode': serializer.toJson<int?>(questMode),
+      'lowEnergy': serializer.toJson<bool>(lowEnergy),
       'usedShield': serializer.toJson<bool>(usedShield),
     };
   }
@@ -2799,6 +3012,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     Value<DateTime?> redAlertSentAt = const Value.absent(),
     Value<DateTime?> fireAppliedAt = const Value.absent(),
     Value<DateTime?> inBedAt = const Value.absent(),
+    bool? legacyBedPress,
+    Value<int?> questMode = const Value.absent(),
+    bool? lowEnergy,
     bool? usedShield,
   }) => NightPlan(
     id: id ?? this.id,
@@ -2817,6 +3033,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
         ? fireAppliedAt.value
         : this.fireAppliedAt,
     inBedAt: inBedAt.present ? inBedAt.value : this.inBedAt,
+    legacyBedPress: legacyBedPress ?? this.legacyBedPress,
+    questMode: questMode.present ? questMode.value : this.questMode,
+    lowEnergy: lowEnergy ?? this.lowEnergy,
     usedShield: usedShield ?? this.usedShield,
   );
   NightPlan copyWithCompanion(NightPlansCompanion data) {
@@ -2847,6 +3066,11 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ? data.fireAppliedAt.value
           : this.fireAppliedAt,
       inBedAt: data.inBedAt.present ? data.inBedAt.value : this.inBedAt,
+      legacyBedPress: data.legacyBedPress.present
+          ? data.legacyBedPress.value
+          : this.legacyBedPress,
+      questMode: data.questMode.present ? data.questMode.value : this.questMode,
+      lowEnergy: data.lowEnergy.present ? data.lowEnergy.value : this.lowEnergy,
       usedShield: data.usedShield.present
           ? data.usedShield.value
           : this.usedShield,
@@ -2868,6 +3092,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ..write('redAlertSentAt: $redAlertSentAt, ')
           ..write('fireAppliedAt: $fireAppliedAt, ')
           ..write('inBedAt: $inBedAt, ')
+          ..write('legacyBedPress: $legacyBedPress, ')
+          ..write('questMode: $questMode, ')
+          ..write('lowEnergy: $lowEnergy, ')
           ..write('usedShield: $usedShield')
           ..write(')'))
         .toString();
@@ -2887,6 +3114,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     redAlertSentAt,
     fireAppliedAt,
     inBedAt,
+    legacyBedPress,
+    questMode,
+    lowEnergy,
     usedShield,
   );
   @override
@@ -2905,6 +3135,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           other.redAlertSentAt == this.redAlertSentAt &&
           other.fireAppliedAt == this.fireAppliedAt &&
           other.inBedAt == this.inBedAt &&
+          other.legacyBedPress == this.legacyBedPress &&
+          other.questMode == this.questMode &&
+          other.lowEnergy == this.lowEnergy &&
           other.usedShield == this.usedShield);
 }
 
@@ -2921,6 +3154,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
   final Value<DateTime?> redAlertSentAt;
   final Value<DateTime?> fireAppliedAt;
   final Value<DateTime?> inBedAt;
+  final Value<bool> legacyBedPress;
+  final Value<int?> questMode;
+  final Value<bool> lowEnergy;
   final Value<bool> usedShield;
   const NightPlansCompanion({
     this.id = const Value.absent(),
@@ -2935,6 +3171,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.redAlertSentAt = const Value.absent(),
     this.fireAppliedAt = const Value.absent(),
     this.inBedAt = const Value.absent(),
+    this.legacyBedPress = const Value.absent(),
+    this.questMode = const Value.absent(),
+    this.lowEnergy = const Value.absent(),
     this.usedShield = const Value.absent(),
   });
   NightPlansCompanion.insert({
@@ -2950,6 +3189,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.redAlertSentAt = const Value.absent(),
     this.fireAppliedAt = const Value.absent(),
     this.inBedAt = const Value.absent(),
+    this.legacyBedPress = const Value.absent(),
+    this.questMode = const Value.absent(),
+    this.lowEnergy = const Value.absent(),
     this.usedShield = const Value.absent(),
   }) : wakeDate = Value(wakeDate),
        plannedWakeAt = Value(plannedWakeAt),
@@ -2967,6 +3209,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Expression<DateTime>? redAlertSentAt,
     Expression<DateTime>? fireAppliedAt,
     Expression<DateTime>? inBedAt,
+    Expression<bool>? legacyBedPress,
+    Expression<int>? questMode,
+    Expression<bool>? lowEnergy,
     Expression<bool>? usedShield,
   }) {
     return RawValuesInsertable({
@@ -2982,6 +3227,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       if (redAlertSentAt != null) 'red_alert_sent_at': redAlertSentAt,
       if (fireAppliedAt != null) 'fire_applied_at': fireAppliedAt,
       if (inBedAt != null) 'in_bed_at': inBedAt,
+      if (legacyBedPress != null) 'legacy_bed_press': legacyBedPress,
+      if (questMode != null) 'quest_mode': questMode,
+      if (lowEnergy != null) 'low_energy': lowEnergy,
       if (usedShield != null) 'used_shield': usedShield,
     });
   }
@@ -2999,6 +3247,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Value<DateTime?>? redAlertSentAt,
     Value<DateTime?>? fireAppliedAt,
     Value<DateTime?>? inBedAt,
+    Value<bool>? legacyBedPress,
+    Value<int?>? questMode,
+    Value<bool>? lowEnergy,
     Value<bool>? usedShield,
   }) {
     return NightPlansCompanion(
@@ -3014,6 +3265,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       redAlertSentAt: redAlertSentAt ?? this.redAlertSentAt,
       fireAppliedAt: fireAppliedAt ?? this.fireAppliedAt,
       inBedAt: inBedAt ?? this.inBedAt,
+      legacyBedPress: legacyBedPress ?? this.legacyBedPress,
+      questMode: questMode ?? this.questMode,
+      lowEnergy: lowEnergy ?? this.lowEnergy,
       usedShield: usedShield ?? this.usedShield,
     );
   }
@@ -3057,6 +3311,15 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     if (inBedAt.present) {
       map['in_bed_at'] = Variable<DateTime>(inBedAt.value);
     }
+    if (legacyBedPress.present) {
+      map['legacy_bed_press'] = Variable<bool>(legacyBedPress.value);
+    }
+    if (questMode.present) {
+      map['quest_mode'] = Variable<int>(questMode.value);
+    }
+    if (lowEnergy.present) {
+      map['low_energy'] = Variable<bool>(lowEnergy.value);
+    }
     if (usedShield.present) {
       map['used_shield'] = Variable<bool>(usedShield.value);
     }
@@ -3078,6 +3341,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
           ..write('redAlertSentAt: $redAlertSentAt, ')
           ..write('fireAppliedAt: $fireAppliedAt, ')
           ..write('inBedAt: $inBedAt, ')
+          ..write('legacyBedPress: $legacyBedPress, ')
+          ..write('questMode: $questMode, ')
+          ..write('lowEnergy: $lowEnergy, ')
           ..write('usedShield: $usedShield')
           ..write(')'))
         .toString();
@@ -3183,6 +3449,32 @@ class $CheckInsTable extends CheckIns
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _pressedInBedMeta = const VerificationMeta(
+    'pressedInBed',
+  );
+  @override
+  late final GeneratedColumn<bool> pressedInBed = GeneratedColumn<bool>(
+    'pressed_in_bed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pressed_in_bed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _lightsOffSourceMeta = const VerificationMeta(
+    'lightsOffSource',
+  );
+  @override
+  late final GeneratedColumn<int> lightsOffSource = GeneratedColumn<int>(
+    'lights_off_source',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3193,6 +3485,8 @@ class $CheckInsTable extends CheckIns
     onTime,
     usedShield,
     checkedInAt,
+    pressedInBed,
+    lightsOffSource,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3264,6 +3558,24 @@ class $CheckInsTable extends CheckIns
     } else if (isInserting) {
       context.missing(_checkedInAtMeta);
     }
+    if (data.containsKey('pressed_in_bed')) {
+      context.handle(
+        _pressedInBedMeta,
+        pressedInBed.isAcceptableOrUnknown(
+          data['pressed_in_bed']!,
+          _pressedInBedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('lights_off_source')) {
+      context.handle(
+        _lightsOffSourceMeta,
+        lightsOffSource.isAcceptableOrUnknown(
+          data['lights_off_source']!,
+          _lightsOffSourceMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3311,6 +3623,14 @@ class $CheckInsTable extends CheckIns
         DriftSqlType.dateTime,
         data['${effectivePrefix}checked_in_at'],
       )!,
+      pressedInBed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pressed_in_bed'],
+      )!,
+      lightsOffSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lights_off_source'],
+      ),
     );
   }
 
@@ -3332,6 +3652,13 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
   final bool onTime;
   final bool usedShield;
   final DateTime checkedInAt;
+
+  /// Whether "เข้านอนแล้ว" was pressed. Rows from before this existed count
+  /// as pressed.
+  final bool pressedInBed;
+
+  /// LightsOffSource index. Null on older rows.
+  final int? lightsOffSource;
   const CheckInRow({
     required this.id,
     required this.wakeDate,
@@ -3341,6 +3668,8 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
     required this.onTime,
     required this.usedShield,
     required this.checkedInAt,
+    required this.pressedInBed,
+    this.lightsOffSource,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3357,6 +3686,10 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
     map['on_time'] = Variable<bool>(onTime);
     map['used_shield'] = Variable<bool>(usedShield);
     map['checked_in_at'] = Variable<DateTime>(checkedInAt);
+    map['pressed_in_bed'] = Variable<bool>(pressedInBed);
+    if (!nullToAbsent || lightsOffSource != null) {
+      map['lights_off_source'] = Variable<int>(lightsOffSource);
+    }
     return map;
   }
 
@@ -3370,6 +3703,10 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
       onTime: Value(onTime),
       usedShield: Value(usedShield),
       checkedInAt: Value(checkedInAt),
+      pressedInBed: Value(pressedInBed),
+      lightsOffSource: lightsOffSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lightsOffSource),
     );
   }
 
@@ -3389,6 +3726,8 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
       onTime: serializer.fromJson<bool>(json['onTime']),
       usedShield: serializer.fromJson<bool>(json['usedShield']),
       checkedInAt: serializer.fromJson<DateTime>(json['checkedInAt']),
+      pressedInBed: serializer.fromJson<bool>(json['pressedInBed']),
+      lightsOffSource: serializer.fromJson<int?>(json['lightsOffSource']),
     );
   }
   @override
@@ -3405,6 +3744,8 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
       'onTime': serializer.toJson<bool>(onTime),
       'usedShield': serializer.toJson<bool>(usedShield),
       'checkedInAt': serializer.toJson<DateTime>(checkedInAt),
+      'pressedInBed': serializer.toJson<bool>(pressedInBed),
+      'lightsOffSource': serializer.toJson<int?>(lightsOffSource),
     };
   }
 
@@ -3417,6 +3758,8 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
     bool? onTime,
     bool? usedShield,
     DateTime? checkedInAt,
+    bool? pressedInBed,
+    Value<int?> lightsOffSource = const Value.absent(),
   }) => CheckInRow(
     id: id ?? this.id,
     wakeDate: wakeDate ?? this.wakeDate,
@@ -3426,6 +3769,10 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
     onTime: onTime ?? this.onTime,
     usedShield: usedShield ?? this.usedShield,
     checkedInAt: checkedInAt ?? this.checkedInAt,
+    pressedInBed: pressedInBed ?? this.pressedInBed,
+    lightsOffSource: lightsOffSource.present
+        ? lightsOffSource.value
+        : this.lightsOffSource,
   );
   CheckInRow copyWithCompanion(CheckInsCompanion data) {
     return CheckInRow(
@@ -3445,6 +3792,12 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
       checkedInAt: data.checkedInAt.present
           ? data.checkedInAt.value
           : this.checkedInAt,
+      pressedInBed: data.pressedInBed.present
+          ? data.pressedInBed.value
+          : this.pressedInBed,
+      lightsOffSource: data.lightsOffSource.present
+          ? data.lightsOffSource.value
+          : this.lightsOffSource,
     );
   }
 
@@ -3458,7 +3811,9 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
           ..write('result: $result, ')
           ..write('onTime: $onTime, ')
           ..write('usedShield: $usedShield, ')
-          ..write('checkedInAt: $checkedInAt')
+          ..write('checkedInAt: $checkedInAt, ')
+          ..write('pressedInBed: $pressedInBed, ')
+          ..write('lightsOffSource: $lightsOffSource')
           ..write(')'))
         .toString();
   }
@@ -3473,6 +3828,8 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
     onTime,
     usedShield,
     checkedInAt,
+    pressedInBed,
+    lightsOffSource,
   );
   @override
   bool operator ==(Object other) =>
@@ -3485,7 +3842,9 @@ class CheckInRow extends DataClass implements Insertable<CheckInRow> {
           other.result == this.result &&
           other.onTime == this.onTime &&
           other.usedShield == this.usedShield &&
-          other.checkedInAt == this.checkedInAt);
+          other.checkedInAt == this.checkedInAt &&
+          other.pressedInBed == this.pressedInBed &&
+          other.lightsOffSource == this.lightsOffSource);
 }
 
 class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
@@ -3497,6 +3856,8 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
   final Value<bool> onTime;
   final Value<bool> usedShield;
   final Value<DateTime> checkedInAt;
+  final Value<bool> pressedInBed;
+  final Value<int?> lightsOffSource;
   const CheckInsCompanion({
     this.id = const Value.absent(),
     this.wakeDate = const Value.absent(),
@@ -3506,6 +3867,8 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
     this.onTime = const Value.absent(),
     this.usedShield = const Value.absent(),
     this.checkedInAt = const Value.absent(),
+    this.pressedInBed = const Value.absent(),
+    this.lightsOffSource = const Value.absent(),
   });
   CheckInsCompanion.insert({
     this.id = const Value.absent(),
@@ -3516,6 +3879,8 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
     required bool onTime,
     this.usedShield = const Value.absent(),
     required DateTime checkedInAt,
+    this.pressedInBed = const Value.absent(),
+    this.lightsOffSource = const Value.absent(),
   }) : wakeDate = Value(wakeDate),
        lightsOffAt = Value(lightsOffAt),
        actualWakeAt = Value(actualWakeAt),
@@ -3531,6 +3896,8 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
     Expression<bool>? onTime,
     Expression<bool>? usedShield,
     Expression<DateTime>? checkedInAt,
+    Expression<bool>? pressedInBed,
+    Expression<int>? lightsOffSource,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3541,6 +3908,8 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
       if (onTime != null) 'on_time': onTime,
       if (usedShield != null) 'used_shield': usedShield,
       if (checkedInAt != null) 'checked_in_at': checkedInAt,
+      if (pressedInBed != null) 'pressed_in_bed': pressedInBed,
+      if (lightsOffSource != null) 'lights_off_source': lightsOffSource,
     });
   }
 
@@ -3553,6 +3922,8 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
     Value<bool>? onTime,
     Value<bool>? usedShield,
     Value<DateTime>? checkedInAt,
+    Value<bool>? pressedInBed,
+    Value<int?>? lightsOffSource,
   }) {
     return CheckInsCompanion(
       id: id ?? this.id,
@@ -3563,6 +3934,8 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
       onTime: onTime ?? this.onTime,
       usedShield: usedShield ?? this.usedShield,
       checkedInAt: checkedInAt ?? this.checkedInAt,
+      pressedInBed: pressedInBed ?? this.pressedInBed,
+      lightsOffSource: lightsOffSource ?? this.lightsOffSource,
     );
   }
 
@@ -3595,6 +3968,12 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
     if (checkedInAt.present) {
       map['checked_in_at'] = Variable<DateTime>(checkedInAt.value);
     }
+    if (pressedInBed.present) {
+      map['pressed_in_bed'] = Variable<bool>(pressedInBed.value);
+    }
+    if (lightsOffSource.present) {
+      map['lights_off_source'] = Variable<int>(lightsOffSource.value);
+    }
     return map;
   }
 
@@ -3608,7 +3987,9 @@ class CheckInsCompanion extends UpdateCompanion<CheckInRow> {
           ..write('result: $result, ')
           ..write('onTime: $onTime, ')
           ..write('usedShield: $usedShield, ')
-          ..write('checkedInAt: $checkedInAt')
+          ..write('checkedInAt: $checkedInAt, ')
+          ..write('pressedInBed: $pressedInBed, ')
+          ..write('lightsOffSource: $lightsOffSource')
           ..write(')'))
         .toString();
   }
@@ -5079,6 +5460,661 @@ class ExamPeriodClaimsCompanion extends UpdateCompanion<ExamPeriodClaim> {
   }
 }
 
+class $DayActivitiesTable extends DayActivities
+    with TableInfo<$DayActivitiesTable, DayActivity> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DayActivitiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _wakeDateMeta = const VerificationMeta(
+    'wakeDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> wakeDate = GeneratedColumn<DateTime>(
+    'wake_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _activitiesMeta = const VerificationMeta(
+    'activities',
+  );
+  @override
+  late final GeneratedColumn<String> activities = GeneratedColumn<String>(
+    'activities',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _confirmedMeta = const VerificationMeta(
+    'confirmed',
+  );
+  @override
+  late final GeneratedColumn<bool> confirmed = GeneratedColumn<bool>(
+    'confirmed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("confirmed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [wakeDate, activities, confirmed];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'day_activities';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DayActivity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('wake_date')) {
+      context.handle(
+        _wakeDateMeta,
+        wakeDate.isAcceptableOrUnknown(data['wake_date']!, _wakeDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wakeDateMeta);
+    }
+    if (data.containsKey('activities')) {
+      context.handle(
+        _activitiesMeta,
+        activities.isAcceptableOrUnknown(data['activities']!, _activitiesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_activitiesMeta);
+    }
+    if (data.containsKey('confirmed')) {
+      context.handle(
+        _confirmedMeta,
+        confirmed.isAcceptableOrUnknown(data['confirmed']!, _confirmedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {wakeDate};
+  @override
+  DayActivity map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DayActivity(
+      wakeDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}wake_date'],
+      )!,
+      activities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}activities'],
+      )!,
+      confirmed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}confirmed'],
+      )!,
+    );
+  }
+
+  @override
+  $DayActivitiesTable createAlias(String alias) {
+    return $DayActivitiesTable(attachedDatabase, alias);
+  }
+}
+
+class DayActivity extends DataClass implements Insertable<DayActivity> {
+  final DateTime wakeDate;
+
+  /// Comma-separated DayActivityKind names.
+  final String activities;
+
+  /// False when it is only the app's guess.
+  final bool confirmed;
+  const DayActivity({
+    required this.wakeDate,
+    required this.activities,
+    required this.confirmed,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['wake_date'] = Variable<DateTime>(wakeDate);
+    map['activities'] = Variable<String>(activities);
+    map['confirmed'] = Variable<bool>(confirmed);
+    return map;
+  }
+
+  DayActivitiesCompanion toCompanion(bool nullToAbsent) {
+    return DayActivitiesCompanion(
+      wakeDate: Value(wakeDate),
+      activities: Value(activities),
+      confirmed: Value(confirmed),
+    );
+  }
+
+  factory DayActivity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DayActivity(
+      wakeDate: serializer.fromJson<DateTime>(json['wakeDate']),
+      activities: serializer.fromJson<String>(json['activities']),
+      confirmed: serializer.fromJson<bool>(json['confirmed']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'wakeDate': serializer.toJson<DateTime>(wakeDate),
+      'activities': serializer.toJson<String>(activities),
+      'confirmed': serializer.toJson<bool>(confirmed),
+    };
+  }
+
+  DayActivity copyWith({
+    DateTime? wakeDate,
+    String? activities,
+    bool? confirmed,
+  }) => DayActivity(
+    wakeDate: wakeDate ?? this.wakeDate,
+    activities: activities ?? this.activities,
+    confirmed: confirmed ?? this.confirmed,
+  );
+  DayActivity copyWithCompanion(DayActivitiesCompanion data) {
+    return DayActivity(
+      wakeDate: data.wakeDate.present ? data.wakeDate.value : this.wakeDate,
+      activities: data.activities.present
+          ? data.activities.value
+          : this.activities,
+      confirmed: data.confirmed.present ? data.confirmed.value : this.confirmed,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayActivity(')
+          ..write('wakeDate: $wakeDate, ')
+          ..write('activities: $activities, ')
+          ..write('confirmed: $confirmed')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(wakeDate, activities, confirmed);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DayActivity &&
+          other.wakeDate == this.wakeDate &&
+          other.activities == this.activities &&
+          other.confirmed == this.confirmed);
+}
+
+class DayActivitiesCompanion extends UpdateCompanion<DayActivity> {
+  final Value<DateTime> wakeDate;
+  final Value<String> activities;
+  final Value<bool> confirmed;
+  final Value<int> rowid;
+  const DayActivitiesCompanion({
+    this.wakeDate = const Value.absent(),
+    this.activities = const Value.absent(),
+    this.confirmed = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DayActivitiesCompanion.insert({
+    required DateTime wakeDate,
+    required String activities,
+    this.confirmed = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : wakeDate = Value(wakeDate),
+       activities = Value(activities);
+  static Insertable<DayActivity> custom({
+    Expression<DateTime>? wakeDate,
+    Expression<String>? activities,
+    Expression<bool>? confirmed,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (wakeDate != null) 'wake_date': wakeDate,
+      if (activities != null) 'activities': activities,
+      if (confirmed != null) 'confirmed': confirmed,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DayActivitiesCompanion copyWith({
+    Value<DateTime>? wakeDate,
+    Value<String>? activities,
+    Value<bool>? confirmed,
+    Value<int>? rowid,
+  }) {
+    return DayActivitiesCompanion(
+      wakeDate: wakeDate ?? this.wakeDate,
+      activities: activities ?? this.activities,
+      confirmed: confirmed ?? this.confirmed,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (wakeDate.present) {
+      map['wake_date'] = Variable<DateTime>(wakeDate.value);
+    }
+    if (activities.present) {
+      map['activities'] = Variable<String>(activities.value);
+    }
+    if (confirmed.present) {
+      map['confirmed'] = Variable<bool>(confirmed.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayActivitiesCompanion(')
+          ..write('wakeDate: $wakeDate, ')
+          ..write('activities: $activities, ')
+          ..write('confirmed: $confirmed, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RoutineLogsTable extends RoutineLogs
+    with TableInfo<$RoutineLogsTable, RoutineLog> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RoutineLogsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _wakeDateMeta = const VerificationMeta(
+    'wakeDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> wakeDate = GeneratedColumn<DateTime>(
+    'wake_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _poseIdsMeta = const VerificationMeta(
+    'poseIds',
+  );
+  @override
+  late final GeneratedColumn<String> poseIds = GeneratedColumn<String>(
+    'pose_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _skippedPoseIdsMeta = const VerificationMeta(
+    'skippedPoseIds',
+  );
+  @override
+  late final GeneratedColumn<String> skippedPoseIds = GeneratedColumn<String>(
+    'skipped_pose_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _completedMeta = const VerificationMeta(
+    'completed',
+  );
+  @override
+  late final GeneratedColumn<bool> completed = GeneratedColumn<bool>(
+    'completed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("completed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _coinsAwardedMeta = const VerificationMeta(
+    'coinsAwarded',
+  );
+  @override
+  late final GeneratedColumn<int> coinsAwarded = GeneratedColumn<int>(
+    'coins_awarded',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    wakeDate,
+    poseIds,
+    skippedPoseIds,
+    completed,
+    coinsAwarded,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'routine_logs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RoutineLog> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('wake_date')) {
+      context.handle(
+        _wakeDateMeta,
+        wakeDate.isAcceptableOrUnknown(data['wake_date']!, _wakeDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wakeDateMeta);
+    }
+    if (data.containsKey('pose_ids')) {
+      context.handle(
+        _poseIdsMeta,
+        poseIds.isAcceptableOrUnknown(data['pose_ids']!, _poseIdsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_poseIdsMeta);
+    }
+    if (data.containsKey('skipped_pose_ids')) {
+      context.handle(
+        _skippedPoseIdsMeta,
+        skippedPoseIds.isAcceptableOrUnknown(
+          data['skipped_pose_ids']!,
+          _skippedPoseIdsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('completed')) {
+      context.handle(
+        _completedMeta,
+        completed.isAcceptableOrUnknown(data['completed']!, _completedMeta),
+      );
+    }
+    if (data.containsKey('coins_awarded')) {
+      context.handle(
+        _coinsAwardedMeta,
+        coinsAwarded.isAcceptableOrUnknown(
+          data['coins_awarded']!,
+          _coinsAwardedMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {wakeDate};
+  @override
+  RoutineLog map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RoutineLog(
+      wakeDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}wake_date'],
+      )!,
+      poseIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pose_ids'],
+      )!,
+      skippedPoseIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}skipped_pose_ids'],
+      )!,
+      completed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}completed'],
+      )!,
+      coinsAwarded: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}coins_awarded'],
+      )!,
+    );
+  }
+
+  @override
+  $RoutineLogsTable createAlias(String alias) {
+    return $RoutineLogsTable(attachedDatabase, alias);
+  }
+}
+
+class RoutineLog extends DataClass implements Insertable<RoutineLog> {
+  final DateTime wakeDate;
+
+  /// Comma-separated pose ids.
+  final String poseIds;
+  final String skippedPoseIds;
+  final bool completed;
+
+  /// Coins already given, so repeating the routine can't earn them twice.
+  final int coinsAwarded;
+  const RoutineLog({
+    required this.wakeDate,
+    required this.poseIds,
+    required this.skippedPoseIds,
+    required this.completed,
+    required this.coinsAwarded,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['wake_date'] = Variable<DateTime>(wakeDate);
+    map['pose_ids'] = Variable<String>(poseIds);
+    map['skipped_pose_ids'] = Variable<String>(skippedPoseIds);
+    map['completed'] = Variable<bool>(completed);
+    map['coins_awarded'] = Variable<int>(coinsAwarded);
+    return map;
+  }
+
+  RoutineLogsCompanion toCompanion(bool nullToAbsent) {
+    return RoutineLogsCompanion(
+      wakeDate: Value(wakeDate),
+      poseIds: Value(poseIds),
+      skippedPoseIds: Value(skippedPoseIds),
+      completed: Value(completed),
+      coinsAwarded: Value(coinsAwarded),
+    );
+  }
+
+  factory RoutineLog.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RoutineLog(
+      wakeDate: serializer.fromJson<DateTime>(json['wakeDate']),
+      poseIds: serializer.fromJson<String>(json['poseIds']),
+      skippedPoseIds: serializer.fromJson<String>(json['skippedPoseIds']),
+      completed: serializer.fromJson<bool>(json['completed']),
+      coinsAwarded: serializer.fromJson<int>(json['coinsAwarded']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'wakeDate': serializer.toJson<DateTime>(wakeDate),
+      'poseIds': serializer.toJson<String>(poseIds),
+      'skippedPoseIds': serializer.toJson<String>(skippedPoseIds),
+      'completed': serializer.toJson<bool>(completed),
+      'coinsAwarded': serializer.toJson<int>(coinsAwarded),
+    };
+  }
+
+  RoutineLog copyWith({
+    DateTime? wakeDate,
+    String? poseIds,
+    String? skippedPoseIds,
+    bool? completed,
+    int? coinsAwarded,
+  }) => RoutineLog(
+    wakeDate: wakeDate ?? this.wakeDate,
+    poseIds: poseIds ?? this.poseIds,
+    skippedPoseIds: skippedPoseIds ?? this.skippedPoseIds,
+    completed: completed ?? this.completed,
+    coinsAwarded: coinsAwarded ?? this.coinsAwarded,
+  );
+  RoutineLog copyWithCompanion(RoutineLogsCompanion data) {
+    return RoutineLog(
+      wakeDate: data.wakeDate.present ? data.wakeDate.value : this.wakeDate,
+      poseIds: data.poseIds.present ? data.poseIds.value : this.poseIds,
+      skippedPoseIds: data.skippedPoseIds.present
+          ? data.skippedPoseIds.value
+          : this.skippedPoseIds,
+      completed: data.completed.present ? data.completed.value : this.completed,
+      coinsAwarded: data.coinsAwarded.present
+          ? data.coinsAwarded.value
+          : this.coinsAwarded,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoutineLog(')
+          ..write('wakeDate: $wakeDate, ')
+          ..write('poseIds: $poseIds, ')
+          ..write('skippedPoseIds: $skippedPoseIds, ')
+          ..write('completed: $completed, ')
+          ..write('coinsAwarded: $coinsAwarded')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(wakeDate, poseIds, skippedPoseIds, completed, coinsAwarded);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RoutineLog &&
+          other.wakeDate == this.wakeDate &&
+          other.poseIds == this.poseIds &&
+          other.skippedPoseIds == this.skippedPoseIds &&
+          other.completed == this.completed &&
+          other.coinsAwarded == this.coinsAwarded);
+}
+
+class RoutineLogsCompanion extends UpdateCompanion<RoutineLog> {
+  final Value<DateTime> wakeDate;
+  final Value<String> poseIds;
+  final Value<String> skippedPoseIds;
+  final Value<bool> completed;
+  final Value<int> coinsAwarded;
+  final Value<int> rowid;
+  const RoutineLogsCompanion({
+    this.wakeDate = const Value.absent(),
+    this.poseIds = const Value.absent(),
+    this.skippedPoseIds = const Value.absent(),
+    this.completed = const Value.absent(),
+    this.coinsAwarded = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RoutineLogsCompanion.insert({
+    required DateTime wakeDate,
+    required String poseIds,
+    this.skippedPoseIds = const Value.absent(),
+    this.completed = const Value.absent(),
+    this.coinsAwarded = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : wakeDate = Value(wakeDate),
+       poseIds = Value(poseIds);
+  static Insertable<RoutineLog> custom({
+    Expression<DateTime>? wakeDate,
+    Expression<String>? poseIds,
+    Expression<String>? skippedPoseIds,
+    Expression<bool>? completed,
+    Expression<int>? coinsAwarded,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (wakeDate != null) 'wake_date': wakeDate,
+      if (poseIds != null) 'pose_ids': poseIds,
+      if (skippedPoseIds != null) 'skipped_pose_ids': skippedPoseIds,
+      if (completed != null) 'completed': completed,
+      if (coinsAwarded != null) 'coins_awarded': coinsAwarded,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RoutineLogsCompanion copyWith({
+    Value<DateTime>? wakeDate,
+    Value<String>? poseIds,
+    Value<String>? skippedPoseIds,
+    Value<bool>? completed,
+    Value<int>? coinsAwarded,
+    Value<int>? rowid,
+  }) {
+    return RoutineLogsCompanion(
+      wakeDate: wakeDate ?? this.wakeDate,
+      poseIds: poseIds ?? this.poseIds,
+      skippedPoseIds: skippedPoseIds ?? this.skippedPoseIds,
+      completed: completed ?? this.completed,
+      coinsAwarded: coinsAwarded ?? this.coinsAwarded,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (wakeDate.present) {
+      map['wake_date'] = Variable<DateTime>(wakeDate.value);
+    }
+    if (poseIds.present) {
+      map['pose_ids'] = Variable<String>(poseIds.value);
+    }
+    if (skippedPoseIds.present) {
+      map['skipped_pose_ids'] = Variable<String>(skippedPoseIds.value);
+    }
+    if (completed.present) {
+      map['completed'] = Variable<bool>(completed.value);
+    }
+    if (coinsAwarded.present) {
+      map['coins_awarded'] = Variable<int>(coinsAwarded.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoutineLogsCompanion(')
+          ..write('wakeDate: $wakeDate, ')
+          ..write('poseIds: $poseIds, ')
+          ..write('skippedPoseIds: $skippedPoseIds, ')
+          ..write('completed: $completed, ')
+          ..write('coinsAwarded: $coinsAwarded, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5095,6 +6131,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ExamPeriodClaimsTable examPeriodClaims = $ExamPeriodClaimsTable(
     this,
   );
+  late final $DayActivitiesTable dayActivities = $DayActivitiesTable(this);
+  late final $RoutineLogsTable routineLogs = $RoutineLogsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5110,6 +6148,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ownedItems,
     weeklyQuestProgresses,
     examPeriodClaims,
+    dayActivities,
+    routineLogs,
   ];
 }
 
@@ -5134,6 +6174,8 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
   Value<DateTime?> onboardedAt,
+  Value<bool> routineEnabled,
+  Value<String> hiddenPoseIds,
   Value<bool> voiceNoticeAccepted,
 });
 typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
@@ -5157,6 +6199,8 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
   Value<DateTime?> onboardedAt,
+  Value<bool> routineEnabled,
+  Value<String> hiddenPoseIds,
   Value<bool> voiceNoticeAccepted,
 });
 
@@ -5268,6 +6312,16 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<DateTime> get onboardedAt => $composableBuilder(
     column: $table.onboardedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get routineEnabled => $composableBuilder(
+    column: $table.routineEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hiddenPoseIds => $composableBuilder(
+    column: $table.hiddenPoseIds,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5386,6 +6440,16 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get routineEnabled => $composableBuilder(
+    column: $table.routineEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hiddenPoseIds => $composableBuilder(
+    column: $table.hiddenPoseIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get voiceNoticeAccepted => $composableBuilder(
     column: $table.voiceNoticeAccepted,
     builder: (column) => ColumnOrderings(column),
@@ -5491,6 +6555,16 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get routineEnabled => $composableBuilder(
+    column: $table.routineEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get hiddenPoseIds => $composableBuilder(
+    column: $table.hiddenPoseIds,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get voiceNoticeAccepted => $composableBuilder(
     column: $table.voiceNoticeAccepted,
     builder: (column) => column,
@@ -5548,6 +6622,8 @@ class $$SettingsTableTableManager
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<bool> routineEnabled = const Value.absent(),
+                Value<String> hiddenPoseIds = const Value.absent(),
                 Value<bool> voiceNoticeAccepted = const Value.absent(),
               }) => SettingsCompanion(
                 id: id,
@@ -5570,6 +6646,8 @@ class $$SettingsTableTableManager
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
                 onboardedAt: onboardedAt,
+                routineEnabled: routineEnabled,
+                hiddenPoseIds: hiddenPoseIds,
                 voiceNoticeAccepted: voiceNoticeAccepted,
               ),
           createCompanionCallback:
@@ -5594,6 +6672,8 @@ class $$SettingsTableTableManager
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<bool> routineEnabled = const Value.absent(),
+                Value<String> hiddenPoseIds = const Value.absent(),
                 Value<bool> voiceNoticeAccepted = const Value.absent(),
               }) => SettingsCompanion.insert(
                 id: id,
@@ -5616,6 +6696,8 @@ class $$SettingsTableTableManager
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
                 onboardedAt: onboardedAt,
+                routineEnabled: routineEnabled,
+                hiddenPoseIds: hiddenPoseIds,
                 voiceNoticeAccepted: voiceNoticeAccepted,
               ),
           withReferenceMapper: (p0) => p0
@@ -6198,6 +7280,9 @@ typedef $$NightPlansTableCreateCompanionBuilder = NightPlansCompanion Function({
   Value<DateTime?> redAlertSentAt,
   Value<DateTime?> fireAppliedAt,
   Value<DateTime?> inBedAt,
+  Value<bool> legacyBedPress,
+  Value<int?> questMode,
+  Value<bool> lowEnergy,
   Value<bool> usedShield,
 });
 typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
@@ -6213,6 +7298,9 @@ typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
   Value<DateTime?> redAlertSentAt,
   Value<DateTime?> fireAppliedAt,
   Value<DateTime?> inBedAt,
+  Value<bool> legacyBedPress,
+  Value<int?> questMode,
+  Value<bool> lowEnergy,
   Value<bool> usedShield,
 });
 
@@ -6282,6 +7370,21 @@ class $$NightPlansTableFilterComposer
 
   ColumnFilters<DateTime> get inBedAt => $composableBuilder(
     column: $table.inBedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get legacyBedPress => $composableBuilder(
+    column: $table.legacyBedPress,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get questMode => $composableBuilder(
+    column: $table.questMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get lowEnergy => $composableBuilder(
+    column: $table.lowEnergy,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6360,6 +7463,21 @@ class $$NightPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get legacyBedPress => $composableBuilder(
+    column: $table.legacyBedPress,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get questMode => $composableBuilder(
+    column: $table.questMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get lowEnergy => $composableBuilder(
+    column: $table.lowEnergy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get usedShield => $composableBuilder(
     column: $table.usedShield,
     builder: (column) => ColumnOrderings(column),
@@ -6425,6 +7543,17 @@ class $$NightPlansTableAnnotationComposer
   GeneratedColumn<DateTime> get inBedAt =>
       $composableBuilder(column: $table.inBedAt, builder: (column) => column);
 
+  GeneratedColumn<bool> get legacyBedPress => $composableBuilder(
+    column: $table.legacyBedPress,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get questMode =>
+      $composableBuilder(column: $table.questMode, builder: (column) => column);
+
+  GeneratedColumn<bool> get lowEnergy =>
+      $composableBuilder(column: $table.lowEnergy, builder: (column) => column);
+
   GeneratedColumn<bool> get usedShield => $composableBuilder(
     column: $table.usedShield,
     builder: (column) => column,
@@ -6474,6 +7603,9 @@ class $$NightPlansTableTableManager
                 Value<DateTime?> redAlertSentAt = const Value.absent(),
                 Value<DateTime?> fireAppliedAt = const Value.absent(),
                 Value<DateTime?> inBedAt = const Value.absent(),
+                Value<bool> legacyBedPress = const Value.absent(),
+                Value<int?> questMode = const Value.absent(),
+                Value<bool> lowEnergy = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
               }) => NightPlansCompanion(
                 id: id,
@@ -6488,6 +7620,9 @@ class $$NightPlansTableTableManager
                 redAlertSentAt: redAlertSentAt,
                 fireAppliedAt: fireAppliedAt,
                 inBedAt: inBedAt,
+                legacyBedPress: legacyBedPress,
+                questMode: questMode,
+                lowEnergy: lowEnergy,
                 usedShield: usedShield,
               ),
           createCompanionCallback:
@@ -6504,6 +7639,9 @@ class $$NightPlansTableTableManager
                 Value<DateTime?> redAlertSentAt = const Value.absent(),
                 Value<DateTime?> fireAppliedAt = const Value.absent(),
                 Value<DateTime?> inBedAt = const Value.absent(),
+                Value<bool> legacyBedPress = const Value.absent(),
+                Value<int?> questMode = const Value.absent(),
+                Value<bool> lowEnergy = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
               }) => NightPlansCompanion.insert(
                 id: id,
@@ -6518,6 +7656,9 @@ class $$NightPlansTableTableManager
                 redAlertSentAt: redAlertSentAt,
                 fireAppliedAt: fireAppliedAt,
                 inBedAt: inBedAt,
+                legacyBedPress: legacyBedPress,
+                questMode: questMode,
+                lowEnergy: lowEnergy,
                 usedShield: usedShield,
               ),
           withReferenceMapper: (p0) => p0
@@ -6560,6 +7701,8 @@ typedef $$CheckInsTableCreateCompanionBuilder = CheckInsCompanion Function({
   required bool onTime,
   Value<bool> usedShield,
   required DateTime checkedInAt,
+  Value<bool> pressedInBed,
+  Value<int?> lightsOffSource,
 });
 typedef $$CheckInsTableUpdateCompanionBuilder = CheckInsCompanion Function({
   Value<int> id,
@@ -6570,6 +7713,8 @@ typedef $$CheckInsTableUpdateCompanionBuilder = CheckInsCompanion Function({
   Value<bool> onTime,
   Value<bool> usedShield,
   Value<DateTime> checkedInAt,
+  Value<bool> pressedInBed,
+  Value<int?> lightsOffSource,
 });
 
 class $$CheckInsTableFilterComposer
@@ -6619,6 +7764,16 @@ class $$CheckInsTableFilterComposer
 
   ColumnFilters<DateTime> get checkedInAt => $composableBuilder(
     column: $table.checkedInAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pressedInBed => $composableBuilder(
+    column: $table.pressedInBed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lightsOffSource => $composableBuilder(
+    column: $table.lightsOffSource,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -6671,6 +7826,16 @@ class $$CheckInsTableOrderingComposer
     column: $table.checkedInAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get pressedInBed => $composableBuilder(
+    column: $table.pressedInBed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lightsOffSource => $composableBuilder(
+    column: $table.lightsOffSource,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CheckInsTableAnnotationComposer
@@ -6711,6 +7876,16 @@ class $$CheckInsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get checkedInAt => $composableBuilder(
     column: $table.checkedInAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get pressedInBed => $composableBuilder(
+    column: $table.pressedInBed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lightsOffSource => $composableBuilder(
+    column: $table.lightsOffSource,
     builder: (column) => column,
   );
 }
@@ -6754,6 +7929,8 @@ class $$CheckInsTableTableManager
                 Value<bool> onTime = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
                 Value<DateTime> checkedInAt = const Value.absent(),
+                Value<bool> pressedInBed = const Value.absent(),
+                Value<int?> lightsOffSource = const Value.absent(),
               }) => CheckInsCompanion(
                 id: id,
                 wakeDate: wakeDate,
@@ -6763,6 +7940,8 @@ class $$CheckInsTableTableManager
                 onTime: onTime,
                 usedShield: usedShield,
                 checkedInAt: checkedInAt,
+                pressedInBed: pressedInBed,
+                lightsOffSource: lightsOffSource,
               ),
           createCompanionCallback:
               ({
@@ -6774,6 +7953,8 @@ class $$CheckInsTableTableManager
                 required bool onTime,
                 Value<bool> usedShield = const Value.absent(),
                 required DateTime checkedInAt,
+                Value<bool> pressedInBed = const Value.absent(),
+                Value<int?> lightsOffSource = const Value.absent(),
               }) => CheckInsCompanion.insert(
                 id: id,
                 wakeDate: wakeDate,
@@ -6783,6 +7964,8 @@ class $$CheckInsTableTableManager
                 onTime: onTime,
                 usedShield: usedShield,
                 checkedInAt: checkedInAt,
+                pressedInBed: pressedInBed,
+                lightsOffSource: lightsOffSource,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -7729,6 +8912,392 @@ typedef $$ExamPeriodClaimsTableProcessedTableManager =
       ExamPeriodClaim,
       PrefetchHooks Function()
     >;
+typedef $$DayActivitiesTableCreateCompanionBuilder =
+    DayActivitiesCompanion Function({
+      required DateTime wakeDate,
+      required String activities,
+      Value<bool> confirmed,
+      Value<int> rowid,
+    });
+typedef $$DayActivitiesTableUpdateCompanionBuilder =
+    DayActivitiesCompanion Function({
+      Value<DateTime> wakeDate,
+      Value<String> activities,
+      Value<bool> confirmed,
+      Value<int> rowid,
+    });
+
+class $$DayActivitiesTableFilterComposer
+    extends Composer<_$AppDatabase, $DayActivitiesTable> {
+  $$DayActivitiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<DateTime> get wakeDate => $composableBuilder(
+    column: $table.wakeDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get activities => $composableBuilder(
+    column: $table.activities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get confirmed => $composableBuilder(
+    column: $table.confirmed,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DayActivitiesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DayActivitiesTable> {
+  $$DayActivitiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<DateTime> get wakeDate => $composableBuilder(
+    column: $table.wakeDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get activities => $composableBuilder(
+    column: $table.activities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get confirmed => $composableBuilder(
+    column: $table.confirmed,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DayActivitiesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DayActivitiesTable> {
+  $$DayActivitiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<DateTime> get wakeDate =>
+      $composableBuilder(column: $table.wakeDate, builder: (column) => column);
+
+  GeneratedColumn<String> get activities => $composableBuilder(
+    column: $table.activities,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get confirmed =>
+      $composableBuilder(column: $table.confirmed, builder: (column) => column);
+}
+
+class $$DayActivitiesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DayActivitiesTable,
+          DayActivity,
+          $$DayActivitiesTableFilterComposer,
+          $$DayActivitiesTableOrderingComposer,
+          $$DayActivitiesTableAnnotationComposer,
+          $$DayActivitiesTableCreateCompanionBuilder,
+          $$DayActivitiesTableUpdateCompanionBuilder,
+          (
+            DayActivity,
+            BaseReferences<_$AppDatabase, $DayActivitiesTable, DayActivity>,
+          ),
+          DayActivity,
+          PrefetchHooks Function()
+        > {
+  $$DayActivitiesTableTableManager(_$AppDatabase db, $DayActivitiesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DayActivitiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DayActivitiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DayActivitiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<DateTime> wakeDate = const Value.absent(),
+                Value<String> activities = const Value.absent(),
+                Value<bool> confirmed = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DayActivitiesCompanion(
+                wakeDate: wakeDate,
+                activities: activities,
+                confirmed: confirmed,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required DateTime wakeDate,
+                required String activities,
+                Value<bool> confirmed = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DayActivitiesCompanion.insert(
+                wakeDate: wakeDate,
+                activities: activities,
+                confirmed: confirmed,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$DayActivitiesTable, DayActivity>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $DayActivitiesTable,
+                    DayActivity
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DayActivitiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DayActivitiesTable,
+      DayActivity,
+      $$DayActivitiesTableFilterComposer,
+      $$DayActivitiesTableOrderingComposer,
+      $$DayActivitiesTableAnnotationComposer,
+      $$DayActivitiesTableCreateCompanionBuilder,
+      $$DayActivitiesTableUpdateCompanionBuilder,
+      (
+        DayActivity,
+        BaseReferences<_$AppDatabase, $DayActivitiesTable, DayActivity>,
+      ),
+      DayActivity,
+      PrefetchHooks Function()
+    >;
+typedef $$RoutineLogsTableCreateCompanionBuilder =
+    RoutineLogsCompanion Function({
+      required DateTime wakeDate,
+      required String poseIds,
+      Value<String> skippedPoseIds,
+      Value<bool> completed,
+      Value<int> coinsAwarded,
+      Value<int> rowid,
+    });
+typedef $$RoutineLogsTableUpdateCompanionBuilder =
+    RoutineLogsCompanion Function({
+      Value<DateTime> wakeDate,
+      Value<String> poseIds,
+      Value<String> skippedPoseIds,
+      Value<bool> completed,
+      Value<int> coinsAwarded,
+      Value<int> rowid,
+    });
+
+class $$RoutineLogsTableFilterComposer
+    extends Composer<_$AppDatabase, $RoutineLogsTable> {
+  $$RoutineLogsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<DateTime> get wakeDate => $composableBuilder(
+    column: $table.wakeDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get poseIds => $composableBuilder(
+    column: $table.poseIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get skippedPoseIds => $composableBuilder(
+    column: $table.skippedPoseIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get completed => $composableBuilder(
+    column: $table.completed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get coinsAwarded => $composableBuilder(
+    column: $table.coinsAwarded,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RoutineLogsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RoutineLogsTable> {
+  $$RoutineLogsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<DateTime> get wakeDate => $composableBuilder(
+    column: $table.wakeDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get poseIds => $composableBuilder(
+    column: $table.poseIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get skippedPoseIds => $composableBuilder(
+    column: $table.skippedPoseIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get completed => $composableBuilder(
+    column: $table.completed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get coinsAwarded => $composableBuilder(
+    column: $table.coinsAwarded,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RoutineLogsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RoutineLogsTable> {
+  $$RoutineLogsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<DateTime> get wakeDate =>
+      $composableBuilder(column: $table.wakeDate, builder: (column) => column);
+
+  GeneratedColumn<String> get poseIds =>
+      $composableBuilder(column: $table.poseIds, builder: (column) => column);
+
+  GeneratedColumn<String> get skippedPoseIds => $composableBuilder(
+    column: $table.skippedPoseIds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get completed =>
+      $composableBuilder(column: $table.completed, builder: (column) => column);
+
+  GeneratedColumn<int> get coinsAwarded => $composableBuilder(
+    column: $table.coinsAwarded,
+    builder: (column) => column,
+  );
+}
+
+class $$RoutineLogsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RoutineLogsTable,
+          RoutineLog,
+          $$RoutineLogsTableFilterComposer,
+          $$RoutineLogsTableOrderingComposer,
+          $$RoutineLogsTableAnnotationComposer,
+          $$RoutineLogsTableCreateCompanionBuilder,
+          $$RoutineLogsTableUpdateCompanionBuilder,
+          (
+            RoutineLog,
+            BaseReferences<_$AppDatabase, $RoutineLogsTable, RoutineLog>,
+          ),
+          RoutineLog,
+          PrefetchHooks Function()
+        > {
+  $$RoutineLogsTableTableManager(_$AppDatabase db, $RoutineLogsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RoutineLogsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RoutineLogsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RoutineLogsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<DateTime> wakeDate = const Value.absent(),
+                Value<String> poseIds = const Value.absent(),
+                Value<String> skippedPoseIds = const Value.absent(),
+                Value<bool> completed = const Value.absent(),
+                Value<int> coinsAwarded = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RoutineLogsCompanion(
+                wakeDate: wakeDate,
+                poseIds: poseIds,
+                skippedPoseIds: skippedPoseIds,
+                completed: completed,
+                coinsAwarded: coinsAwarded,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required DateTime wakeDate,
+                required String poseIds,
+                Value<String> skippedPoseIds = const Value.absent(),
+                Value<bool> completed = const Value.absent(),
+                Value<int> coinsAwarded = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RoutineLogsCompanion.insert(
+                wakeDate: wakeDate,
+                poseIds: poseIds,
+                skippedPoseIds: skippedPoseIds,
+                completed: completed,
+                coinsAwarded: coinsAwarded,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RoutineLogsTable, RoutineLog>(table),
+                  BaseReferences<_$AppDatabase, $RoutineLogsTable, RoutineLog>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RoutineLogsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RoutineLogsTable,
+      RoutineLog,
+      $$RoutineLogsTableFilterComposer,
+      $$RoutineLogsTableOrderingComposer,
+      $$RoutineLogsTableAnnotationComposer,
+      $$RoutineLogsTableCreateCompanionBuilder,
+      $$RoutineLogsTableUpdateCompanionBuilder,
+      (
+        RoutineLog,
+        BaseReferences<_$AppDatabase, $RoutineLogsTable, RoutineLog>,
+      ),
+      RoutineLog,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7753,4 +9322,8 @@ class $AppDatabaseManager {
       $$WeeklyQuestProgressesTableTableManager(_db, _db.weeklyQuestProgresses);
   $$ExamPeriodClaimsTableTableManager get examPeriodClaims =>
       $$ExamPeriodClaimsTableTableManager(_db, _db.examPeriodClaims);
+  $$DayActivitiesTableTableManager get dayActivities =>
+      $$DayActivitiesTableTableManager(_db, _db.dayActivities);
+  $$RoutineLogsTableTableManager get routineLogs =>
+      $$RoutineLogsTableTableManager(_db, _db.routineLogs);
 }

@@ -11,6 +11,7 @@ import '../../theme/widgets/stat_tile.dart';
 import '../shared/settings_button.dart';
 import 'heatmap.dart';
 import 'night_detail_sheet.dart';
+import '../../services/app_clock.dart';
 
 enum _StatsRange { term, threeMonths, oneYear }
 
@@ -26,7 +27,7 @@ final _statsCellsProvider = FutureProvider.autoDispose<List<HeatmapCell>>((
   final range = ref.watch(_statsRangeProvider);
   ref.watch(nightHistoryChangesProvider);
   final settings = await ref.watch(settingsStreamProvider.future);
-  final today = _dateOnly(DateTime.now());
+  final today = _dateOnly(ref.watch(clockProvider)());
 
   final start = switch (range) {
     _StatsRange.term =>
@@ -47,7 +48,7 @@ final _monthComparisonProvider = FutureProvider.autoDispose<String>((
   final settings = await ref.watch(settingsStreamProvider.future);
   ref.watch(nightHistoryChangesProvider);
   final repo = ref.watch(statsRepositoryProvider);
-  final today = _dateOnly(DateTime.now());
+  final today = _dateOnly(ref.watch(clockProvider)());
   DateTime daysAgo(int n) => DateTime(today.year, today.month, today.day - n);
   StatsSummary summarize(List<HeatmapCell> cells) =>
       repo.summarize(cells, fallAsleepMinutes: settings.fallAsleepMinutes);

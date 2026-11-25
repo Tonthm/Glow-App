@@ -11,6 +11,7 @@ import 'one_time_item_form.dart';
 import 'voice_input_screen.dart';
 import 'week_grid.dart';
 import 'weekly_item_form.dart';
+import '../../services/app_clock.dart';
 
 class ScheduleScreen extends ConsumerWidget {
   const ScheduleScreen({super.key});
@@ -65,7 +66,7 @@ class ScheduleScreen extends ConsumerWidget {
                       showWeeklyItemForm(context, existing: item),
                 ),
                 const Divider(height: GlowSpacing.xxl),
-                _OneTimeList(items: oneTime),
+                _OneTimeList(items: oneTime, now: ref.watch(clockProvider)()),
                 const SizedBox(height: GlowSpacing.xl),
               ],
             ),
@@ -111,7 +112,7 @@ class ScheduleScreen extends ConsumerWidget {
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: start ?? DateTime.now(),
+                    initialDate: start ?? ref.read(clockProvider)(),
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2035),
                   );
@@ -124,7 +125,7 @@ class ScheduleScreen extends ConsumerWidget {
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: end ?? (start ?? DateTime.now()),
+                    initialDate: end ?? (start ?? ref.read(clockProvider)()),
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2035),
                   );
@@ -158,12 +159,12 @@ String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
 class _OneTimeList extends StatelessWidget {
   final List<OneTimeItem> items;
-  const _OneTimeList({required this.items});
+  final DateTime now;
+  const _OneTimeList({required this.items, required this.now});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     // Upcoming first; past items drop to the bottom, newest first.
     final upcoming = items.where((i) => !i.date.isBefore(today)).toList()

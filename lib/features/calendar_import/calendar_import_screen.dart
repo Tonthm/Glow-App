@@ -5,6 +5,7 @@ import '../../core/calendar_events.dart';
 import '../../providers.dart';
 import '../../services/calendar_import_service.dart';
 import '../schedule/add_item_sheet.dart';
+import '../../services/app_clock.dart';
 
 /// Section 2 "นำเข้าจากปฏิทินในมือถือ" flow: ask for read-only permission on
 /// entry, pick a calendar + date range, review guessed types, then save.
@@ -23,8 +24,8 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
   String? _error;
   List<DeviceCalendar> _calendars = [];
   DeviceCalendar? _selectedCalendar;
-  DateTime _start = DateTime.now();
-  DateTime _end = DateTime.now().add(const Duration(days: 90));
+  late DateTime _start = ref.read(clockProvider)();
+  late DateTime _end = _start.add(const Duration(days: 90));
   List<ProposedImportItem>? _proposals;
 
   @override

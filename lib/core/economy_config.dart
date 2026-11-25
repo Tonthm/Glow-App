@@ -9,7 +9,9 @@ class EconomyConfig {
   // Section 8: quests.
   static const int dailyCompleteCoins = 10;
   static const int dailyOnTimeBonusCoins = 5;
-  static const int weeklyOnTimeQuestCoins = 50;
+  static const int sleepOnPlanCoins = 10;
+  static const int routineCoins = 5;
+  static const int weeklyQuestCoins = 50;
   static const int preExamNightCoins = 30;
 
   // Section 9: shop.

@@ -1,47 +1,85 @@
 import 'check_in.dart';
 import 'economy_config.dart';
+import 'schedule_load.dart';
 
-/// One night's inputs for quest evaluation, per CLAUDE.md section 8.
+/// A night's quest mode (CLAUDE.md section 8). Stored by index.
+enum QuestMode { normal, light, minimum }
+
+/// Red nights from the schedule, or "วันนี้หมดแรง", cut the night down to one
+/// quest; a busy (yellow) evening only shortens the stretching.
+QuestMode questModeFor({
+  required EveningLoadLevel load,
+  required bool lowEnergy,
+}) {
+  if (lowEnergy || load == EveningLoadLevel.red) return QuestMode.minimum;
+  return load == EveningLoadLevel.yellow ? QuestMode.light : QuestMode.normal;
+}
+
+/// One night's inputs for quest evaluation.
 class QuestNightInput {
   final DateTime wakeDate;
+
+  /// Null when there was no check-in.
   final CheckInResult? result;
+
+  /// Pressed "เข้านอนแล้ว" and lights off within 45 minutes of the plan. In
+  /// minimum mode this is the whole quest, "หลับตามแผน".
   final bool onTime;
   final bool usedShield;
+  final QuestMode mode;
 
   const QuestNightInput({
     required this.wakeDate,
     required this.result,
     required this.onTime,
     required this.usedShield,
+    this.mode = QuestMode.normal,
   });
 }
 
-/// A night "passes" a quest only if it was ครบ and didn't need a shield to
-/// get there (section 7: "คืนที่ใช้โล่ไม่นับเป็นคืนที่ผ่านเควส").
-bool nightPassesDaily(QuestNightInput night) =>
-    night.result == CheckInResult.enough && !night.usedShield;
+/// "คืนที่ผ่าน": ครบ and on time, or in minimum mode just on time. A night
+/// that needed a shield never passes.
+bool nightPasses(QuestNightInput night) {
+  if (night.usedShield || night.result == null || !night.onTime) return false;
+  return night.mode == QuestMode.minimum ||
+      night.result == CheckInResult.enough;
+}
 
-bool nightPassesOnTime(QuestNightInput night) =>
-    nightPassesDaily(night) && night.onTime;
-
-/// Coins for the daily "นอนครบ" quest plus its "ตรงเวลา" bonus, for one
-/// night (section 8).
+/// Coins for one night's sleep quests.
 int dailyQuestCoins(QuestNightInput night) {
-  if (!nightPassesDaily(night)) return 0;
+  if (night.usedShield || night.result == null) return 0;
+  if (night.mode == QuestMode.minimum) {
+    return night.onTime ? EconomyConfig.sleepOnPlanCoins : 0;
+  }
+  if (night.result != CheckInResult.enough) return 0;
   return EconomyConfig.dailyCompleteCoins +
       (night.onTime ? EconomyConfig.dailyOnTimeBonusCoins : 0);
 }
 
-/// How many nights in [weekNights] (expected: the 7 nights Mon..Sun of one
-/// calendar week) pass the on-time bar for the weekly "ตรงเวลา 5 ใน 7"
-/// quest.
-int weeklyOnTimeCount(List<QuestNightInput> weekNights) =>
-    weekNights.where(nightPassesOnTime).length;
+/// The stretching quest exists in normal and light mode only. It has no
+/// effect on fire or on passing nights.
+int routineQuestCoins(QuestMode mode) =>
+    mode == QuestMode.minimum ? 0 : EconomyConfig.routineCoins;
 
-const int weeklyOnTimeQuestTarget = 5;
+/// How many of [weekNights] (one Monday-to-Sunday week) passed.
+int weeklyPassCount(List<QuestNightInput> weekNights) =>
+    weekNights.where(nightPasses).length;
 
-bool weeklyOnTimeQuestComplete(List<QuestNightInput> weekNights) =>
-    weeklyOnTimeCount(weekNights) >= weeklyOnTimeQuestTarget;
+const int weeklyQuestTarget = 5;
+
+bool weeklyQuestComplete(List<QuestNightInput> weekNights) =>
+    weeklyPassCount(weekNights) >= weeklyQuestTarget;
+
+/// "วันนี้หมดแรง": once per Monday-to-Sunday week.
+const int lowEnergyPerWeek = 1;
+
+/// Can be switched on or off only before the night's plan locks, and only if
+/// this week's use isn't already spent on another night.
+bool canChangeLowEnergy({
+  required DateTime now,
+  required DateTime lockTime,
+  required int usedOnOtherNightsThisWeek,
+}) => now.isBefore(lockTime) && usedOnOtherNightsThisWeek < lowEnergyPerWeek;
 
 /// Groups sorted, deduplicated exam dates into periods — runs where every
 /// exam is within [maxGapDays] of the previous one, mirroring exam mode's

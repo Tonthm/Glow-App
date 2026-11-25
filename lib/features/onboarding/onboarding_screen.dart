@@ -5,6 +5,7 @@ import '../../data/database.dart';
 import '../../providers.dart';
 import '../shared/minutes_stepper.dart';
 import '../settings/battery_optimization_sheet.dart';
+import '../../services/app_clock.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -59,7 +60,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
     // Section 1: onboarding ends with entering the first schedule.
     ref.read(selectedTabIndexProvider.notifier).state = 1;
-    await settingsRepo.markOnboardingCompleted(DateTime.now());
+    await settingsRepo.markOnboardingCompleted(ref.read(clockProvider)());
   }
 
   @override

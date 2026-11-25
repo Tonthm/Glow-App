@@ -22,6 +22,7 @@ import '../stats/night_detail_sheet.dart';
 import 'check_in_card.dart';
 import 'check_in_result_screen.dart';
 import 'fire_badge.dart';
+import '../../services/app_clock.dart';
 
 class TonightPlanData {
   final DateTime wakeDate;
@@ -60,7 +61,7 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   ref.watch(oneTimeItemsStreamProvider);
   final settings = ref.watch(settingsStreamProvider).value;
   final repo = ref.watch(nightPlanningRepositoryProvider);
-  final now = DateTime.now();
+  final now = ref.watch(clockProvider)();
 
   final fireRepo = ref.watch(fireRepositoryProvider);
   final checkInRepo = ref.watch(checkInRepositoryProvider);
@@ -75,7 +76,10 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     await questRepo.claimExamPeriodRewardsIfComplete(now);
   });
 
-  if (settings != null && settings.onboardingCompleted) {
+  if (ref.watch(clockOffsetProvider) != Duration.zero) {
+    // Demo time travel: real reminders would fire at nonsense moments.
+    await ref.watch(notificationServiceProvider).cancelAll();
+  } else if (settings != null && settings.onboardingCompleted) {
     final notificationService = ref.watch(notificationServiceProvider);
     await notificationService.rescheduleAll(
       repo: repo,
@@ -96,7 +100,7 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   final pendingCheckIn = await ref
       .watch(checkInRepositoryProvider)
       .findPendingCheckIn(now);
-  final weeklyOnTimeCount = await questRepo.currentWeekOnTimeCount(now);
+  final weeklyOnTimeCount = await questRepo.currentWeekPassCount(now);
   return TonightPlanData(
     wakeDate: wakeDate,
     draft: draft,
@@ -261,7 +265,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     final notifications = ref.read(notificationServiceProvider);
     await ref
         .read(nightPlanningRepositoryProvider)
-        .markInBed(plan.wakeDate, DateTime.now());
+        .markInBed(plan.wakeDate, ref.read(clockProvider)());
     await notifications.cancelBedtimeNotification(plan.wakeDate);
     if (!mounted) return;
     ref.invalidate(tonightPlanProvider);
@@ -403,7 +407,7 @@ class _QuestProgressDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final target = weeklyOnTimeQuestTarget;
+    final target = weeklyQuestTarget;
     final filled = count.clamp(0, target);
     final accent = Theme.of(context).colorScheme.primary;
     final empty = Theme.of(context).dividerColor;

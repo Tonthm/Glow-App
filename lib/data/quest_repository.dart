@@ -17,12 +17,14 @@ CheckInResult _fromDbResult(CheckInResultDb result) => switch (result) {
   CheckInResultDb.over => CheckInResult.over,
 };
 
-QuestNightInput _toQuestInput(CheckInRow row) => QuestNightInput(
-  wakeDate: _dateOnly(row.wakeDate),
-  result: row.usedShield ? null : _fromDbResult(row.result),
-  onTime: row.onTime,
-  usedShield: row.usedShield,
-);
+QuestNightInput _toQuestInput(CheckInRow row, QuestMode mode) =>
+    QuestNightInput(
+      wakeDate: _dateOnly(row.wakeDate),
+      result: _fromDbResult(row.result),
+      onTime: row.onTime,
+      usedShield: row.usedShield,
+      mode: mode,
+    );
 
 /// Claims the two aggregate quest rewards from CLAUDE.md section 8 that
 /// can't be granted the moment a single check-in happens (the per-night
@@ -36,24 +38,39 @@ class QuestRepository {
 
   QuestRepository(this.db, this.walletRepo, this.scheduleRepo);
 
-  Future<List<QuestNightInput>> _weekNights(DateTime monday) async {
-    final sunday = monday.add(const Duration(days: 6));
+  /// Check-ins in [start]..[end], each with the quest mode its night had.
+  Future<List<QuestNightInput>> _nights(DateTime start, DateTime end) async {
     final rows =
         await (db.select(db.checkIns)..where(
               (t) =>
-                  t.wakeDate.isBiggerOrEqualValue(monday) &
-                  t.wakeDate.isSmallerOrEqualValue(sunday),
+                  t.wakeDate.isBiggerOrEqualValue(start) &
+                  t.wakeDate.isSmallerOrEqualValue(end),
             ))
             .get();
-    return rows.map(_toQuestInput).toList();
+    final plans =
+        await (db.select(db.nightPlans)..where(
+              (t) =>
+                  t.wakeDate.isBiggerOrEqualValue(start) &
+                  t.wakeDate.isSmallerOrEqualValue(end),
+            ))
+            .get();
+    final modes = {
+      for (final p in plans)
+        _dateOnly(p.wakeDate):
+            QuestMode.values[p.questMode ?? QuestMode.normal.index],
+    };
+    return [
+      for (final row in rows)
+        _toQuestInput(row, modes[_dateOnly(row.wakeDate)] ?? QuestMode.normal),
+    ];
   }
 
-  /// Progress toward this week's "ตรงเวลา 5 ใน 7" quest, for the dots on
-  /// the Tonight screen (●●●○○).
-  Future<int> currentWeekOnTimeCount(DateTime now) async {
-    final monday = mondayOfWeek(now);
-    return weeklyOnTimeCount(await _weekNights(monday));
-  }
+  Future<List<QuestNightInput>> _weekNights(DateTime monday) =>
+      _nights(monday, DateTime(monday.year, monday.month, monday.day + 6));
+
+  /// Nights passed this week, for the dots on the Tonight screen (●●●○○).
+  Future<int> currentWeekPassCount(DateTime now) async =>
+      weeklyPassCount(await _weekNights(mondayOfWeek(now)));
 
   /// Checks last week too: Sunday's night can still be checked in until
   /// Monday 14:00, after the week has already rolled over.
@@ -69,7 +86,7 @@ class QuestRepository {
     )..where((t) => t.weekStart.equals(monday))).getSingleOrNull();
     if (existing?.rewardClaimed == true) return;
 
-    final complete = weeklyOnTimeQuestComplete(await _weekNights(monday));
+    final complete = weeklyQuestComplete(await _weekNights(monday));
     if (!complete) return;
 
     await db
@@ -80,7 +97,7 @@ class QuestRepository {
             rewardClaimed: const Value(true),
           ),
         );
-    await walletRepo.addCoins(EconomyConfig.weeklyOnTimeQuestCoins);
+    await walletRepo.addCoins(EconomyConfig.weeklyQuestCoins);
   }
 
   Future<void> claimExamPeriodRewardsIfComplete(DateTime now) async {
@@ -96,16 +113,9 @@ class QuestRepository {
     final periods = groupExamPeriods(examDates);
     final rangeStart = periods.first.first;
     final rangeEnd = periods.last.last;
-    final checkIns =
-        await (db.select(db.checkIns)..where(
-              (t) =>
-                  t.wakeDate.isBiggerOrEqualValue(rangeStart) &
-                  t.wakeDate.isSmallerOrEqualValue(rangeEnd),
-            ))
-            .get();
     final completeByDate = {
-      for (final row in checkIns)
-        _dateOnly(row.wakeDate): nightPassesDaily(_toQuestInput(row)),
+      for (final night in await _nights(rangeStart, rangeEnd))
+        night.wakeDate: nightPasses(night),
     };
     bool isComplete(DateTime wakeDate) => completeByDate[wakeDate] ?? false;
 

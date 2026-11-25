@@ -80,12 +80,14 @@ enum NightFireEffect { enough, unaffected, missed }
 NightFireEffect determineFireEffect({
   required bool isRedNightFromSchedule,
   required CheckInResult? result,
+  required bool pressedInBed,
 }) {
   if (isRedNightFromSchedule) return NightFireEffect.unaffected;
   if (result == null) return NightFireEffect.missed;
   switch (result) {
     case CheckInResult.enough:
-      return NightFireEffect.enough;
+      // Fire only grows when both buttons were pressed (section 7).
+      return pressedInBed ? NightFireEffect.enough : NightFireEffect.unaffected;
     case CheckInResult.almostEnough:
     case CheckInResult.over:
       return NightFireEffect.unaffected;

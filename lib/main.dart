@@ -5,12 +5,21 @@ import 'app_shell.dart';
 import 'data/database.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'providers.dart';
+import 'services/app_clock.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final clockOffset = await loadClockOffset();
   // Riverpod's automatic retry keeps a failed provider in "loading", which
   // hides errors (e.g. a database that can't open) behind an endless spinner.
-  runApp(ProviderScope(retry: (_, _) => null, child: const GlowApp()));
+  runApp(
+    ProviderScope(
+      retry: (_, _) => null,
+      overrides: [initialClockOffsetProvider.overrideWithValue(clockOffset)],
+      child: const GlowApp(),
+    ),
+  );
 }
 
 class GlowApp extends StatelessWidget {
@@ -20,6 +29,8 @@ class GlowApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Glow',
+      // The demo runs on a debug build; keep the banner off the stage.
+      debugShowCheckedModeBanner: false,
       locale: const Locale('th'),
       supportedLocales: const [Locale('th')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,

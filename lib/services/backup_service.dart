@@ -12,7 +12,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 2;
+  static const _version = 3;
 
   Future<Map<String, dynamic>> buildSnapshot() async {
     Future<List<Map<String, dynamic>>>
@@ -34,6 +34,8 @@ class BackupService {
       'ownedItems': await dump(db.ownedItems),
       'weeklyQuestProgresses': await dump(db.weeklyQuestProgresses),
       'examPeriodClaims': await dump(db.examPeriodClaims),
+      'dayActivities': await dump(db.dayActivities),
+      'routineLogs': await dump(db.routineLogs),
     };
   }
 
@@ -99,6 +101,8 @@ class BackupService {
                 'notifyCheckIn': true,
                 'themeMode': 0,
                 'voiceNoticeAccepted': false,
+                'routineEnabled': true,
+                'hiddenPoseIds': '',
                 ...settingsJson,
               }).toCompanion(false),
               mode: InsertMode.insertOrReplace,
@@ -117,13 +121,20 @@ class BackupService {
       await load(
         'nightPlans',
         db.nightPlans,
-        (j) =>
-            NightPlan.fromJson({'usedShield': false, ...j}).toCompanion(false),
+        // Nights in a backup older than version 3 count as pressed.
+        (j) => NightPlan.fromJson({
+          'usedShield': false,
+          'legacyBedPress': version < 3,
+          'lowEnergy': false,
+          ...j,
+        }).toCompanion(false),
       );
       await load(
         'checkIns',
         db.checkIns,
-        (j) => CheckInRow.fromJson(j).toCompanion(false),
+        (j) =>
+            CheckInRow.fromJson({'pressedInBed': true, ...j})
+                .toCompanion(false),
       );
       await load(
         'fireStates',
@@ -149,6 +160,16 @@ class BackupService {
         'examPeriodClaims',
         db.examPeriodClaims,
         (j) => ExamPeriodClaim.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'dayActivities',
+        db.dayActivities,
+        (j) => DayActivity.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'routineLogs',
+        db.routineLogs,
+        (j) => RoutineLog.fromJson(j).toCompanion(false),
       );
     });
   }
