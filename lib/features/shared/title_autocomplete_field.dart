@@ -6,12 +6,14 @@ class TitleAutocompleteField extends StatelessWidget {
   final String initialValue;
   final List<String> suggestions;
   final ValueChanged<String> onChanged;
+  final String label;
 
   const TitleAutocompleteField({
     super.key,
     required this.initialValue,
     required this.suggestions,
     required this.onChanged,
+    this.label = 'ชื่อวิชา/กิจกรรม',
   });
 
   @override
@@ -28,9 +30,9 @@ class TitleAutocompleteField extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           onChanged: onChanged,
-          decoration: const InputDecoration(
-            labelText: 'ชื่อวิชา/กิจกรรม',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
           ),
         );
       },

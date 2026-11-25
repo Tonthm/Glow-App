@@ -10,6 +10,7 @@ import '../demo/demo_button.dart';
 import '../../theme/theme_gallery_screen.dart';
 import '../shared/minutes_stepper.dart';
 import '../shared/time_of_day_field.dart';
+import 'evening_settings_rows.dart';
 import 'hidden_poses_sheet.dart';
 import 'setting_row.dart';
 import 'battery_optimization_sheet.dart';
@@ -171,6 +172,8 @@ class SettingsScreen extends ConsumerWidget {
                 value: '${hiddenPoseSet(settings).length} ท่า',
                 onTap: () => showHiddenPosesSheet(context),
               ),
+              const _SectionHeader('ตารางเย็น'),
+              EveningSettingsRows(settings: settings),
               const _SectionHeader('ลักษณะที่ปรากฏ'),
               SettingRow(
                 title: 'โหมดสี',

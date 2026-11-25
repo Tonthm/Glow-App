@@ -26,6 +26,8 @@ import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/night_ring.dart';
 import '../../theme/widgets/warning_bar.dart';
+import '../evening/evening_card.dart';
+import '../evening/evening_screen.dart';
 import '../routine/activity_card.dart';
 import '../routine/routine_screen.dart';
 import '../shared/settings_button.dart';
@@ -55,6 +57,7 @@ class TonightPlanData {
   /// When the activity card may appear this evening.
   final DateTime activityCardFrom;
   final bool routineEnabled;
+  final bool eveningEnabled;
   final Set<String> hiddenPoseIds;
   final bool routineDone;
   final ScheduleEntry? firstAppointment;
@@ -75,6 +78,7 @@ class TonightPlanData {
     required this.activitiesConfirmed,
     required this.activityCardFrom,
     required this.routineEnabled,
+    required this.eveningEnabled,
     required this.hiddenPoseIds,
     required this.routineDone,
     required this.firstAppointment,
@@ -127,6 +131,8 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     );
   }
 
+  await ref.watch(eveningRepositoryProvider).carryOverLockedTasks(now);
+
   final wakeDate = resolveTonightWakeDate(now);
   final draft = await repo.getOrLockPlan(wakeDate, now: now);
   final load = await repo.computeEveningLoad(draft);
@@ -168,6 +174,7 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     activitiesConfirmed: savedActivities?.confirmed ?? false,
     activityCardFrom: activityCardFrom(eveningDate, todaysEntries),
     routineEnabled: settings?.routineEnabled ?? true,
+    eveningEnabled: settings?.eveningEnabled ?? true,
     hiddenPoseIds: settings == null ? const {} : hiddenPoseSet(settings),
     routineDone: routineLog?.completed ?? false,
     firstAppointment: await repo.firstAppointment(wakeDate),
@@ -410,7 +417,12 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
             ),
             const SizedBox(height: GlowSpacing.md),
           ],
-          _PlanContent(plan: plan),
+          _PlanContent(
+            plan: plan,
+            onOpenEvening: plan.eveningEnabled
+                ? () => _openEvening(plan)
+                : null,
+          ),
           const SizedBox(height: GlowSpacing.lg),
           if (plan.inBedAt == null &&
               plan.routineEnabled &&
@@ -433,6 +445,10 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                 plan.lowEnergy ? 'ยกเลิก "วันนี้หมดแรง"' : 'วันนี้หมดแรง',
               ),
             ),
+          if (plan.eveningEnabled && plan.inBedAt == null) ...[
+            const SizedBox(height: GlowSpacing.lg),
+            EveningCard(onOpen: () => _openEvening(plan)),
+          ],
         ],
       ],
     );
@@ -448,6 +464,19 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   int _routineMinutes(TonightPlanData plan) {
     final seconds = _routineFor(plan).fold(0, (sum, p) => sum + p.seconds);
     return (seconds / 60).round();
+  }
+
+  Future<void> _openEvening(TonightPlanData plan) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EveningScreen(
+          onStartRoutine: plan.routineEnabled && plan.inBedAt == null
+              ? () => _startRoutine(plan)
+              : null,
+        ),
+      ),
+    );
+    if (mounted) ref.invalidate(tonightPlanProvider);
   }
 
   Future<void> _saveActivities(
@@ -628,7 +657,10 @@ class _EmptyScheduleCard extends ConsumerWidget {
 class _PlanContent extends StatelessWidget {
   final TonightPlanData plan;
 
-  const _PlanContent({required this.plan});
+  /// Tapping the busy-evening bar opens the evening plan.
+  final VoidCallback? onOpenEvening;
+
+  const _PlanContent({required this.plan, this.onOpenEvening});
 
   @override
   Widget build(BuildContext context) {
@@ -659,10 +691,15 @@ class _PlanContent extends StatelessWidget {
         ),
         const SizedBox(height: GlowSpacing.xl),
         if (plan.load.level == EveningLoadLevel.yellow)
-          WarningBar(
-            severity: WarningBarSeverity.yellow,
-            message:
-                'เย็นนี้แน่น ทำงานให้เสร็จก่อน ${_formatTime(plan.load.notifyTime)}',
+          InkWell(
+            onTap: onOpenEvening,
+            child: WarningBar(
+              severity: WarningBarSeverity.yellow,
+              message:
+                  'เย็นนี้แน่น ทำงานให้เสร็จก่อน '
+                  '${_formatTime(plan.load.notifyTime)}'
+                  '${onOpenEvening == null ? '' : ' · แตะเพื่อจัดตารางเย็น'}',
+            ),
           ),
         if (plan.load.level == EveningLoadLevel.red)
           const WarningBar(

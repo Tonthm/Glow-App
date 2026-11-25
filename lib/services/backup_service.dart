@@ -12,7 +12,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 3;
+  static const _version = 4;
 
   Future<Map<String, dynamic>> buildSnapshot() async {
     Future<List<Map<String, dynamic>>>
@@ -36,6 +36,7 @@ class BackupService {
       'examPeriodClaims': await dump(db.examPeriodClaims),
       'dayActivities': await dump(db.dayActivities),
       'routineLogs': await dump(db.routineLogs),
+      'eveningTasks': await dump(db.eveningTasks),
     };
   }
 
@@ -102,6 +103,15 @@ class BackupService {
                 'themeMode': 0,
                 'voiceNoticeAccepted': false,
                 'routineEnabled': true,
+                'eveningEnabled': true,
+                'restMinutes': 30,
+                'dinnerMinutes': 45,
+                'dinnerStartMinutes': 1110,
+                'showerMinutes': 20,
+                'showerOnArrival': false,
+                'maxFocusMinutes': 50,
+                'breakMinutes': 10,
+                'bufferBeforeNotifyMinutes': 15,
                 'hiddenPoseIds': '',
                 ...settingsJson,
               }).toCompanion(false),
@@ -170,6 +180,11 @@ class BackupService {
         'routineLogs',
         db.routineLogs,
         (j) => RoutineLog.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'eveningTasks',
+        db.eveningTasks,
+        (j) => EveningTask.fromJson(j).toCompanion(false),
       );
     });
   }

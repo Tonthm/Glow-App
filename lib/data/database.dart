@@ -58,6 +58,20 @@ class Settings extends Table {
   /// counted as missed check-ins.
   DateTimeColumn get onboardedAt => dateTime().nullable()();
 
+  // Evening planner values (section 14).
+  BoolColumn get eveningEnabled =>
+      boolean().withDefault(const Constant(true))();
+  IntColumn get restMinutes => integer().withDefault(const Constant(30))();
+  IntColumn get dinnerMinutes => integer().withDefault(const Constant(45))();
+  IntColumn get dinnerStartMinutes =>
+      integer().withDefault(const Constant(1110))();
+  IntColumn get showerMinutes => integer().withDefault(const Constant(20))();
+  BoolColumn get showerOnArrival =>
+      boolean().withDefault(const Constant(false))();
+  IntColumn get maxFocusMinutes => integer().withDefault(const Constant(50))();
+  IntColumn get breakMinutes => integer().withDefault(const Constant(10))();
+  IntColumn get bufferBeforeNotifyMinutes =>
+      integer().withDefault(const Constant(15))();
   BoolColumn get routineEnabled =>
       boolean().withDefault(const Constant(true))();
 
@@ -139,6 +153,13 @@ class NightPlans extends Table {
 
   /// "วันนี้หมดแรง" was chosen for this night.
   BoolColumn get lowEnergy => boolean().withDefault(const Constant(false))();
+
+  /// Evening tasks are laid out no earlier than this (after "เสร็จ" or
+  /// "จัดใหม่").
+  DateTimeColumn get eveningFrom => dateTime().nullable()();
+
+  /// "เริ่มตอนนี้" on a day with no classes.
+  DateTimeColumn get eveningStartedAt => dateTime().nullable()();
 
   /// A shield absorbed this night's miss. Kept on the plan because a missed
   /// night has no check-in row to mark.
@@ -275,6 +296,36 @@ class RoutineLogs extends Table {
   Set<Column> get primaryKey => {wakeDate};
 }
 
+/// One of tonight's tasks (section 14). Postponing moves [planDate].
+class EveningTasks extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get title => text()();
+
+  /// The estimate for the whole task.
+  IntColumn get minutes => integer()();
+  IntColumn get doneMinutes => integer().withDefault(const Constant(0))();
+  DateTimeColumn get dueDate => dateTime().nullable()();
+
+  /// EveningTaskKind index.
+  IntColumn get kind => integer()();
+
+  /// The exam this revision is for.
+  DateTimeColumn get examDate => dateTime().nullable()();
+
+  /// The evening it is to be done.
+  DateTimeColumn get planDate => dateTime()();
+
+  /// 0 to do, 1 done.
+  IntColumn get status => integer().withDefault(const Constant(0))();
+  IntColumn get userOrder => integer().nullable()();
+  BoolColumn get carried => boolean().withDefault(const Constant(false))();
+  IntColumn get source =>
+      intEnum<ItemSource>().withDefault(const Constant(0))();
+
+  /// Accepted from a study suggestion.
+  BoolColumn get suggested => boolean().withDefault(const Constant(false))();
+}
+
 @DriftDatabase(
   tables: [
     Settings,
@@ -289,6 +340,7 @@ class RoutineLogs extends Table {
     ExamPeriodClaims,
     DayActivities,
     RoutineLogs,
+    EveningTasks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -297,7 +349,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -369,6 +421,24 @@ class AppDatabase extends _$AppDatabase {
         // Every night planned before this version counts as pressed, so no
         // fire or quest is judged by a button that didn't matter yet.
         await customStatement('UPDATE night_plans SET legacy_bed_press = 1');
+      }
+      if (from < 12) {
+        await m.createTable(eveningTasks);
+        await _addColumnIfMissing(m, settings, settings.eveningEnabled);
+        await _addColumnIfMissing(m, settings, settings.restMinutes);
+        await _addColumnIfMissing(m, settings, settings.dinnerMinutes);
+        await _addColumnIfMissing(m, settings, settings.dinnerStartMinutes);
+        await _addColumnIfMissing(m, settings, settings.showerMinutes);
+        await _addColumnIfMissing(m, settings, settings.showerOnArrival);
+        await _addColumnIfMissing(m, settings, settings.maxFocusMinutes);
+        await _addColumnIfMissing(m, settings, settings.breakMinutes);
+        await _addColumnIfMissing(
+          m,
+          settings,
+          settings.bufferBeforeNotifyMinutes,
+        );
+        await _addColumnIfMissing(m, nightPlans, nightPlans.eveningFrom);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.eveningStartedAt);
       }
     },
   );

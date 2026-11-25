@@ -249,6 +249,119 @@ class $SettingsTable extends Settings
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _eveningEnabledMeta = const VerificationMeta(
+    'eveningEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> eveningEnabled = GeneratedColumn<bool>(
+    'evening_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("evening_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _restMinutesMeta = const VerificationMeta(
+    'restMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> restMinutes = GeneratedColumn<int>(
+    'rest_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(30),
+  );
+  static const VerificationMeta _dinnerMinutesMeta = const VerificationMeta(
+    'dinnerMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> dinnerMinutes = GeneratedColumn<int>(
+    'dinner_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(45),
+  );
+  static const VerificationMeta _dinnerStartMinutesMeta =
+      const VerificationMeta('dinnerStartMinutes');
+  @override
+  late final GeneratedColumn<int> dinnerStartMinutes = GeneratedColumn<int>(
+    'dinner_start_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1110),
+  );
+  static const VerificationMeta _showerMinutesMeta = const VerificationMeta(
+    'showerMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> showerMinutes = GeneratedColumn<int>(
+    'shower_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(20),
+  );
+  static const VerificationMeta _showerOnArrivalMeta = const VerificationMeta(
+    'showerOnArrival',
+  );
+  @override
+  late final GeneratedColumn<bool> showerOnArrival = GeneratedColumn<bool>(
+    'shower_on_arrival',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("shower_on_arrival" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _maxFocusMinutesMeta = const VerificationMeta(
+    'maxFocusMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> maxFocusMinutes = GeneratedColumn<int>(
+    'max_focus_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(50),
+  );
+  static const VerificationMeta _breakMinutesMeta = const VerificationMeta(
+    'breakMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> breakMinutes = GeneratedColumn<int>(
+    'break_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(10),
+  );
+  static const VerificationMeta _bufferBeforeNotifyMinutesMeta =
+      const VerificationMeta('bufferBeforeNotifyMinutes');
+  @override
+  late final GeneratedColumn<int> bufferBeforeNotifyMinutes =
+      GeneratedColumn<int>(
+        'buffer_before_notify_minutes',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(15),
+      );
   static const VerificationMeta _routineEnabledMeta = const VerificationMeta(
     'routineEnabled',
   );
@@ -312,6 +425,15 @@ class $SettingsTable extends Settings
     onboardingCompleted,
     themeMode,
     onboardedAt,
+    eveningEnabled,
+    restMinutes,
+    dinnerMinutes,
+    dinnerStartMinutes,
+    showerMinutes,
+    showerOnArrival,
+    maxFocusMinutes,
+    breakMinutes,
+    bufferBeforeNotifyMinutes,
     routineEnabled,
     hiddenPoseIds,
     voiceNoticeAccepted,
@@ -478,6 +600,87 @@ class $SettingsTable extends Settings
         ),
       );
     }
+    if (data.containsKey('evening_enabled')) {
+      context.handle(
+        _eveningEnabledMeta,
+        eveningEnabled.isAcceptableOrUnknown(
+          data['evening_enabled']!,
+          _eveningEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rest_minutes')) {
+      context.handle(
+        _restMinutesMeta,
+        restMinutes.isAcceptableOrUnknown(
+          data['rest_minutes']!,
+          _restMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dinner_minutes')) {
+      context.handle(
+        _dinnerMinutesMeta,
+        dinnerMinutes.isAcceptableOrUnknown(
+          data['dinner_minutes']!,
+          _dinnerMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dinner_start_minutes')) {
+      context.handle(
+        _dinnerStartMinutesMeta,
+        dinnerStartMinutes.isAcceptableOrUnknown(
+          data['dinner_start_minutes']!,
+          _dinnerStartMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('shower_minutes')) {
+      context.handle(
+        _showerMinutesMeta,
+        showerMinutes.isAcceptableOrUnknown(
+          data['shower_minutes']!,
+          _showerMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('shower_on_arrival')) {
+      context.handle(
+        _showerOnArrivalMeta,
+        showerOnArrival.isAcceptableOrUnknown(
+          data['shower_on_arrival']!,
+          _showerOnArrivalMeta,
+        ),
+      );
+    }
+    if (data.containsKey('max_focus_minutes')) {
+      context.handle(
+        _maxFocusMinutesMeta,
+        maxFocusMinutes.isAcceptableOrUnknown(
+          data['max_focus_minutes']!,
+          _maxFocusMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('break_minutes')) {
+      context.handle(
+        _breakMinutesMeta,
+        breakMinutes.isAcceptableOrUnknown(
+          data['break_minutes']!,
+          _breakMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('buffer_before_notify_minutes')) {
+      context.handle(
+        _bufferBeforeNotifyMinutesMeta,
+        bufferBeforeNotifyMinutes.isAcceptableOrUnknown(
+          data['buffer_before_notify_minutes']!,
+          _bufferBeforeNotifyMinutesMeta,
+        ),
+      );
+    }
     if (data.containsKey('routine_enabled')) {
       context.handle(
         _routineEnabledMeta,
@@ -598,6 +801,42 @@ class $SettingsTable extends Settings
         DriftSqlType.dateTime,
         data['${effectivePrefix}onboarded_at'],
       ),
+      eveningEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}evening_enabled'],
+      )!,
+      restMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rest_minutes'],
+      )!,
+      dinnerMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}dinner_minutes'],
+      )!,
+      dinnerStartMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}dinner_start_minutes'],
+      )!,
+      showerMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}shower_minutes'],
+      )!,
+      showerOnArrival: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}shower_on_arrival'],
+      )!,
+      maxFocusMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_focus_minutes'],
+      )!,
+      breakMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}break_minutes'],
+      )!,
+      bufferBeforeNotifyMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}buffer_before_notify_minutes'],
+      )!,
       routineEnabled: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}routine_enabled'],
@@ -648,6 +887,15 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   /// When onboarding finished. Nights that started before this are never
   /// counted as missed check-ins.
   final DateTime? onboardedAt;
+  final bool eveningEnabled;
+  final int restMinutes;
+  final int dinnerMinutes;
+  final int dinnerStartMinutes;
+  final int showerMinutes;
+  final bool showerOnArrival;
+  final int maxFocusMinutes;
+  final int breakMinutes;
+  final int bufferBeforeNotifyMinutes;
   final bool routineEnabled;
 
   /// Comma-separated pose ids the user doesn't want.
@@ -677,6 +925,15 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.onboardingCompleted,
     required this.themeMode,
     this.onboardedAt,
+    required this.eveningEnabled,
+    required this.restMinutes,
+    required this.dinnerMinutes,
+    required this.dinnerStartMinutes,
+    required this.showerMinutes,
+    required this.showerOnArrival,
+    required this.maxFocusMinutes,
+    required this.breakMinutes,
+    required this.bufferBeforeNotifyMinutes,
     required this.routineEnabled,
     required this.hiddenPoseIds,
     required this.voiceNoticeAccepted,
@@ -718,6 +975,17 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     if (!nullToAbsent || onboardedAt != null) {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt);
     }
+    map['evening_enabled'] = Variable<bool>(eveningEnabled);
+    map['rest_minutes'] = Variable<int>(restMinutes);
+    map['dinner_minutes'] = Variable<int>(dinnerMinutes);
+    map['dinner_start_minutes'] = Variable<int>(dinnerStartMinutes);
+    map['shower_minutes'] = Variable<int>(showerMinutes);
+    map['shower_on_arrival'] = Variable<bool>(showerOnArrival);
+    map['max_focus_minutes'] = Variable<int>(maxFocusMinutes);
+    map['break_minutes'] = Variable<int>(breakMinutes);
+    map['buffer_before_notify_minutes'] = Variable<int>(
+      bufferBeforeNotifyMinutes,
+    );
     map['routine_enabled'] = Variable<bool>(routineEnabled);
     map['hidden_pose_ids'] = Variable<String>(hiddenPoseIds);
     map['voice_notice_accepted'] = Variable<bool>(voiceNoticeAccepted);
@@ -752,6 +1020,15 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardedAt: onboardedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(onboardedAt),
+      eveningEnabled: Value(eveningEnabled),
+      restMinutes: Value(restMinutes),
+      dinnerMinutes: Value(dinnerMinutes),
+      dinnerStartMinutes: Value(dinnerStartMinutes),
+      showerMinutes: Value(showerMinutes),
+      showerOnArrival: Value(showerOnArrival),
+      maxFocusMinutes: Value(maxFocusMinutes),
+      breakMinutes: Value(breakMinutes),
+      bufferBeforeNotifyMinutes: Value(bufferBeforeNotifyMinutes),
       routineEnabled: Value(routineEnabled),
       hiddenPoseIds: Value(hiddenPoseIds),
       voiceNoticeAccepted: Value(voiceNoticeAccepted),
@@ -796,6 +1073,17 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         serializer.fromJson<int>(json['themeMode']),
       ),
       onboardedAt: serializer.fromJson<DateTime?>(json['onboardedAt']),
+      eveningEnabled: serializer.fromJson<bool>(json['eveningEnabled']),
+      restMinutes: serializer.fromJson<int>(json['restMinutes']),
+      dinnerMinutes: serializer.fromJson<int>(json['dinnerMinutes']),
+      dinnerStartMinutes: serializer.fromJson<int>(json['dinnerStartMinutes']),
+      showerMinutes: serializer.fromJson<int>(json['showerMinutes']),
+      showerOnArrival: serializer.fromJson<bool>(json['showerOnArrival']),
+      maxFocusMinutes: serializer.fromJson<int>(json['maxFocusMinutes']),
+      breakMinutes: serializer.fromJson<int>(json['breakMinutes']),
+      bufferBeforeNotifyMinutes: serializer.fromJson<int>(
+        json['bufferBeforeNotifyMinutes'],
+      ),
       routineEnabled: serializer.fromJson<bool>(json['routineEnabled']),
       hiddenPoseIds: serializer.fromJson<String>(json['hiddenPoseIds']),
       voiceNoticeAccepted: serializer.fromJson<bool>(
@@ -831,6 +1119,17 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         $SettingsTable.$converterthemeMode.toJson(themeMode),
       ),
       'onboardedAt': serializer.toJson<DateTime?>(onboardedAt),
+      'eveningEnabled': serializer.toJson<bool>(eveningEnabled),
+      'restMinutes': serializer.toJson<int>(restMinutes),
+      'dinnerMinutes': serializer.toJson<int>(dinnerMinutes),
+      'dinnerStartMinutes': serializer.toJson<int>(dinnerStartMinutes),
+      'showerMinutes': serializer.toJson<int>(showerMinutes),
+      'showerOnArrival': serializer.toJson<bool>(showerOnArrival),
+      'maxFocusMinutes': serializer.toJson<int>(maxFocusMinutes),
+      'breakMinutes': serializer.toJson<int>(breakMinutes),
+      'bufferBeforeNotifyMinutes': serializer.toJson<int>(
+        bufferBeforeNotifyMinutes,
+      ),
       'routineEnabled': serializer.toJson<bool>(routineEnabled),
       'hiddenPoseIds': serializer.toJson<String>(hiddenPoseIds),
       'voiceNoticeAccepted': serializer.toJson<bool>(voiceNoticeAccepted),
@@ -858,6 +1157,15 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bool? onboardingCompleted,
     AppThemeMode? themeMode,
     Value<DateTime?> onboardedAt = const Value.absent(),
+    bool? eveningEnabled,
+    int? restMinutes,
+    int? dinnerMinutes,
+    int? dinnerStartMinutes,
+    int? showerMinutes,
+    bool? showerOnArrival,
+    int? maxFocusMinutes,
+    int? breakMinutes,
+    int? bufferBeforeNotifyMinutes,
     bool? routineEnabled,
     String? hiddenPoseIds,
     bool? voiceNoticeAccepted,
@@ -882,6 +1190,16 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
     themeMode: themeMode ?? this.themeMode,
     onboardedAt: onboardedAt.present ? onboardedAt.value : this.onboardedAt,
+    eveningEnabled: eveningEnabled ?? this.eveningEnabled,
+    restMinutes: restMinutes ?? this.restMinutes,
+    dinnerMinutes: dinnerMinutes ?? this.dinnerMinutes,
+    dinnerStartMinutes: dinnerStartMinutes ?? this.dinnerStartMinutes,
+    showerMinutes: showerMinutes ?? this.showerMinutes,
+    showerOnArrival: showerOnArrival ?? this.showerOnArrival,
+    maxFocusMinutes: maxFocusMinutes ?? this.maxFocusMinutes,
+    breakMinutes: breakMinutes ?? this.breakMinutes,
+    bufferBeforeNotifyMinutes:
+        bufferBeforeNotifyMinutes ?? this.bufferBeforeNotifyMinutes,
     routineEnabled: routineEnabled ?? this.routineEnabled,
     hiddenPoseIds: hiddenPoseIds ?? this.hiddenPoseIds,
     voiceNoticeAccepted: voiceNoticeAccepted ?? this.voiceNoticeAccepted,
@@ -938,6 +1256,33 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardedAt: data.onboardedAt.present
           ? data.onboardedAt.value
           : this.onboardedAt,
+      eveningEnabled: data.eveningEnabled.present
+          ? data.eveningEnabled.value
+          : this.eveningEnabled,
+      restMinutes: data.restMinutes.present
+          ? data.restMinutes.value
+          : this.restMinutes,
+      dinnerMinutes: data.dinnerMinutes.present
+          ? data.dinnerMinutes.value
+          : this.dinnerMinutes,
+      dinnerStartMinutes: data.dinnerStartMinutes.present
+          ? data.dinnerStartMinutes.value
+          : this.dinnerStartMinutes,
+      showerMinutes: data.showerMinutes.present
+          ? data.showerMinutes.value
+          : this.showerMinutes,
+      showerOnArrival: data.showerOnArrival.present
+          ? data.showerOnArrival.value
+          : this.showerOnArrival,
+      maxFocusMinutes: data.maxFocusMinutes.present
+          ? data.maxFocusMinutes.value
+          : this.maxFocusMinutes,
+      breakMinutes: data.breakMinutes.present
+          ? data.breakMinutes.value
+          : this.breakMinutes,
+      bufferBeforeNotifyMinutes: data.bufferBeforeNotifyMinutes.present
+          ? data.bufferBeforeNotifyMinutes.value
+          : this.bufferBeforeNotifyMinutes,
       routineEnabled: data.routineEnabled.present
           ? data.routineEnabled.value
           : this.routineEnabled,
@@ -973,6 +1318,15 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode, ')
           ..write('onboardedAt: $onboardedAt, ')
+          ..write('eveningEnabled: $eveningEnabled, ')
+          ..write('restMinutes: $restMinutes, ')
+          ..write('dinnerMinutes: $dinnerMinutes, ')
+          ..write('dinnerStartMinutes: $dinnerStartMinutes, ')
+          ..write('showerMinutes: $showerMinutes, ')
+          ..write('showerOnArrival: $showerOnArrival, ')
+          ..write('maxFocusMinutes: $maxFocusMinutes, ')
+          ..write('breakMinutes: $breakMinutes, ')
+          ..write('bufferBeforeNotifyMinutes: $bufferBeforeNotifyMinutes, ')
           ..write('routineEnabled: $routineEnabled, ')
           ..write('hiddenPoseIds: $hiddenPoseIds, ')
           ..write('voiceNoticeAccepted: $voiceNoticeAccepted')
@@ -1002,6 +1356,15 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     onboardingCompleted,
     themeMode,
     onboardedAt,
+    eveningEnabled,
+    restMinutes,
+    dinnerMinutes,
+    dinnerStartMinutes,
+    showerMinutes,
+    showerOnArrival,
+    maxFocusMinutes,
+    breakMinutes,
+    bufferBeforeNotifyMinutes,
     routineEnabled,
     hiddenPoseIds,
     voiceNoticeAccepted,
@@ -1030,6 +1393,15 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.onboardingCompleted == this.onboardingCompleted &&
           other.themeMode == this.themeMode &&
           other.onboardedAt == this.onboardedAt &&
+          other.eveningEnabled == this.eveningEnabled &&
+          other.restMinutes == this.restMinutes &&
+          other.dinnerMinutes == this.dinnerMinutes &&
+          other.dinnerStartMinutes == this.dinnerStartMinutes &&
+          other.showerMinutes == this.showerMinutes &&
+          other.showerOnArrival == this.showerOnArrival &&
+          other.maxFocusMinutes == this.maxFocusMinutes &&
+          other.breakMinutes == this.breakMinutes &&
+          other.bufferBeforeNotifyMinutes == this.bufferBeforeNotifyMinutes &&
           other.routineEnabled == this.routineEnabled &&
           other.hiddenPoseIds == this.hiddenPoseIds &&
           other.voiceNoticeAccepted == this.voiceNoticeAccepted);
@@ -1056,6 +1428,15 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<bool> onboardingCompleted;
   final Value<AppThemeMode> themeMode;
   final Value<DateTime?> onboardedAt;
+  final Value<bool> eveningEnabled;
+  final Value<int> restMinutes;
+  final Value<int> dinnerMinutes;
+  final Value<int> dinnerStartMinutes;
+  final Value<int> showerMinutes;
+  final Value<bool> showerOnArrival;
+  final Value<int> maxFocusMinutes;
+  final Value<int> breakMinutes;
+  final Value<int> bufferBeforeNotifyMinutes;
   final Value<bool> routineEnabled;
   final Value<String> hiddenPoseIds;
   final Value<bool> voiceNoticeAccepted;
@@ -1080,6 +1461,15 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.onboardedAt = const Value.absent(),
+    this.eveningEnabled = const Value.absent(),
+    this.restMinutes = const Value.absent(),
+    this.dinnerMinutes = const Value.absent(),
+    this.dinnerStartMinutes = const Value.absent(),
+    this.showerMinutes = const Value.absent(),
+    this.showerOnArrival = const Value.absent(),
+    this.maxFocusMinutes = const Value.absent(),
+    this.breakMinutes = const Value.absent(),
+    this.bufferBeforeNotifyMinutes = const Value.absent(),
     this.routineEnabled = const Value.absent(),
     this.hiddenPoseIds = const Value.absent(),
     this.voiceNoticeAccepted = const Value.absent(),
@@ -1105,6 +1495,15 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.onboardedAt = const Value.absent(),
+    this.eveningEnabled = const Value.absent(),
+    this.restMinutes = const Value.absent(),
+    this.dinnerMinutes = const Value.absent(),
+    this.dinnerStartMinutes = const Value.absent(),
+    this.showerMinutes = const Value.absent(),
+    this.showerOnArrival = const Value.absent(),
+    this.maxFocusMinutes = const Value.absent(),
+    this.breakMinutes = const Value.absent(),
+    this.bufferBeforeNotifyMinutes = const Value.absent(),
     this.routineEnabled = const Value.absent(),
     this.hiddenPoseIds = const Value.absent(),
     this.voiceNoticeAccepted = const Value.absent(),
@@ -1130,6 +1529,15 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<bool>? onboardingCompleted,
     Expression<int>? themeMode,
     Expression<DateTime>? onboardedAt,
+    Expression<bool>? eveningEnabled,
+    Expression<int>? restMinutes,
+    Expression<int>? dinnerMinutes,
+    Expression<int>? dinnerStartMinutes,
+    Expression<int>? showerMinutes,
+    Expression<bool>? showerOnArrival,
+    Expression<int>? maxFocusMinutes,
+    Expression<int>? breakMinutes,
+    Expression<int>? bufferBeforeNotifyMinutes,
     Expression<bool>? routineEnabled,
     Expression<String>? hiddenPoseIds,
     Expression<bool>? voiceNoticeAccepted,
@@ -1161,6 +1569,17 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
         'onboarding_completed': onboardingCompleted,
       if (themeMode != null) 'theme_mode': themeMode,
       if (onboardedAt != null) 'onboarded_at': onboardedAt,
+      if (eveningEnabled != null) 'evening_enabled': eveningEnabled,
+      if (restMinutes != null) 'rest_minutes': restMinutes,
+      if (dinnerMinutes != null) 'dinner_minutes': dinnerMinutes,
+      if (dinnerStartMinutes != null)
+        'dinner_start_minutes': dinnerStartMinutes,
+      if (showerMinutes != null) 'shower_minutes': showerMinutes,
+      if (showerOnArrival != null) 'shower_on_arrival': showerOnArrival,
+      if (maxFocusMinutes != null) 'max_focus_minutes': maxFocusMinutes,
+      if (breakMinutes != null) 'break_minutes': breakMinutes,
+      if (bufferBeforeNotifyMinutes != null)
+        'buffer_before_notify_minutes': bufferBeforeNotifyMinutes,
       if (routineEnabled != null) 'routine_enabled': routineEnabled,
       if (hiddenPoseIds != null) 'hidden_pose_ids': hiddenPoseIds,
       if (voiceNoticeAccepted != null)
@@ -1189,6 +1608,15 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<bool>? onboardingCompleted,
     Value<AppThemeMode>? themeMode,
     Value<DateTime?>? onboardedAt,
+    Value<bool>? eveningEnabled,
+    Value<int>? restMinutes,
+    Value<int>? dinnerMinutes,
+    Value<int>? dinnerStartMinutes,
+    Value<int>? showerMinutes,
+    Value<bool>? showerOnArrival,
+    Value<int>? maxFocusMinutes,
+    Value<int>? breakMinutes,
+    Value<int>? bufferBeforeNotifyMinutes,
     Value<bool>? routineEnabled,
     Value<String>? hiddenPoseIds,
     Value<bool>? voiceNoticeAccepted,
@@ -1214,6 +1642,16 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       themeMode: themeMode ?? this.themeMode,
       onboardedAt: onboardedAt ?? this.onboardedAt,
+      eveningEnabled: eveningEnabled ?? this.eveningEnabled,
+      restMinutes: restMinutes ?? this.restMinutes,
+      dinnerMinutes: dinnerMinutes ?? this.dinnerMinutes,
+      dinnerStartMinutes: dinnerStartMinutes ?? this.dinnerStartMinutes,
+      showerMinutes: showerMinutes ?? this.showerMinutes,
+      showerOnArrival: showerOnArrival ?? this.showerOnArrival,
+      maxFocusMinutes: maxFocusMinutes ?? this.maxFocusMinutes,
+      breakMinutes: breakMinutes ?? this.breakMinutes,
+      bufferBeforeNotifyMinutes:
+          bufferBeforeNotifyMinutes ?? this.bufferBeforeNotifyMinutes,
       routineEnabled: routineEnabled ?? this.routineEnabled,
       hiddenPoseIds: hiddenPoseIds ?? this.hiddenPoseIds,
       voiceNoticeAccepted: voiceNoticeAccepted ?? this.voiceNoticeAccepted,
@@ -1287,6 +1725,35 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     if (onboardedAt.present) {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt.value);
     }
+    if (eveningEnabled.present) {
+      map['evening_enabled'] = Variable<bool>(eveningEnabled.value);
+    }
+    if (restMinutes.present) {
+      map['rest_minutes'] = Variable<int>(restMinutes.value);
+    }
+    if (dinnerMinutes.present) {
+      map['dinner_minutes'] = Variable<int>(dinnerMinutes.value);
+    }
+    if (dinnerStartMinutes.present) {
+      map['dinner_start_minutes'] = Variable<int>(dinnerStartMinutes.value);
+    }
+    if (showerMinutes.present) {
+      map['shower_minutes'] = Variable<int>(showerMinutes.value);
+    }
+    if (showerOnArrival.present) {
+      map['shower_on_arrival'] = Variable<bool>(showerOnArrival.value);
+    }
+    if (maxFocusMinutes.present) {
+      map['max_focus_minutes'] = Variable<int>(maxFocusMinutes.value);
+    }
+    if (breakMinutes.present) {
+      map['break_minutes'] = Variable<int>(breakMinutes.value);
+    }
+    if (bufferBeforeNotifyMinutes.present) {
+      map['buffer_before_notify_minutes'] = Variable<int>(
+        bufferBeforeNotifyMinutes.value,
+      );
+    }
     if (routineEnabled.present) {
       map['routine_enabled'] = Variable<bool>(routineEnabled.value);
     }
@@ -1322,6 +1789,15 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode, ')
           ..write('onboardedAt: $onboardedAt, ')
+          ..write('eveningEnabled: $eveningEnabled, ')
+          ..write('restMinutes: $restMinutes, ')
+          ..write('dinnerMinutes: $dinnerMinutes, ')
+          ..write('dinnerStartMinutes: $dinnerStartMinutes, ')
+          ..write('showerMinutes: $showerMinutes, ')
+          ..write('showerOnArrival: $showerOnArrival, ')
+          ..write('maxFocusMinutes: $maxFocusMinutes, ')
+          ..write('breakMinutes: $breakMinutes, ')
+          ..write('bufferBeforeNotifyMinutes: $bufferBeforeNotifyMinutes, ')
           ..write('routineEnabled: $routineEnabled, ')
           ..write('hiddenPoseIds: $hiddenPoseIds, ')
           ..write('voiceNoticeAccepted: $voiceNoticeAccepted')
@@ -2579,6 +3055,29 @@ class $NightPlansTable extends NightPlans
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _eveningFromMeta = const VerificationMeta(
+    'eveningFrom',
+  );
+  @override
+  late final GeneratedColumn<DateTime> eveningFrom = GeneratedColumn<DateTime>(
+    'evening_from',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _eveningStartedAtMeta = const VerificationMeta(
+    'eveningStartedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> eveningStartedAt =
+      GeneratedColumn<DateTime>(
+        'evening_started_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _usedShieldMeta = const VerificationMeta(
     'usedShield',
   );
@@ -2611,6 +3110,8 @@ class $NightPlansTable extends NightPlans
     legacyBedPress,
     questMode,
     lowEnergy,
+    eveningFrom,
+    eveningStartedAt,
     usedShield,
   ];
   @override
@@ -2742,6 +3243,24 @@ class $NightPlansTable extends NightPlans
         lowEnergy.isAcceptableOrUnknown(data['low_energy']!, _lowEnergyMeta),
       );
     }
+    if (data.containsKey('evening_from')) {
+      context.handle(
+        _eveningFromMeta,
+        eveningFrom.isAcceptableOrUnknown(
+          data['evening_from']!,
+          _eveningFromMeta,
+        ),
+      );
+    }
+    if (data.containsKey('evening_started_at')) {
+      context.handle(
+        _eveningStartedAtMeta,
+        eveningStartedAt.isAcceptableOrUnknown(
+          data['evening_started_at']!,
+          _eveningStartedAtMeta,
+        ),
+      );
+    }
     if (data.containsKey('used_shield')) {
       context.handle(
         _usedShieldMeta,
@@ -2821,6 +3340,14 @@ class $NightPlansTable extends NightPlans
         DriftSqlType.bool,
         data['${effectivePrefix}low_energy'],
       )!,
+      eveningFrom: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}evening_from'],
+      ),
+      eveningStartedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}evening_started_at'],
+      ),
       usedShield: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}used_shield'],
@@ -2868,6 +3395,13 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
   /// "วันนี้หมดแรง" was chosen for this night.
   final bool lowEnergy;
 
+  /// Evening tasks are laid out no earlier than this (after "เสร็จ" or
+  /// "จัดใหม่").
+  final DateTime? eveningFrom;
+
+  /// "เริ่มตอนนี้" on a day with no classes.
+  final DateTime? eveningStartedAt;
+
   /// A shield absorbed this night's miss. Kept on the plan because a missed
   /// night has no check-in row to mark.
   final bool usedShield;
@@ -2887,6 +3421,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     required this.legacyBedPress,
     this.questMode,
     required this.lowEnergy,
+    this.eveningFrom,
+    this.eveningStartedAt,
     required this.usedShield,
   });
   @override
@@ -2917,6 +3453,12 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       map['quest_mode'] = Variable<int>(questMode);
     }
     map['low_energy'] = Variable<bool>(lowEnergy);
+    if (!nullToAbsent || eveningFrom != null) {
+      map['evening_from'] = Variable<DateTime>(eveningFrom);
+    }
+    if (!nullToAbsent || eveningStartedAt != null) {
+      map['evening_started_at'] = Variable<DateTime>(eveningStartedAt);
+    }
     map['used_shield'] = Variable<bool>(usedShield);
     return map;
   }
@@ -2948,6 +3490,12 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ? const Value.absent()
           : Value(questMode),
       lowEnergy: Value(lowEnergy),
+      eveningFrom: eveningFrom == null && nullToAbsent
+          ? const Value.absent()
+          : Value(eveningFrom),
+      eveningStartedAt: eveningStartedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(eveningStartedAt),
       usedShield: Value(usedShield),
     );
   }
@@ -2973,6 +3521,10 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       legacyBedPress: serializer.fromJson<bool>(json['legacyBedPress']),
       questMode: serializer.fromJson<int?>(json['questMode']),
       lowEnergy: serializer.fromJson<bool>(json['lowEnergy']),
+      eveningFrom: serializer.fromJson<DateTime?>(json['eveningFrom']),
+      eveningStartedAt: serializer.fromJson<DateTime?>(
+        json['eveningStartedAt'],
+      ),
       usedShield: serializer.fromJson<bool>(json['usedShield']),
     );
   }
@@ -2995,6 +3547,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       'legacyBedPress': serializer.toJson<bool>(legacyBedPress),
       'questMode': serializer.toJson<int?>(questMode),
       'lowEnergy': serializer.toJson<bool>(lowEnergy),
+      'eveningFrom': serializer.toJson<DateTime?>(eveningFrom),
+      'eveningStartedAt': serializer.toJson<DateTime?>(eveningStartedAt),
       'usedShield': serializer.toJson<bool>(usedShield),
     };
   }
@@ -3015,6 +3569,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     bool? legacyBedPress,
     Value<int?> questMode = const Value.absent(),
     bool? lowEnergy,
+    Value<DateTime?> eveningFrom = const Value.absent(),
+    Value<DateTime?> eveningStartedAt = const Value.absent(),
     bool? usedShield,
   }) => NightPlan(
     id: id ?? this.id,
@@ -3036,6 +3592,10 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     legacyBedPress: legacyBedPress ?? this.legacyBedPress,
     questMode: questMode.present ? questMode.value : this.questMode,
     lowEnergy: lowEnergy ?? this.lowEnergy,
+    eveningFrom: eveningFrom.present ? eveningFrom.value : this.eveningFrom,
+    eveningStartedAt: eveningStartedAt.present
+        ? eveningStartedAt.value
+        : this.eveningStartedAt,
     usedShield: usedShield ?? this.usedShield,
   );
   NightPlan copyWithCompanion(NightPlansCompanion data) {
@@ -3071,6 +3631,12 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           : this.legacyBedPress,
       questMode: data.questMode.present ? data.questMode.value : this.questMode,
       lowEnergy: data.lowEnergy.present ? data.lowEnergy.value : this.lowEnergy,
+      eveningFrom: data.eveningFrom.present
+          ? data.eveningFrom.value
+          : this.eveningFrom,
+      eveningStartedAt: data.eveningStartedAt.present
+          ? data.eveningStartedAt.value
+          : this.eveningStartedAt,
       usedShield: data.usedShield.present
           ? data.usedShield.value
           : this.usedShield,
@@ -3095,6 +3661,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ..write('legacyBedPress: $legacyBedPress, ')
           ..write('questMode: $questMode, ')
           ..write('lowEnergy: $lowEnergy, ')
+          ..write('eveningFrom: $eveningFrom, ')
+          ..write('eveningStartedAt: $eveningStartedAt, ')
           ..write('usedShield: $usedShield')
           ..write(')'))
         .toString();
@@ -3117,6 +3685,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     legacyBedPress,
     questMode,
     lowEnergy,
+    eveningFrom,
+    eveningStartedAt,
     usedShield,
   );
   @override
@@ -3138,6 +3708,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           other.legacyBedPress == this.legacyBedPress &&
           other.questMode == this.questMode &&
           other.lowEnergy == this.lowEnergy &&
+          other.eveningFrom == this.eveningFrom &&
+          other.eveningStartedAt == this.eveningStartedAt &&
           other.usedShield == this.usedShield);
 }
 
@@ -3157,6 +3729,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
   final Value<bool> legacyBedPress;
   final Value<int?> questMode;
   final Value<bool> lowEnergy;
+  final Value<DateTime?> eveningFrom;
+  final Value<DateTime?> eveningStartedAt;
   final Value<bool> usedShield;
   const NightPlansCompanion({
     this.id = const Value.absent(),
@@ -3174,6 +3748,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.legacyBedPress = const Value.absent(),
     this.questMode = const Value.absent(),
     this.lowEnergy = const Value.absent(),
+    this.eveningFrom = const Value.absent(),
+    this.eveningStartedAt = const Value.absent(),
     this.usedShield = const Value.absent(),
   });
   NightPlansCompanion.insert({
@@ -3192,6 +3768,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.legacyBedPress = const Value.absent(),
     this.questMode = const Value.absent(),
     this.lowEnergy = const Value.absent(),
+    this.eveningFrom = const Value.absent(),
+    this.eveningStartedAt = const Value.absent(),
     this.usedShield = const Value.absent(),
   }) : wakeDate = Value(wakeDate),
        plannedWakeAt = Value(plannedWakeAt),
@@ -3212,6 +3790,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Expression<bool>? legacyBedPress,
     Expression<int>? questMode,
     Expression<bool>? lowEnergy,
+    Expression<DateTime>? eveningFrom,
+    Expression<DateTime>? eveningStartedAt,
     Expression<bool>? usedShield,
   }) {
     return RawValuesInsertable({
@@ -3230,6 +3810,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       if (legacyBedPress != null) 'legacy_bed_press': legacyBedPress,
       if (questMode != null) 'quest_mode': questMode,
       if (lowEnergy != null) 'low_energy': lowEnergy,
+      if (eveningFrom != null) 'evening_from': eveningFrom,
+      if (eveningStartedAt != null) 'evening_started_at': eveningStartedAt,
       if (usedShield != null) 'used_shield': usedShield,
     });
   }
@@ -3250,6 +3832,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Value<bool>? legacyBedPress,
     Value<int?>? questMode,
     Value<bool>? lowEnergy,
+    Value<DateTime?>? eveningFrom,
+    Value<DateTime?>? eveningStartedAt,
     Value<bool>? usedShield,
   }) {
     return NightPlansCompanion(
@@ -3268,6 +3852,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       legacyBedPress: legacyBedPress ?? this.legacyBedPress,
       questMode: questMode ?? this.questMode,
       lowEnergy: lowEnergy ?? this.lowEnergy,
+      eveningFrom: eveningFrom ?? this.eveningFrom,
+      eveningStartedAt: eveningStartedAt ?? this.eveningStartedAt,
       usedShield: usedShield ?? this.usedShield,
     );
   }
@@ -3320,6 +3906,12 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     if (lowEnergy.present) {
       map['low_energy'] = Variable<bool>(lowEnergy.value);
     }
+    if (eveningFrom.present) {
+      map['evening_from'] = Variable<DateTime>(eveningFrom.value);
+    }
+    if (eveningStartedAt.present) {
+      map['evening_started_at'] = Variable<DateTime>(eveningStartedAt.value);
+    }
     if (usedShield.present) {
       map['used_shield'] = Variable<bool>(usedShield.value);
     }
@@ -3344,6 +3936,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
           ..write('legacyBedPress: $legacyBedPress, ')
           ..write('questMode: $questMode, ')
           ..write('lowEnergy: $lowEnergy, ')
+          ..write('eveningFrom: $eveningFrom, ')
+          ..write('eveningStartedAt: $eveningStartedAt, ')
           ..write('usedShield: $usedShield')
           ..write(')'))
         .toString();
@@ -6115,6 +6709,765 @@ class RoutineLogsCompanion extends UpdateCompanion<RoutineLog> {
   }
 }
 
+class $EveningTasksTable extends EveningTasks
+    with TableInfo<$EveningTasksTable, EveningTask> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EveningTasksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _minutesMeta = const VerificationMeta(
+    'minutes',
+  );
+  @override
+  late final GeneratedColumn<int> minutes = GeneratedColumn<int>(
+    'minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _doneMinutesMeta = const VerificationMeta(
+    'doneMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> doneMinutes = GeneratedColumn<int>(
+    'done_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dueDateMeta = const VerificationMeta(
+    'dueDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dueDate = GeneratedColumn<DateTime>(
+    'due_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<int> kind = GeneratedColumn<int>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _examDateMeta = const VerificationMeta(
+    'examDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> examDate = GeneratedColumn<DateTime>(
+    'exam_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _planDateMeta = const VerificationMeta(
+    'planDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> planDate = GeneratedColumn<DateTime>(
+    'plan_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<int> status = GeneratedColumn<int>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _userOrderMeta = const VerificationMeta(
+    'userOrder',
+  );
+  @override
+  late final GeneratedColumn<int> userOrder = GeneratedColumn<int>(
+    'user_order',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _carriedMeta = const VerificationMeta(
+    'carried',
+  );
+  @override
+  late final GeneratedColumn<bool> carried = GeneratedColumn<bool>(
+    'carried',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("carried" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<ItemSource, int> source =
+      GeneratedColumn<int>(
+        'source',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<ItemSource>($EveningTasksTable.$convertersource);
+  static const VerificationMeta _suggestedMeta = const VerificationMeta(
+    'suggested',
+  );
+  @override
+  late final GeneratedColumn<bool> suggested = GeneratedColumn<bool>(
+    'suggested',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("suggested" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    title,
+    minutes,
+    doneMinutes,
+    dueDate,
+    kind,
+    examDate,
+    planDate,
+    status,
+    userOrder,
+    carried,
+    source,
+    suggested,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'evening_tasks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EveningTask> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('minutes')) {
+      context.handle(
+        _minutesMeta,
+        minutes.isAcceptableOrUnknown(data['minutes']!, _minutesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_minutesMeta);
+    }
+    if (data.containsKey('done_minutes')) {
+      context.handle(
+        _doneMinutesMeta,
+        doneMinutes.isAcceptableOrUnknown(
+          data['done_minutes']!,
+          _doneMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('due_date')) {
+      context.handle(
+        _dueDateMeta,
+        dueDate.isAcceptableOrUnknown(data['due_date']!, _dueDateMeta),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('exam_date')) {
+      context.handle(
+        _examDateMeta,
+        examDate.isAcceptableOrUnknown(data['exam_date']!, _examDateMeta),
+      );
+    }
+    if (data.containsKey('plan_date')) {
+      context.handle(
+        _planDateMeta,
+        planDate.isAcceptableOrUnknown(data['plan_date']!, _planDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_planDateMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('user_order')) {
+      context.handle(
+        _userOrderMeta,
+        userOrder.isAcceptableOrUnknown(data['user_order']!, _userOrderMeta),
+      );
+    }
+    if (data.containsKey('carried')) {
+      context.handle(
+        _carriedMeta,
+        carried.isAcceptableOrUnknown(data['carried']!, _carriedMeta),
+      );
+    }
+    if (data.containsKey('suggested')) {
+      context.handle(
+        _suggestedMeta,
+        suggested.isAcceptableOrUnknown(data['suggested']!, _suggestedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EveningTask map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EveningTask(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      minutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}minutes'],
+      )!,
+      doneMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}done_minutes'],
+      )!,
+      dueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}due_date'],
+      ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}kind'],
+      )!,
+      examDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}exam_date'],
+      ),
+      planDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}plan_date'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}status'],
+      )!,
+      userOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}user_order'],
+      ),
+      carried: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}carried'],
+      )!,
+      source: $EveningTasksTable.$convertersource.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}source'],
+        )!,
+      ),
+      suggested: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}suggested'],
+      )!,
+    );
+  }
+
+  @override
+  $EveningTasksTable createAlias(String alias) {
+    return $EveningTasksTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<ItemSource, int, int> $convertersource =
+      const EnumIndexConverter<ItemSource>(ItemSource.values);
+}
+
+class EveningTask extends DataClass implements Insertable<EveningTask> {
+  final int id;
+  final String title;
+
+  /// The estimate for the whole task.
+  final int minutes;
+  final int doneMinutes;
+  final DateTime? dueDate;
+
+  /// EveningTaskKind index.
+  final int kind;
+
+  /// The exam this revision is for.
+  final DateTime? examDate;
+
+  /// The evening it is to be done.
+  final DateTime planDate;
+
+  /// 0 to do, 1 done.
+  final int status;
+  final int? userOrder;
+  final bool carried;
+  final ItemSource source;
+
+  /// Accepted from a study suggestion.
+  final bool suggested;
+  const EveningTask({
+    required this.id,
+    required this.title,
+    required this.minutes,
+    required this.doneMinutes,
+    this.dueDate,
+    required this.kind,
+    this.examDate,
+    required this.planDate,
+    required this.status,
+    this.userOrder,
+    required this.carried,
+    required this.source,
+    required this.suggested,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
+    map['minutes'] = Variable<int>(minutes);
+    map['done_minutes'] = Variable<int>(doneMinutes);
+    if (!nullToAbsent || dueDate != null) {
+      map['due_date'] = Variable<DateTime>(dueDate);
+    }
+    map['kind'] = Variable<int>(kind);
+    if (!nullToAbsent || examDate != null) {
+      map['exam_date'] = Variable<DateTime>(examDate);
+    }
+    map['plan_date'] = Variable<DateTime>(planDate);
+    map['status'] = Variable<int>(status);
+    if (!nullToAbsent || userOrder != null) {
+      map['user_order'] = Variable<int>(userOrder);
+    }
+    map['carried'] = Variable<bool>(carried);
+    {
+      map['source'] = Variable<int>(
+        $EveningTasksTable.$convertersource.toSql(source),
+      );
+    }
+    map['suggested'] = Variable<bool>(suggested);
+    return map;
+  }
+
+  EveningTasksCompanion toCompanion(bool nullToAbsent) {
+    return EveningTasksCompanion(
+      id: Value(id),
+      title: Value(title),
+      minutes: Value(minutes),
+      doneMinutes: Value(doneMinutes),
+      dueDate: dueDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueDate),
+      kind: Value(kind),
+      examDate: examDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(examDate),
+      planDate: Value(planDate),
+      status: Value(status),
+      userOrder: userOrder == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userOrder),
+      carried: Value(carried),
+      source: Value(source),
+      suggested: Value(suggested),
+    );
+  }
+
+  factory EveningTask.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EveningTask(
+      id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      minutes: serializer.fromJson<int>(json['minutes']),
+      doneMinutes: serializer.fromJson<int>(json['doneMinutes']),
+      dueDate: serializer.fromJson<DateTime?>(json['dueDate']),
+      kind: serializer.fromJson<int>(json['kind']),
+      examDate: serializer.fromJson<DateTime?>(json['examDate']),
+      planDate: serializer.fromJson<DateTime>(json['planDate']),
+      status: serializer.fromJson<int>(json['status']),
+      userOrder: serializer.fromJson<int?>(json['userOrder']),
+      carried: serializer.fromJson<bool>(json['carried']),
+      source: $EveningTasksTable.$convertersource.fromJson(
+        serializer.fromJson<int>(json['source']),
+      ),
+      suggested: serializer.fromJson<bool>(json['suggested']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
+      'minutes': serializer.toJson<int>(minutes),
+      'doneMinutes': serializer.toJson<int>(doneMinutes),
+      'dueDate': serializer.toJson<DateTime?>(dueDate),
+      'kind': serializer.toJson<int>(kind),
+      'examDate': serializer.toJson<DateTime?>(examDate),
+      'planDate': serializer.toJson<DateTime>(planDate),
+      'status': serializer.toJson<int>(status),
+      'userOrder': serializer.toJson<int?>(userOrder),
+      'carried': serializer.toJson<bool>(carried),
+      'source': serializer.toJson<int>(
+        $EveningTasksTable.$convertersource.toJson(source),
+      ),
+      'suggested': serializer.toJson<bool>(suggested),
+    };
+  }
+
+  EveningTask copyWith({
+    int? id,
+    String? title,
+    int? minutes,
+    int? doneMinutes,
+    Value<DateTime?> dueDate = const Value.absent(),
+    int? kind,
+    Value<DateTime?> examDate = const Value.absent(),
+    DateTime? planDate,
+    int? status,
+    Value<int?> userOrder = const Value.absent(),
+    bool? carried,
+    ItemSource? source,
+    bool? suggested,
+  }) => EveningTask(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    minutes: minutes ?? this.minutes,
+    doneMinutes: doneMinutes ?? this.doneMinutes,
+    dueDate: dueDate.present ? dueDate.value : this.dueDate,
+    kind: kind ?? this.kind,
+    examDate: examDate.present ? examDate.value : this.examDate,
+    planDate: planDate ?? this.planDate,
+    status: status ?? this.status,
+    userOrder: userOrder.present ? userOrder.value : this.userOrder,
+    carried: carried ?? this.carried,
+    source: source ?? this.source,
+    suggested: suggested ?? this.suggested,
+  );
+  EveningTask copyWithCompanion(EveningTasksCompanion data) {
+    return EveningTask(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      minutes: data.minutes.present ? data.minutes.value : this.minutes,
+      doneMinutes: data.doneMinutes.present
+          ? data.doneMinutes.value
+          : this.doneMinutes,
+      dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      examDate: data.examDate.present ? data.examDate.value : this.examDate,
+      planDate: data.planDate.present ? data.planDate.value : this.planDate,
+      status: data.status.present ? data.status.value : this.status,
+      userOrder: data.userOrder.present ? data.userOrder.value : this.userOrder,
+      carried: data.carried.present ? data.carried.value : this.carried,
+      source: data.source.present ? data.source.value : this.source,
+      suggested: data.suggested.present ? data.suggested.value : this.suggested,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EveningTask(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('minutes: $minutes, ')
+          ..write('doneMinutes: $doneMinutes, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('kind: $kind, ')
+          ..write('examDate: $examDate, ')
+          ..write('planDate: $planDate, ')
+          ..write('status: $status, ')
+          ..write('userOrder: $userOrder, ')
+          ..write('carried: $carried, ')
+          ..write('source: $source, ')
+          ..write('suggested: $suggested')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    title,
+    minutes,
+    doneMinutes,
+    dueDate,
+    kind,
+    examDate,
+    planDate,
+    status,
+    userOrder,
+    carried,
+    source,
+    suggested,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EveningTask &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.minutes == this.minutes &&
+          other.doneMinutes == this.doneMinutes &&
+          other.dueDate == this.dueDate &&
+          other.kind == this.kind &&
+          other.examDate == this.examDate &&
+          other.planDate == this.planDate &&
+          other.status == this.status &&
+          other.userOrder == this.userOrder &&
+          other.carried == this.carried &&
+          other.source == this.source &&
+          other.suggested == this.suggested);
+}
+
+class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
+  final Value<int> id;
+  final Value<String> title;
+  final Value<int> minutes;
+  final Value<int> doneMinutes;
+  final Value<DateTime?> dueDate;
+  final Value<int> kind;
+  final Value<DateTime?> examDate;
+  final Value<DateTime> planDate;
+  final Value<int> status;
+  final Value<int?> userOrder;
+  final Value<bool> carried;
+  final Value<ItemSource> source;
+  final Value<bool> suggested;
+  const EveningTasksCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.minutes = const Value.absent(),
+    this.doneMinutes = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.examDate = const Value.absent(),
+    this.planDate = const Value.absent(),
+    this.status = const Value.absent(),
+    this.userOrder = const Value.absent(),
+    this.carried = const Value.absent(),
+    this.source = const Value.absent(),
+    this.suggested = const Value.absent(),
+  });
+  EveningTasksCompanion.insert({
+    this.id = const Value.absent(),
+    required String title,
+    required int minutes,
+    this.doneMinutes = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    required int kind,
+    this.examDate = const Value.absent(),
+    required DateTime planDate,
+    this.status = const Value.absent(),
+    this.userOrder = const Value.absent(),
+    this.carried = const Value.absent(),
+    this.source = const Value.absent(),
+    this.suggested = const Value.absent(),
+  }) : title = Value(title),
+       minutes = Value(minutes),
+       kind = Value(kind),
+       planDate = Value(planDate);
+  static Insertable<EveningTask> custom({
+    Expression<int>? id,
+    Expression<String>? title,
+    Expression<int>? minutes,
+    Expression<int>? doneMinutes,
+    Expression<DateTime>? dueDate,
+    Expression<int>? kind,
+    Expression<DateTime>? examDate,
+    Expression<DateTime>? planDate,
+    Expression<int>? status,
+    Expression<int>? userOrder,
+    Expression<bool>? carried,
+    Expression<int>? source,
+    Expression<bool>? suggested,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (minutes != null) 'minutes': minutes,
+      if (doneMinutes != null) 'done_minutes': doneMinutes,
+      if (dueDate != null) 'due_date': dueDate,
+      if (kind != null) 'kind': kind,
+      if (examDate != null) 'exam_date': examDate,
+      if (planDate != null) 'plan_date': planDate,
+      if (status != null) 'status': status,
+      if (userOrder != null) 'user_order': userOrder,
+      if (carried != null) 'carried': carried,
+      if (source != null) 'source': source,
+      if (suggested != null) 'suggested': suggested,
+    });
+  }
+
+  EveningTasksCompanion copyWith({
+    Value<int>? id,
+    Value<String>? title,
+    Value<int>? minutes,
+    Value<int>? doneMinutes,
+    Value<DateTime?>? dueDate,
+    Value<int>? kind,
+    Value<DateTime?>? examDate,
+    Value<DateTime>? planDate,
+    Value<int>? status,
+    Value<int?>? userOrder,
+    Value<bool>? carried,
+    Value<ItemSource>? source,
+    Value<bool>? suggested,
+  }) {
+    return EveningTasksCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      minutes: minutes ?? this.minutes,
+      doneMinutes: doneMinutes ?? this.doneMinutes,
+      dueDate: dueDate ?? this.dueDate,
+      kind: kind ?? this.kind,
+      examDate: examDate ?? this.examDate,
+      planDate: planDate ?? this.planDate,
+      status: status ?? this.status,
+      userOrder: userOrder ?? this.userOrder,
+      carried: carried ?? this.carried,
+      source: source ?? this.source,
+      suggested: suggested ?? this.suggested,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (minutes.present) {
+      map['minutes'] = Variable<int>(minutes.value);
+    }
+    if (doneMinutes.present) {
+      map['done_minutes'] = Variable<int>(doneMinutes.value);
+    }
+    if (dueDate.present) {
+      map['due_date'] = Variable<DateTime>(dueDate.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<int>(kind.value);
+    }
+    if (examDate.present) {
+      map['exam_date'] = Variable<DateTime>(examDate.value);
+    }
+    if (planDate.present) {
+      map['plan_date'] = Variable<DateTime>(planDate.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<int>(status.value);
+    }
+    if (userOrder.present) {
+      map['user_order'] = Variable<int>(userOrder.value);
+    }
+    if (carried.present) {
+      map['carried'] = Variable<bool>(carried.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<int>(
+        $EveningTasksTable.$convertersource.toSql(source.value),
+      );
+    }
+    if (suggested.present) {
+      map['suggested'] = Variable<bool>(suggested.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EveningTasksCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('minutes: $minutes, ')
+          ..write('doneMinutes: $doneMinutes, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('kind: $kind, ')
+          ..write('examDate: $examDate, ')
+          ..write('planDate: $planDate, ')
+          ..write('status: $status, ')
+          ..write('userOrder: $userOrder, ')
+          ..write('carried: $carried, ')
+          ..write('source: $source, ')
+          ..write('suggested: $suggested')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6133,6 +7486,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $DayActivitiesTable dayActivities = $DayActivitiesTable(this);
   late final $RoutineLogsTable routineLogs = $RoutineLogsTable(this);
+  late final $EveningTasksTable eveningTasks = $EveningTasksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6150,6 +7504,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     examPeriodClaims,
     dayActivities,
     routineLogs,
+    eveningTasks,
   ];
 }
 
@@ -6174,6 +7529,15 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
   Value<DateTime?> onboardedAt,
+  Value<bool> eveningEnabled,
+  Value<int> restMinutes,
+  Value<int> dinnerMinutes,
+  Value<int> dinnerStartMinutes,
+  Value<int> showerMinutes,
+  Value<bool> showerOnArrival,
+  Value<int> maxFocusMinutes,
+  Value<int> breakMinutes,
+  Value<int> bufferBeforeNotifyMinutes,
   Value<bool> routineEnabled,
   Value<String> hiddenPoseIds,
   Value<bool> voiceNoticeAccepted,
@@ -6199,6 +7563,15 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
   Value<DateTime?> onboardedAt,
+  Value<bool> eveningEnabled,
+  Value<int> restMinutes,
+  Value<int> dinnerMinutes,
+  Value<int> dinnerStartMinutes,
+  Value<int> showerMinutes,
+  Value<bool> showerOnArrival,
+  Value<int> maxFocusMinutes,
+  Value<int> breakMinutes,
+  Value<int> bufferBeforeNotifyMinutes,
   Value<bool> routineEnabled,
   Value<String> hiddenPoseIds,
   Value<bool> voiceNoticeAccepted,
@@ -6312,6 +7685,51 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<DateTime> get onboardedAt => $composableBuilder(
     column: $table.onboardedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get eveningEnabled => $composableBuilder(
+    column: $table.eveningEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get restMinutes => $composableBuilder(
+    column: $table.restMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dinnerMinutes => $composableBuilder(
+    column: $table.dinnerMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dinnerStartMinutes => $composableBuilder(
+    column: $table.dinnerStartMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get showerMinutes => $composableBuilder(
+    column: $table.showerMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showerOnArrival => $composableBuilder(
+    column: $table.showerOnArrival,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxFocusMinutes => $composableBuilder(
+    column: $table.maxFocusMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get breakMinutes => $composableBuilder(
+    column: $table.breakMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bufferBeforeNotifyMinutes => $composableBuilder(
+    column: $table.bufferBeforeNotifyMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6440,6 +7858,51 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get eveningEnabled => $composableBuilder(
+    column: $table.eveningEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get restMinutes => $composableBuilder(
+    column: $table.restMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dinnerMinutes => $composableBuilder(
+    column: $table.dinnerMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dinnerStartMinutes => $composableBuilder(
+    column: $table.dinnerStartMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get showerMinutes => $composableBuilder(
+    column: $table.showerMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showerOnArrival => $composableBuilder(
+    column: $table.showerOnArrival,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maxFocusMinutes => $composableBuilder(
+    column: $table.maxFocusMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get breakMinutes => $composableBuilder(
+    column: $table.breakMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bufferBeforeNotifyMinutes => $composableBuilder(
+    column: $table.bufferBeforeNotifyMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get routineEnabled => $composableBuilder(
     column: $table.routineEnabled,
     builder: (column) => ColumnOrderings(column),
@@ -6555,6 +8018,51 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get eveningEnabled => $composableBuilder(
+    column: $table.eveningEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get restMinutes => $composableBuilder(
+    column: $table.restMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dinnerMinutes => $composableBuilder(
+    column: $table.dinnerMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dinnerStartMinutes => $composableBuilder(
+    column: $table.dinnerStartMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get showerMinutes => $composableBuilder(
+    column: $table.showerMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showerOnArrival => $composableBuilder(
+    column: $table.showerOnArrival,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get maxFocusMinutes => $composableBuilder(
+    column: $table.maxFocusMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get breakMinutes => $composableBuilder(
+    column: $table.breakMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get bufferBeforeNotifyMinutes => $composableBuilder(
+    column: $table.bufferBeforeNotifyMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get routineEnabled => $composableBuilder(
     column: $table.routineEnabled,
     builder: (column) => column,
@@ -6622,6 +8130,15 @@ class $$SettingsTableTableManager
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<bool> eveningEnabled = const Value.absent(),
+                Value<int> restMinutes = const Value.absent(),
+                Value<int> dinnerMinutes = const Value.absent(),
+                Value<int> dinnerStartMinutes = const Value.absent(),
+                Value<int> showerMinutes = const Value.absent(),
+                Value<bool> showerOnArrival = const Value.absent(),
+                Value<int> maxFocusMinutes = const Value.absent(),
+                Value<int> breakMinutes = const Value.absent(),
+                Value<int> bufferBeforeNotifyMinutes = const Value.absent(),
                 Value<bool> routineEnabled = const Value.absent(),
                 Value<String> hiddenPoseIds = const Value.absent(),
                 Value<bool> voiceNoticeAccepted = const Value.absent(),
@@ -6646,6 +8163,15 @@ class $$SettingsTableTableManager
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
                 onboardedAt: onboardedAt,
+                eveningEnabled: eveningEnabled,
+                restMinutes: restMinutes,
+                dinnerMinutes: dinnerMinutes,
+                dinnerStartMinutes: dinnerStartMinutes,
+                showerMinutes: showerMinutes,
+                showerOnArrival: showerOnArrival,
+                maxFocusMinutes: maxFocusMinutes,
+                breakMinutes: breakMinutes,
+                bufferBeforeNotifyMinutes: bufferBeforeNotifyMinutes,
                 routineEnabled: routineEnabled,
                 hiddenPoseIds: hiddenPoseIds,
                 voiceNoticeAccepted: voiceNoticeAccepted,
@@ -6672,6 +8198,15 @@ class $$SettingsTableTableManager
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<bool> eveningEnabled = const Value.absent(),
+                Value<int> restMinutes = const Value.absent(),
+                Value<int> dinnerMinutes = const Value.absent(),
+                Value<int> dinnerStartMinutes = const Value.absent(),
+                Value<int> showerMinutes = const Value.absent(),
+                Value<bool> showerOnArrival = const Value.absent(),
+                Value<int> maxFocusMinutes = const Value.absent(),
+                Value<int> breakMinutes = const Value.absent(),
+                Value<int> bufferBeforeNotifyMinutes = const Value.absent(),
                 Value<bool> routineEnabled = const Value.absent(),
                 Value<String> hiddenPoseIds = const Value.absent(),
                 Value<bool> voiceNoticeAccepted = const Value.absent(),
@@ -6696,6 +8231,15 @@ class $$SettingsTableTableManager
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
                 onboardedAt: onboardedAt,
+                eveningEnabled: eveningEnabled,
+                restMinutes: restMinutes,
+                dinnerMinutes: dinnerMinutes,
+                dinnerStartMinutes: dinnerStartMinutes,
+                showerMinutes: showerMinutes,
+                showerOnArrival: showerOnArrival,
+                maxFocusMinutes: maxFocusMinutes,
+                breakMinutes: breakMinutes,
+                bufferBeforeNotifyMinutes: bufferBeforeNotifyMinutes,
                 routineEnabled: routineEnabled,
                 hiddenPoseIds: hiddenPoseIds,
                 voiceNoticeAccepted: voiceNoticeAccepted,
@@ -7283,6 +8827,8 @@ typedef $$NightPlansTableCreateCompanionBuilder = NightPlansCompanion Function({
   Value<bool> legacyBedPress,
   Value<int?> questMode,
   Value<bool> lowEnergy,
+  Value<DateTime?> eveningFrom,
+  Value<DateTime?> eveningStartedAt,
   Value<bool> usedShield,
 });
 typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
@@ -7301,6 +8847,8 @@ typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
   Value<bool> legacyBedPress,
   Value<int?> questMode,
   Value<bool> lowEnergy,
+  Value<DateTime?> eveningFrom,
+  Value<DateTime?> eveningStartedAt,
   Value<bool> usedShield,
 });
 
@@ -7385,6 +8933,16 @@ class $$NightPlansTableFilterComposer
 
   ColumnFilters<bool> get lowEnergy => $composableBuilder(
     column: $table.lowEnergy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get eveningFrom => $composableBuilder(
+    column: $table.eveningFrom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get eveningStartedAt => $composableBuilder(
+    column: $table.eveningStartedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7478,6 +9036,16 @@ class $$NightPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get eveningFrom => $composableBuilder(
+    column: $table.eveningFrom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get eveningStartedAt => $composableBuilder(
+    column: $table.eveningStartedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get usedShield => $composableBuilder(
     column: $table.usedShield,
     builder: (column) => ColumnOrderings(column),
@@ -7554,6 +9122,16 @@ class $$NightPlansTableAnnotationComposer
   GeneratedColumn<bool> get lowEnergy =>
       $composableBuilder(column: $table.lowEnergy, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get eveningFrom => $composableBuilder(
+    column: $table.eveningFrom,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get eveningStartedAt => $composableBuilder(
+    column: $table.eveningStartedAt,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get usedShield => $composableBuilder(
     column: $table.usedShield,
     builder: (column) => column,
@@ -7606,6 +9184,8 @@ class $$NightPlansTableTableManager
                 Value<bool> legacyBedPress = const Value.absent(),
                 Value<int?> questMode = const Value.absent(),
                 Value<bool> lowEnergy = const Value.absent(),
+                Value<DateTime?> eveningFrom = const Value.absent(),
+                Value<DateTime?> eveningStartedAt = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
               }) => NightPlansCompanion(
                 id: id,
@@ -7623,6 +9203,8 @@ class $$NightPlansTableTableManager
                 legacyBedPress: legacyBedPress,
                 questMode: questMode,
                 lowEnergy: lowEnergy,
+                eveningFrom: eveningFrom,
+                eveningStartedAt: eveningStartedAt,
                 usedShield: usedShield,
               ),
           createCompanionCallback:
@@ -7642,6 +9224,8 @@ class $$NightPlansTableTableManager
                 Value<bool> legacyBedPress = const Value.absent(),
                 Value<int?> questMode = const Value.absent(),
                 Value<bool> lowEnergy = const Value.absent(),
+                Value<DateTime?> eveningFrom = const Value.absent(),
+                Value<DateTime?> eveningStartedAt = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
               }) => NightPlansCompanion.insert(
                 id: id,
@@ -7659,6 +9243,8 @@ class $$NightPlansTableTableManager
                 legacyBedPress: legacyBedPress,
                 questMode: questMode,
                 lowEnergy: lowEnergy,
+                eveningFrom: eveningFrom,
+                eveningStartedAt: eveningStartedAt,
                 usedShield: usedShield,
               ),
           withReferenceMapper: (p0) => p0
@@ -9298,6 +10884,364 @@ typedef $$RoutineLogsTableProcessedTableManager =
       RoutineLog,
       PrefetchHooks Function()
     >;
+typedef $$EveningTasksTableCreateCompanionBuilder =
+    EveningTasksCompanion Function({
+      Value<int> id,
+      required String title,
+      required int minutes,
+      Value<int> doneMinutes,
+      Value<DateTime?> dueDate,
+      required int kind,
+      Value<DateTime?> examDate,
+      required DateTime planDate,
+      Value<int> status,
+      Value<int?> userOrder,
+      Value<bool> carried,
+      Value<ItemSource> source,
+      Value<bool> suggested,
+    });
+typedef $$EveningTasksTableUpdateCompanionBuilder =
+    EveningTasksCompanion Function({
+      Value<int> id,
+      Value<String> title,
+      Value<int> minutes,
+      Value<int> doneMinutes,
+      Value<DateTime?> dueDate,
+      Value<int> kind,
+      Value<DateTime?> examDate,
+      Value<DateTime> planDate,
+      Value<int> status,
+      Value<int?> userOrder,
+      Value<bool> carried,
+      Value<ItemSource> source,
+      Value<bool> suggested,
+    });
+
+class $$EveningTasksTableFilterComposer
+    extends Composer<_$AppDatabase, $EveningTasksTable> {
+  $$EveningTasksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minutes => $composableBuilder(
+    column: $table.minutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get doneMinutes => $composableBuilder(
+    column: $table.doneMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get examDate => $composableBuilder(
+    column: $table.examDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get planDate => $composableBuilder(
+    column: $table.planDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get userOrder => $composableBuilder(
+    column: $table.userOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get carried => $composableBuilder(
+    column: $table.carried,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<ItemSource, ItemSource, int> get source =>
+      $composableBuilder(
+        column: $table.source,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<bool> get suggested => $composableBuilder(
+    column: $table.suggested,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$EveningTasksTableOrderingComposer
+    extends Composer<_$AppDatabase, $EveningTasksTable> {
+  $$EveningTasksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minutes => $composableBuilder(
+    column: $table.minutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get doneMinutes => $composableBuilder(
+    column: $table.doneMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get examDate => $composableBuilder(
+    column: $table.examDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get planDate => $composableBuilder(
+    column: $table.planDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get userOrder => $composableBuilder(
+    column: $table.userOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get carried => $composableBuilder(
+    column: $table.carried,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get suggested => $composableBuilder(
+    column: $table.suggested,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$EveningTasksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EveningTasksTable> {
+  $$EveningTasksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<int> get minutes =>
+      $composableBuilder(column: $table.minutes, builder: (column) => column);
+
+  GeneratedColumn<int> get doneMinutes => $composableBuilder(
+    column: $table.doneMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get dueDate =>
+      $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<int> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get examDate =>
+      $composableBuilder(column: $table.examDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get planDate =>
+      $composableBuilder(column: $table.planDate, builder: (column) => column);
+
+  GeneratedColumn<int> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get userOrder =>
+      $composableBuilder(column: $table.userOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get carried =>
+      $composableBuilder(column: $table.carried, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<ItemSource, int> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<bool> get suggested =>
+      $composableBuilder(column: $table.suggested, builder: (column) => column);
+}
+
+class $$EveningTasksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EveningTasksTable,
+          EveningTask,
+          $$EveningTasksTableFilterComposer,
+          $$EveningTasksTableOrderingComposer,
+          $$EveningTasksTableAnnotationComposer,
+          $$EveningTasksTableCreateCompanionBuilder,
+          $$EveningTasksTableUpdateCompanionBuilder,
+          (
+            EveningTask,
+            BaseReferences<_$AppDatabase, $EveningTasksTable, EveningTask>,
+          ),
+          EveningTask,
+          PrefetchHooks Function()
+        > {
+  $$EveningTasksTableTableManager(_$AppDatabase db, $EveningTasksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EveningTasksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EveningTasksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EveningTasksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<int> minutes = const Value.absent(),
+                Value<int> doneMinutes = const Value.absent(),
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<int> kind = const Value.absent(),
+                Value<DateTime?> examDate = const Value.absent(),
+                Value<DateTime> planDate = const Value.absent(),
+                Value<int> status = const Value.absent(),
+                Value<int?> userOrder = const Value.absent(),
+                Value<bool> carried = const Value.absent(),
+                Value<ItemSource> source = const Value.absent(),
+                Value<bool> suggested = const Value.absent(),
+              }) => EveningTasksCompanion(
+                id: id,
+                title: title,
+                minutes: minutes,
+                doneMinutes: doneMinutes,
+                dueDate: dueDate,
+                kind: kind,
+                examDate: examDate,
+                planDate: planDate,
+                status: status,
+                userOrder: userOrder,
+                carried: carried,
+                source: source,
+                suggested: suggested,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String title,
+                required int minutes,
+                Value<int> doneMinutes = const Value.absent(),
+                Value<DateTime?> dueDate = const Value.absent(),
+                required int kind,
+                Value<DateTime?> examDate = const Value.absent(),
+                required DateTime planDate,
+                Value<int> status = const Value.absent(),
+                Value<int?> userOrder = const Value.absent(),
+                Value<bool> carried = const Value.absent(),
+                Value<ItemSource> source = const Value.absent(),
+                Value<bool> suggested = const Value.absent(),
+              }) => EveningTasksCompanion.insert(
+                id: id,
+                title: title,
+                minutes: minutes,
+                doneMinutes: doneMinutes,
+                dueDate: dueDate,
+                kind: kind,
+                examDate: examDate,
+                planDate: planDate,
+                status: status,
+                userOrder: userOrder,
+                carried: carried,
+                source: source,
+                suggested: suggested,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$EveningTasksTable, EveningTask>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $EveningTasksTable,
+                    EveningTask
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$EveningTasksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EveningTasksTable,
+      EveningTask,
+      $$EveningTasksTableFilterComposer,
+      $$EveningTasksTableOrderingComposer,
+      $$EveningTasksTableAnnotationComposer,
+      $$EveningTasksTableCreateCompanionBuilder,
+      $$EveningTasksTableUpdateCompanionBuilder,
+      (
+        EveningTask,
+        BaseReferences<_$AppDatabase, $EveningTasksTable, EveningTask>,
+      ),
+      EveningTask,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9326,4 +11270,6 @@ class $AppDatabaseManager {
       $$DayActivitiesTableTableManager(_db, _db.dayActivities);
   $$RoutineLogsTableTableManager get routineLogs =>
       $$RoutineLogsTableTableManager(_db, _db.routineLogs);
+  $$EveningTasksTableTableManager get eveningTasks =>
+      $$EveningTasksTableTableManager(_db, _db.eveningTasks);
 }

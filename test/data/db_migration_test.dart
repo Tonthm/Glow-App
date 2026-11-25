@@ -4,6 +4,21 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
+const _rewindFrom12 = [
+  'ALTER TABLE settings DROP COLUMN evening_enabled',
+  'ALTER TABLE settings DROP COLUMN rest_minutes',
+  'ALTER TABLE settings DROP COLUMN dinner_minutes',
+  'ALTER TABLE settings DROP COLUMN dinner_start_minutes',
+  'ALTER TABLE settings DROP COLUMN shower_minutes',
+  'ALTER TABLE settings DROP COLUMN shower_on_arrival',
+  'ALTER TABLE settings DROP COLUMN max_focus_minutes',
+  'ALTER TABLE settings DROP COLUMN break_minutes',
+  'ALTER TABLE settings DROP COLUMN buffer_before_notify_minutes',
+  'ALTER TABLE night_plans DROP COLUMN evening_from',
+  'ALTER TABLE night_plans DROP COLUMN evening_started_at',
+  'DROP TABLE evening_tasks',
+];
+
 /// What schema 11 added to tables that existed before it. The check_ins
 /// columns are only listed for rewinds that keep that table.
 const _rewindFrom11 = [
@@ -14,6 +29,7 @@ const _rewindFrom11 = [
   'ALTER TABLE night_plans DROP COLUMN low_energy',
   'DROP TABLE day_activities',
   'DROP TABLE routine_logs',
+  ..._rewindFrom12,
 ];
 
 /// Rewinds a freshly created database to what schema version 2 looked like.

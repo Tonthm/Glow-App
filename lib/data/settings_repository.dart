@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../core/evening_planner.dart';
 import '../core/sleep_calculator.dart';
 import 'database.dart';
 
@@ -153,6 +154,24 @@ class SettingsRepository {
         onboardedAt: Value(now),
       ),
     );
+  }
+}
+
+EveningSettings toEveningSettings(SettingsRow row) => EveningSettings(
+  restMinutes: row.restMinutes,
+  dinnerMinutes: row.dinnerMinutes,
+  dinnerStartMinutes: row.dinnerStartMinutes,
+  showerMinutes: row.showerMinutes,
+  showerOnArrival: row.showerOnArrival,
+  maxFocusMinutes: row.maxFocusMinutes,
+  breakMinutes: row.breakMinutes,
+  bufferBeforeNotifyMinutes: row.bufferBeforeNotifyMinutes,
+);
+
+/// Saves any of the evening planner values.
+extension EveningSettingsWriter on SettingsRepository {
+  Future<void> updateEvening(SettingsCompanion changes) async {
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(changes);
   }
 }
 

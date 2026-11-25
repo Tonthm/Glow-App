@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import 'data/check_in_repository.dart';
 import 'data/database.dart';
+import 'data/evening_repository.dart';
 import 'data/fire_repository.dart';
 import 'data/night_planning_repository.dart';
 import 'data/quest_repository.dart';
@@ -76,6 +77,37 @@ final routineRepositoryProvider = Provider<RoutineRepository>((ref) {
     ref.watch(databaseProvider),
     ref.watch(walletRepositoryProvider),
   );
+});
+
+final eveningRepositoryProvider = Provider<EveningRepository>((ref) {
+  return EveningRepository(
+    ref.watch(databaseProvider),
+    ref.watch(nightPlanningRepositoryProvider),
+    ref.watch(settingsRepositoryProvider),
+  );
+});
+
+final eveningChangesProvider = StreamProvider<void>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.tableUpdates(
+    TableUpdateQuery.onAllTables([
+      db.eveningTasks,
+      db.weeklyItems,
+      db.oneTimeItems,
+      db.settings,
+      db.nightPlans,
+    ]),
+  );
+});
+
+/// Task names typed before, newest first, for suggestions.
+final taskTitlesProvider = FutureProvider.autoDispose<List<String>>((
+  ref,
+) async {
+  ref.watch(eveningChangesProvider);
+  final db = ref.watch(databaseProvider);
+  final rows = await db.select(db.eveningTasks).get();
+  return <String>{for (final row in rows.reversed) row.title}.toList();
 });
 
 final shopRepositoryProvider = Provider<ShopRepository>((ref) {

@@ -6,9 +6,9 @@ import '../../core/thai_schedule_parser.dart';
 import '../../providers.dart';
 import '../../services/speech_service.dart';
 import '../../theme/tokens.dart';
-import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import 'add_item_sheet.dart';
+import 'voice_notice.dart';
 import 'voice_review_screen.dart';
 import '../../services/app_clock.dart';
 
@@ -47,7 +47,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
       await _speech.stop();
       return;
     }
-    if (!await _acceptNotice()) return;
+    if (!await acceptVoiceNotice(context, ref)) return;
     final ready = await _speech.prepare();
     if (!mounted) return;
     if (!ready) {
@@ -77,42 +77,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
         });
       },
     );
-  }
-
-  /// Shown once, before the very first recording (section 11).
-  Future<bool> _acceptNotice() async {
-    final repo = ref.read(settingsRepositoryProvider);
-    if ((await repo.get()).voiceNoticeAccepted) return true;
-    if (!mounted) return false;
-    final accepted = await showGlowBottomSheet<bool>(
-      context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('ก่อนใช้ไมค์', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: GlowSpacing.sm),
-          Text(
-            'Glow ใช้ระบบแปลงเสียงของเครื่อง ถ้าเครื่องไม่มีภาษาไทยแบบ'
-            'ออฟไลน์ เสียงของคุณจะถูกส่งไปที่ Google เพื่อแปลงเป็นข้อความ '
-            'Glow ไม่ได้บันทึกเสียงไว้ ถ้าไม่สะดวก พิมพ์แทนได้',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: GlowSpacing.lg),
-          GlowPrimaryButton(
-            label: 'เข้าใจแล้ว',
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('ยกเลิก'),
-          ),
-        ],
-      ),
-    );
-    if (accepted != true) return false;
-    await repo.markVoiceNoticeAccepted();
-    return true;
   }
 
   Future<void> _split() async {

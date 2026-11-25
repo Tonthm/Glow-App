@@ -184,6 +184,12 @@ class NightPlanningRepository {
     });
   }
 
+  Future<void> setEveningFrom(DateTime wakeDate, DateTime from) =>
+      _upsertPlan(wakeDate, NightPlansCompanion(eveningFrom: Value(from)));
+
+  Future<void> setEveningStartedAt(DateTime wakeDate, DateTime at) =>
+      _upsertPlan(wakeDate, NightPlansCompanion(eveningStartedAt: Value(at)));
+
   /// "ยังไม่นอน": forgets the press so it can be made again.
   Future<void> undoInBed(DateTime wakeDate) {
     return _upsertPlan(
