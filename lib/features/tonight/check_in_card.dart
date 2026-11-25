@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/bed_press.dart';
 import '../../core/check_in.dart';
 import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
@@ -33,7 +34,8 @@ class CheckInCard extends ConsumerStatefulWidget {
 }
 
 class _CheckInCardState extends ConsumerState<CheckInCard> {
-  late DateTime _lightsOffAt = widget.pending.plannedBedtime;
+  late DateTime _lightsOffAt = widget.pending.defaultLightsOff;
+  late LightsOffSource _source = widget.pending.defaultSource;
   late DateTime _wakeAt = widget.pending.plannedWakeTime;
   bool _submitting = false;
 
@@ -48,6 +50,7 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
     );
     if (result != null) {
       setState(() {
+        if (result.$1 != _lightsOffAt) _source = LightsOffSource.edited;
         _lightsOffAt = result.$1;
         _wakeAt = result.$2;
       });
@@ -67,6 +70,7 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
         lightsOffAt: _lightsOffAt,
         actualWakeAt: _wakeAt,
         now: now,
+        source: _source,
       );
       final fireAfter = await fireRepo.get();
       await ref
@@ -108,6 +112,8 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
           'นอน ${duration.inHours} ชม. ${duration.inMinutes % 60} นาที',
           style: textTheme.bodyMedium,
         ),
+        if (!widget.pending.countsAsPressed)
+          Text('เมื่อคืนไม่ได้กดเข้านอน', style: textTheme.labelSmall),
         const SizedBox(height: GlowSpacing.xl),
         GlowPrimaryButton(
           label: 'ใช่ ตามนี้',

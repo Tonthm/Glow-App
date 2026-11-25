@@ -3,6 +3,7 @@ package com.example.glow
 import android.Manifest
 import android.content.ContentUris
 import android.content.pm.PackageManager
+import android.view.WindowManager
 import android.provider.CalendarContract
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -22,6 +23,19 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "glow/screen")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "keepOn") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                if (call.arguments == true) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+                result.success(null)
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {

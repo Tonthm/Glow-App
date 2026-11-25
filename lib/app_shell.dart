@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'features/demo/demo_button.dart';
 import 'features/room/room_screen.dart';
 import 'features/schedule/schedule_screen.dart';
 import 'features/stats/stats_screen.dart';
@@ -52,7 +54,16 @@ class AppShell extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: IndexedStack(index: index, children: _tabs),
+      body: Stack(
+        children: [
+          IndexedStack(index: index, children: _tabs),
+          // Top middle: clear of titles, actions, and the main button.
+          if (kDebugMode)
+            const SafeArea(
+              child: Align(alignment: Alignment.topCenter, child: DemoButton()),
+            ),
+        ],
+      ),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(

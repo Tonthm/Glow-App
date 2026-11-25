@@ -1,14 +1,22 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/bed_press.dart';
 import '../../core/economy_config.dart';
 import '../../core/night_date.dart';
 import '../../core/quests.dart';
+import '../../core/quests.dart' as quests;
+import '../../core/routine_builder.dart';
+import '../../core/routine_config.dart';
 import '../../core/schedule_load.dart';
 import '../../core/schedule_models.dart';
 import '../../core/sleep_calculator.dart';
 import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
+import '../../data/night_planning_repository.dart';
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
@@ -16,6 +24,8 @@ import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/night_ring.dart';
 import '../../theme/widgets/warning_bar.dart';
+import '../routine/activity_card.dart';
+import '../routine/routine_screen.dart';
 import '../shared/settings_button.dart';
 import '../stats/heatmap.dart';
 import '../stats/night_detail_sheet.dart';
@@ -30,8 +40,13 @@ class TonightPlanData {
   final EveningLoadResult load;
   final ({OneTimeItem exam, int daysUntil})? examCountdown;
   final PendingCheckIn? pendingCheckIn;
-  final int weeklyOnTimeCount;
-  final bool inBed;
+  final int weeklyPassCount;
+  final DateTime? inBedAt;
+  final QuestMode mode;
+  final bool lowEnergy;
+  final bool canChangeLowEnergy;
+  final Set<DayActivityKind> activities;
+  final bool routineDone;
   final ScheduleEntry? firstAppointment;
   final List<HeatmapCell> weekCells;
 
@@ -41,8 +56,13 @@ class TonightPlanData {
     required this.load,
     required this.examCountdown,
     required this.pendingCheckIn,
-    required this.weeklyOnTimeCount,
-    required this.inBed,
+    required this.weeklyPassCount,
+    required this.inBedAt,
+    required this.mode,
+    required this.lowEnergy,
+    required this.canChangeLowEnergy,
+    required this.activities,
+    required this.routineDone,
     required this.firstAppointment,
     required this.weekCells,
   });
@@ -100,15 +120,35 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   final pendingCheckIn = await ref
       .watch(checkInRepositoryProvider)
       .findPendingCheckIn(now);
-  final weeklyOnTimeCount = await questRepo.currentWeekPassCount(now);
+  final weeklyPassCount = await questRepo.currentWeekPassCount(now);
+  final planRow = await repo.getPlanRow(wakeDate);
+  final routineRepo = ref.watch(routineRepositoryProvider);
+  final savedActivities = await routineRepo.activitiesFor(wakeDate);
+  final routineLog = await routineRepo.logFor(wakeDate);
+  final lowEnergy = planRow?.lowEnergy ?? false;
   return TonightPlanData(
     wakeDate: wakeDate,
     draft: draft,
     load: load,
     examCountdown: examCountdown,
     pendingCheckIn: pendingCheckIn,
-    weeklyOnTimeCount: weeklyOnTimeCount,
-    inBed: (await repo.getPlanRow(wakeDate))?.inBedAt != null,
+    weeklyPassCount: weeklyPassCount,
+    inBedAt: planRow?.inBedAt,
+    mode: await repo.questModeFor(draft),
+    lowEnergy: lowEnergy,
+    canChangeLowEnergy:
+        planRow?.isLocked != true &&
+        // A red night is already down to one quest.
+        (lowEnergy || load.level != EveningLoadLevel.red) &&
+        quests.canChangeLowEnergy(
+          now: now,
+          lockTime: NightPlanningRepository.notifyTimeOf(draft),
+          usedOnOtherNightsThisWeek: await repo.lowEnergyUsedElsewhere(
+            wakeDate,
+          ),
+        ),
+    activities: savedActivities?.activities ?? const {},
+    routineDone: routineLog?.completed ?? false,
     firstAppointment: await repo.firstAppointment(wakeDate),
     weekCells: await ref
         .watch(statsRepositoryProvider)
@@ -135,11 +175,19 @@ class TonightScreen extends ConsumerStatefulWidget {
 class _TonightScreenState extends ConsumerState<TonightScreen> {
   bool? _notificationsOk;
   late final AppLifecycleListener _lifecycle;
+  late final Timer _minuteTick;
+
+  /// Chips picked since the plan was last loaded.
+  Set<DayActivityKind>? _picked;
+  DateTime? _pickedFor;
 
   @override
   void initState() {
     super.initState();
     _checkPermissions();
+    _minuteTick = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted) setState(() {});
+    });
     // Coming back from the background counts as opening the app: the day may
     // have changed, and permissions may have been switched off meanwhile.
     _lifecycle = AppLifecycleListener(
@@ -152,6 +200,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
 
   @override
   void dispose() {
+    _minuteTick.cancel();
     _lifecycle.dispose();
     super.dispose();
   }
@@ -169,7 +218,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     final planAsync = ref.watch(tonightPlanProvider);
 
     final plan = hasSchedule ? planAsync.value : null;
-    final showBedButton = plan != null && plan.pendingCheckIn == null;
+    final showBedArea = plan != null && plan.pendingCheckIn == null;
 
     return Scaffold(
       appBar: AppBar(
@@ -212,18 +261,58 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
               ),
             ),
           ),
-          if (showBedButton)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GlowSpacing.pageMargin,
-                GlowSpacing.sm,
-                GlowSpacing.pageMargin,
-                GlowSpacing.md,
-              ),
-              child: GlowPrimaryButton(
-                label: plan.inBed ? 'เข้านอนแล้ว ✓' : 'เข้านอนแล้ว',
-                onPressed: plan.inBed ? null : () => _goToBed(plan),
-              ),
+          if (showBedArea) _buildBedArea(plan),
+        ],
+      ),
+    );
+  }
+
+  bool _canPressInBed(TonightPlanData plan) => canPressInBed(
+    now: ref.read(clockProvider)(),
+    notifyTime: NightPlanningRepository.notifyTimeOf(plan.draft),
+    plannedWakeTime: plan.draft.wakeTime,
+  );
+
+  /// The main button, pinned above the tab bar.
+  Widget _buildBedArea(TonightPlanData plan) {
+    final textTheme = Theme.of(context).textTheme;
+    final pressedAt = plan.inBedAt;
+    final canPress = _canPressInBed(plan);
+    final canUndo =
+        pressedAt != null &&
+        canUndoInBed(pressedAt: pressedAt, now: ref.read(clockProvider)());
+    final opensAt = bedPressWindowStart(
+      NightPlanningRepository.notifyTimeOf(plan.draft),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        GlowSpacing.pageMargin,
+        GlowSpacing.sm,
+        GlowSpacing.pageMargin,
+        GlowSpacing.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (pressedAt == null && !canPress)
+            Text(
+              'ปุ่มเข้านอนกดได้ตั้งแต่ ${_formatTime(opensAt)}',
+              textAlign: TextAlign.center,
+              style: textTheme.labelSmall,
+            ),
+          GlowPrimaryButton(
+            label: pressedAt == null
+                ? 'เข้านอนแล้ว'
+                : 'เข้านอนแล้ว ✓ ${_formatTime(pressedAt)}',
+            onPressed: pressedAt == null && canPress
+                ? () => _goToBed(plan)
+                : null,
+          ),
+          if (canUndo)
+            TextButton(
+              onPressed: () => _undoInBed(plan),
+              child: const Text('ยังไม่นอน'),
             ),
         ],
       ),
@@ -231,6 +320,10 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   }
 
   Widget _buildPlan(TonightPlanData plan) {
+    if (_pickedFor != plan.wakeDate) {
+      _pickedFor = plan.wakeDate;
+      _picked = null;
+    }
     final pending = plan.pendingCheckIn;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -239,6 +332,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         const SizedBox(height: GlowSpacing.xl),
         if (pending != null)
           CheckInCard(
+            key: ValueKey(pending.wakeDate),
             pending: pending,
             onSubmitted: (result, fireBefore, fireAfter) {
               ref.invalidate(tonightPlanProvider);
@@ -255,14 +349,80 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
               );
             },
           )
-        else
+        else ...[
           _PlanContent(plan: plan),
+          const SizedBox(height: GlowSpacing.lg),
+          if (plan.inBedAt == null)
+            ActivityCard(
+              selected: _picked ?? plan.activities,
+              done: plan.routineDone,
+              minutes: _routineMinutes(plan),
+              onChanged: (value) {
+                setState(() => _picked = value);
+                ref
+                    .read(routineRepositoryProvider)
+                    .saveActivities(plan.wakeDate, value, confirmed: true);
+              },
+              onStart: () => _startRoutine(plan),
+            ),
+          if (plan.canChangeLowEnergy && plan.inBedAt == null)
+            TextButton(
+              onPressed: () => _toggleLowEnergy(plan),
+              child: Text(
+                plan.lowEnergy ? 'ยกเลิก "วันนี้หมดแรง"' : 'วันนี้หมดแรง',
+              ),
+            ),
+        ],
       ],
     );
   }
 
+  List<Pose> _routineFor(TonightPlanData plan) => buildRoutine(
+    wakeDate: plan.wakeDate,
+    activities: _picked ?? plan.activities,
+    mode: plan.mode,
+  );
+
+  int _routineMinutes(TonightPlanData plan) {
+    final seconds = _routineFor(plan).fold(0, (sum, p) => sum + p.seconds);
+    return (seconds / 60).round();
+  }
+
+  Future<void> _startRoutine(TonightPlanData plan) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RoutineScreen(
+          wakeDate: plan.wakeDate,
+          poses: _routineFor(plan),
+          mode: plan.mode,
+          onInBed: plan.inBedAt == null && _canPressInBed(plan)
+              ? () => _goToBed(plan)
+              : null,
+        ),
+      ),
+    );
+    if (mounted) ref.invalidate(tonightPlanProvider);
+  }
+
+  Future<void> _toggleLowEnergy(TonightPlanData plan) async {
+    final turningOn = !plan.lowEnergy;
+    final changed = await ref
+        .read(nightPlanningRepositoryProvider)
+        .setLowEnergy(plan.wakeDate, turningOn, now: ref.read(clockProvider)());
+    if (!mounted) return;
+    ref.invalidate(tonightPlanProvider);
+    if (changed && turningOn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('คืนนี้พักได้ เควสเหลือข้อเดียว: หลับตามแผน'),
+        ),
+      );
+    }
+  }
+
   Future<void> _goToBed(TonightPlanData plan) async {
     final notifications = ref.read(notificationServiceProvider);
+    HapticFeedback.lightImpact();
     await ref
         .read(nightPlanningRepositoryProvider)
         .markInBed(plan.wakeDate, ref.read(clockProvider)());
@@ -271,6 +431,12 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     ref.invalidate(tonightPlanProvider);
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('บันทึกแล้ว ฝันดีนะ')));
+  }
+
+  Future<void> _undoInBed(TonightPlanData plan) async {
+    await ref.read(nightPlanningRepositoryProvider).undoInBed(plan.wakeDate);
+    // Reloading also puts the bedtime reminder back.
+    if (mounted) ref.invalidate(tonightPlanProvider);
   }
 }
 
@@ -388,17 +554,29 @@ class _PlanContent extends StatelessWidget {
         const SizedBox(height: GlowSpacing.lg),
         const FireBadge(),
         const SizedBox(height: GlowSpacing.md),
-        Text(
-          'เควสวันนี้: นอนครบ +${EconomyConfig.dailyCompleteCoins} เหรียญ '
-          '· ตรงเวลา +${EconomyConfig.dailyOnTimeBonusCoins}',
-          style: textTheme.bodyMedium,
-        ),
+        Text(_modeLine(plan), style: textTheme.bodyLarge),
+        Text(_questLine(plan.mode), style: textTheme.bodyMedium),
         const SizedBox(height: GlowSpacing.sm),
-        _QuestProgressDots(count: plan.weeklyOnTimeCount),
+        _QuestProgressDots(count: plan.weeklyPassCount),
       ],
     );
   }
 }
+
+String _modeLine(TonightPlanData plan) => switch (plan.mode) {
+  QuestMode.normal => 'คืนนี้โหมดปกติ',
+  QuestMode.light => 'คืนนี้โหมดเบา: เย็นนี้แน่น ท่าก่อนนอนเป็นชุดสั้น',
+  QuestMode.minimum =>
+    plan.lowEnergy
+        ? 'คืนนี้โหมดขั้นต่ำ: พักได้ เควสเหลือข้อเดียว'
+        : 'คืนนี้โหมดขั้นต่ำ: ตารางแน่น เควสเหลือข้อเดียว',
+};
+
+String _questLine(QuestMode mode) => mode == QuestMode.minimum
+    ? 'หลับตามแผน +${EconomyConfig.sleepOnPlanCoins} เหรียญ'
+    : 'นอนครบ +${EconomyConfig.dailyCompleteCoins} · '
+          'ตรงเวลา +${EconomyConfig.dailyOnTimeBonusCoins} · '
+          'ท่าก่อนนอน +${EconomyConfig.routineCoins}';
 
 /// ●●●○○ weekly "ตรงเวลา 5 ใน 7" quest progress (CLAUDE.md section 8).
 class _QuestProgressDots extends StatelessWidget {
@@ -425,7 +603,7 @@ class _QuestProgressDots extends StatelessWidget {
         const SizedBox(width: GlowSpacing.xs),
         Expanded(
           child: Text(
-            'ตรงเวลา $count/$target สัปดาห์นี้',
+            'ผ่าน $count/$target คืนสัปดาห์นี้',
             style: Theme.of(context).textTheme.labelSmall,
           ),
         ),

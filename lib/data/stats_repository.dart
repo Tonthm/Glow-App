@@ -12,7 +12,13 @@ class HeatmapCell {
   final bool isPreExamNight;
   final bool usedShield;
 
+  /// Quest mode the night had; null for nights from before modes existed.
+  final int? questMode;
+  final bool routineDone;
+
   const HeatmapCell({
+    this.questMode,
+    this.routineDone = false,
     required this.date,
     required this.checkIn,
     required this.isPreExamNight,
@@ -84,6 +90,19 @@ class StatsRepository {
         if (p.usedShield) _dateOnly(p.wakeDate),
     };
 
+    final modes = {for (final p in plans) _dateOnly(p.wakeDate): p.questMode};
+    final routines =
+        await (db.select(db.routineLogs)..where(
+              (t) =>
+                  t.wakeDate.isBiggerOrEqualValue(startDate) &
+                  t.wakeDate.isSmallerOrEqualValue(endDate),
+            ))
+            .get();
+    final routineDates = {
+      for (final r in routines)
+        if (r.completed) _dateOnly(r.wakeDate),
+    };
+
     final cells = <HeatmapCell>[];
     for (
       var d = startDate;
@@ -95,6 +114,8 @@ class StatsRepository {
           date: d,
           checkIn: checkInByDate[d],
           isPreExamNight: preExamByDate[d] ?? false,
+          questMode: modes[d],
+          routineDone: routineDates.contains(d),
           usedShield:
               shieldDates.contains(d) || checkInByDate[d]?.usedShield == true,
         ),

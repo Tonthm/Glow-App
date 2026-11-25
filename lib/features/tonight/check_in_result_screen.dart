@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/check_in.dart';
 import '../../core/fire.dart';
+import '../../core/quests.dart';
 import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
@@ -98,6 +99,19 @@ class CheckInResultScreen extends ConsumerWidget {
               const Divider(),
               const SizedBox(height: GlowSpacing.lg),
               _FireChangeRow(before: fireBefore, after: fireAfter),
+              if (!result.pressedInBed &&
+                  result.outcome.result == CheckInResult.enough)
+                Text(
+                  'คืนหน้ากด "เข้านอนแล้ว" ตอนวางมือถือด้วย ไฟจะขึ้นได้',
+                  style: textTheme.bodyMedium,
+                ),
+              if (result.mode == QuestMode.minimum)
+                Text(
+                  result.outcome.onTime
+                      ? 'โหมดขั้นต่ำ: หลับตามแผนสำเร็จ'
+                      : 'โหมดขั้นต่ำ: พักได้ คืนหน้าค่อยว่ากัน',
+                  style: textTheme.bodyMedium,
+                ),
               const SizedBox(height: GlowSpacing.xl),
               const Divider(),
               const SizedBox(height: GlowSpacing.lg),

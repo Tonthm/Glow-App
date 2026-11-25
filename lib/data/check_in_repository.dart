@@ -54,7 +54,11 @@ class PendingCheckIn {
   });
 
   /// What the card fills in: the press time if there is one, else the plan.
-  DateTime get defaultLightsOff => pressedAt ?? plannedBedtime;
+  DateTime get defaultLightsOff {
+    final t = pressedAt ?? plannedBedtime;
+    return DateTime(t.year, t.month, t.day, t.hour, t.minute);
+  }
+
   LightsOffSource get defaultSource =>
       pressedAt == null ? LightsOffSource.plan : LightsOffSource.button;
 }
@@ -70,8 +74,15 @@ class WeekCheckInSummary {
 class CheckInRecordResult {
   final CheckInOutcome outcome;
   final int coinsEarned;
+  final bool pressedInBed;
+  final QuestMode mode;
 
-  const CheckInRecordResult({required this.outcome, required this.coinsEarned});
+  const CheckInRecordResult({
+    required this.outcome,
+    required this.coinsEarned,
+    required this.pressedInBed,
+    required this.mode,
+  });
 }
 
 /// Records morning check-ins and keeps fire in sync with them, per
@@ -202,7 +213,12 @@ class CheckInRepository {
     }
     await walletRepo.addCoins(coinsEarned);
 
-    return CheckInRecordResult(outcome: outcome, coinsEarned: coinsEarned);
+    return CheckInRecordResult(
+      outcome: outcome,
+      coinsEarned: coinsEarned,
+      pressedInBed: pressed,
+      mode: mode,
+    );
   }
 
   /// The most recent locked night that's still waiting on a check-in and

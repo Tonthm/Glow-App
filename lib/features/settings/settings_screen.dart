@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database.dart';
 import '../../providers.dart';
+import '../../services/app_clock.dart';
+import '../demo/demo_button.dart';
 import '../../theme/theme_gallery_screen.dart';
 import '../shared/minutes_stepper.dart';
 import '../shared/time_of_day_field.dart';
@@ -250,6 +252,13 @@ class SettingsScreen extends ConsumerWidget {
               if (kDebugMode) ...[
                 const _SectionHeader('Debug'),
                 ListTile(
+                  title: const Text('แสดงปุ่มเดโม'),
+                  onTap: () {
+                    ref.read(demoButtonVisibleProvider.notifier).state = true;
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
                   title: const Text('Theme gallery'),
                   trailing: const Icon(Icons.palette_outlined),
                   onTap: () => Navigator.of(context).push(
@@ -265,7 +274,7 @@ class SettingsScreen extends ConsumerWidget {
                   onTap: () async {
                     await ref
                         .read(debugSampleDataServiceProvider)
-                        .generateSampleNights(DateTime.now());
+                        .generateSampleNights(ref.read(clockProvider)());
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

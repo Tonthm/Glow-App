@@ -1,9 +1,16 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/check_in.dart';
+import '../../core/quests.dart';
 import '../../data/database.dart';
 import '../../data/stats_repository.dart';
 import '../../theme/tokens.dart';
+
+const questModeLabels = {
+  QuestMode.normal: 'ปกติ',
+  QuestMode.light: 'เบา',
+  QuestMode.minimum: 'ขั้นต่ำ',
+};
 
 const _resultLabels = {
   CheckInResultDb.enough: 'ครบ',
@@ -60,6 +67,24 @@ class NightDetailSheet extends StatelessWidget {
             '${checkIn.onTime ? ' · ตรงเวลา' : ''}',
             style: textTheme.bodyMedium,
           ),
+        ],
+        if (checkIn != null) ...[
+          const SizedBox(height: GlowSpacing.xs),
+          Text(
+            checkIn.pressedInBed ? 'กดเข้านอนแล้ว' : 'ไม่ได้กดเข้านอน',
+            style: textTheme.bodyMedium,
+          ),
+        ],
+        if (cell.questMode != null) ...[
+          const SizedBox(height: GlowSpacing.xs),
+          Text(
+            'โหมดเควส: ${questModeLabels[QuestMode.values[cell.questMode!]]}',
+            style: textTheme.bodyMedium,
+          ),
+        ],
+        if (cell.routineDone) ...[
+          const SizedBox(height: GlowSpacing.xs),
+          Text('ทำท่าก่อนนอนแล้ว', style: textTheme.bodyMedium),
         ],
         if (cell.usedShield) ...[
           const SizedBox(height: GlowSpacing.xs),
