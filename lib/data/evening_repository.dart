@@ -166,7 +166,11 @@ class EveningRepository {
     DateTime? examDate,
     ItemSource source = ItemSource.typed,
     bool suggested = false,
-  }) {
+    DateTime? now,
+  }) async {
+    // Adding during the evening lays the work out from now, so a new task is
+    // never placed in hours that have already gone by.
+    if (now != null && planDate == eveningDateFor(now)) await replanFrom(now);
     return db
         .into(db.eveningTasks)
         .insert(

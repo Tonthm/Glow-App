@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:glow/data/database.dart';
+import 'package:glow/features/onboarding/intro_page.dart';
 import 'package:glow/main.dart';
 import 'package:glow/providers.dart';
 
@@ -24,6 +25,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // The intro comes first, then the setup form.
+    expect(find.text(IntroPage.headline), findsOneWidget);
+    await tester.tap(find.text('เริ่มเลย'));
+    await tester.pumpAndSettle();
     expect(find.text('ยินดีต้อนรับสู่ Glow'), findsOneWidget);
 
     await db.close();

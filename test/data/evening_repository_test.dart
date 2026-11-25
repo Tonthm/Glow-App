@@ -46,6 +46,19 @@ void main() {
     }
   });
 
+  test('a task added mid-evening is not placed in the past', () async {
+    await evening.addTask(
+      title: 'เลข',
+      minutes: 30,
+      kind: EveningTaskKind.homework,
+      planDate: monday,
+      now: at(20),
+    );
+    final view = await evening.load(at(20));
+    final block = view.plan.blocks.firstWhere((b) => b.taskId != null);
+    expect(block.start.isBefore(at(20)), isFalse);
+  });
+
   test('unfinished work moves to tomorrow once the plan locks', () async {
     await add('เลข', 60);
     // A free evening: bedtime 22:45, so the reminder is 21:45.

@@ -29,7 +29,7 @@ Glow วางแผนเวลาเข้านอนย้อนกลับ
   - ฐานข้อมูล: `drift` + `sqlite3_flutter_libs` (SQLite ในเครื่อง)
   - แจ้งเตือน: `flutter_local_notifications` + `timezone` + `flutter_timezone`
   - สิทธิ์: `permission_handler`
-  - ปฏิทิน (เฟส 1 ท้าย): `device_calendar`
+  - ปฏิทิน (เฟส 1 ท้าย): ตัวอ่านอย่างเดียวที่เขียนเองใน `MainActivity.kt` (ถอด `device_calendar` แล้ว เพราะบังคับขอสิทธิ์เขียน)
   - เสียง (เฟส 4): `speech_to_text`
   - วันที่/ภาษาไทย: `intl`
   - วิดเจ็ตหน้าจอหลัก (เฟส 7): `home_widget`

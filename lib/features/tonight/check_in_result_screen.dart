@@ -10,6 +10,7 @@ import '../../providers.dart';
 import '../../theme/glow_colors.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_primary_button.dart';
+import '../share/share_screen.dart';
 
 const _resultLabels = {
   CheckInResult.enough: 'ครบ',
@@ -126,6 +127,23 @@ class CheckInResultScreen extends ConsumerWidget {
                           .value
                           ?.fallAsleepMinutes ??
                       15,
+                ),
+              // Monday wraps up the week that just ended.
+              if (wakeDate.weekday == DateTime.monday)
+                TextButton.icon(
+                  icon: const Icon(Icons.ios_share_outlined),
+                  label: const Text('แชร์สัปดาห์ที่แล้ว'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ShareScreen(
+                        monday: DateTime(
+                          wakeDate.year,
+                          wakeDate.month,
+                          wakeDate.day - 7,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               const SizedBox(height: GlowSpacing.xl),
               GlowPrimaryButton(

@@ -2,12 +2,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../core/night_date.dart';
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/empty_state.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/stat_tile.dart';
+import '../share/share_screen.dart';
 import '../shared/settings_button.dart';
 import 'heatmap.dart';
 import 'night_detail_sheet.dart';
@@ -77,7 +79,20 @@ class StatsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('สถิติ'),
-        actions: const [SettingsButton()],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share_outlined),
+            tooltip: 'แชร์สัปดาห์นี้',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ShareScreen(
+                  monday: mondayOfWeek(ref.read(clockProvider)()),
+                ),
+              ),
+            ),
+          ),
+          const SettingsButton(),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(GlowSpacing.pageMargin),

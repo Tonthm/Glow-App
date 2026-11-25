@@ -167,6 +167,7 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
                       minutes: s.minutes,
                       kind: EveningTaskKind.examStudy,
                       planDate: view.eveningDate,
+                      now: ref.read(clockProvider)(),
                       examDate: s.examDate,
                       suggested: true,
                     );

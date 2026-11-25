@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp" android:height="28dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="@color/glow_widget_lamp"
+        android:pathData="M8,3 L16,3 L19,12 L5,12 Z"/>
+    <path android:fillColor="@color/glow_widget_lamp"
+        android:pathData="M11,12 L13,12 L13,19 L16,19 L16,21 L8,21 L8,19 L11,19 Z"/>
+</vector>

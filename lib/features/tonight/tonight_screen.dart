@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,6 +38,7 @@ import 'check_in_card.dart';
 import 'check_in_result_screen.dart';
 import 'fire_badge.dart';
 import '../../services/app_clock.dart';
+import '../../services/home_widget_service.dart';
 
 class TonightPlanData {
   final DateTime wakeDate;
@@ -133,6 +135,10 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
 
   await ref.watch(eveningRepositoryProvider).carryOverLockedTasks(now);
 
+  // The widgets follow every change to the plan, the press, and check-ins.
+  final database = ref.watch(databaseProvider);
+  unawaited(updateHomeWidgets(database, now));
+
   final wakeDate = resolveTonightWakeDate(now);
   final draft = await repo.getOrLockPlan(wakeDate, now: now);
   final load = await repo.computeEveningLoad(draft);
@@ -204,6 +210,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   bool? _notificationsOk;
   late final AppLifecycleListener _lifecycle;
   late final Timer _minuteTick;
+  StreamSubscription<Uri?>? _widgetTaps;
   late final _notifications = ref.read(notificationServiceProvider);
 
   /// Chips picked since the plan was last loaded.
@@ -217,6 +224,11 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   @override
   void initState() {
     super.initState();
+    _widgetTaps = HomeWidget.widgetClicked.listen((_) {
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      ref.read(selectedTabIndexProvider.notifier).state = 0;
+    }, onError: (_) {});
     _notifications.routineRequested.addListener(_onRoutineRequested);
     _checkPermissions();
     _minuteTick = Timer.periodic(const Duration(seconds: 20), (_) {
@@ -236,6 +248,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   @override
   void dispose() {
     _notifications.routineRequested.removeListener(_onRoutineRequested);
+    _widgetTaps?.cancel();
     _minuteTick.cancel();
     _lifecycle.dispose();
     super.dispose();

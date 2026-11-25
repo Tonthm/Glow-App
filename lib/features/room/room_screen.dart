@@ -13,6 +13,7 @@ import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/stat_tile.dart';
 import '../shared/settings_button.dart';
+import 'blanket_color.dart';
 import '../../services/app_clock.dart';
 
 final _ownedItemsStreamProvider = StreamProvider.autoDispose<Set<String>>((
@@ -68,7 +69,7 @@ class RoomScreen extends ConsumerWidget {
                         child: ColoredBox(
                           color: Theme.of(context).colorScheme.surface,
                           child: BedCharacter(
-                            blanketColor: _blanketColor(
+                            blanketColor: blanketColorOf(
                               wallet?.equippedBlanketId,
                             ),
                             isFluffy: isFluffy,
@@ -146,21 +147,6 @@ class RoomScreen extends ConsumerWidget {
   }
 }
 
-const int _defaultBlanketColor = 0xFFBFC7D1;
-
-Color _blanketColor(String? itemId) {
-  if (itemId == null) return const Color(_defaultBlanketColor);
-  final match = EconomyConfig.blankets.where((b) => b.id == itemId);
-  if (match.isNotEmpty) return Color(match.first.colorValue);
-  for (final blanket in EconomyConfig.fireLevelRewardBlankets.values) {
-    if (blanket.id == itemId) return Color(blanket.colorValue);
-  }
-  if (itemId == EconomyConfig.examPeriodRewardBlanket.id) {
-    return Color(EconomyConfig.examPeriodRewardBlanket.colorValue);
-  }
-  return const Color(_defaultBlanketColor);
-}
-
 class _MyBlanketsGrid extends ConsumerWidget {
   final String? equippedId;
   const _MyBlanketsGrid({required this.equippedId});
@@ -179,7 +165,7 @@ class _MyBlanketsGrid extends ConsumerWidget {
         ];
         // The starting blanket is always available, so there's a way back.
         final ownedBlankets = [
-          const BlanketConfig(defaultBlanketId, _defaultBlanketColor, 0),
+          const BlanketConfig(defaultBlanketId, defaultBlanketColor, 0),
           ...allBlankets.where((b) => owned.contains(b.id)),
         ];
         return GridView.builder(

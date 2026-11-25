@@ -124,6 +124,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
         minutes: _minutes,
         kind: _kind,
         planDate: widget.planDate,
+        now: ref.read(clockProvider)(),
         dueDate: _due,
         examDate: examDate,
         source: _spoken ? ItemSource.voice : ItemSource.typed,

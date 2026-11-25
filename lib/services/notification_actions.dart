@@ -8,6 +8,7 @@ import '../data/database.dart';
 import '../data/night_planning_repository.dart';
 import '../data/schedule_repository.dart';
 import '../data/settings_repository.dart';
+import 'home_widget_service.dart';
 
 /// "เข้านอนแล้ว" on the bedtime reminder.
 const String inBedActionId = 'in_bed';
@@ -54,7 +55,10 @@ Future<void> onBackgroundNotificationAction(
   DartPluginRegistrant.ensureInitialized();
   final db = AppDatabase();
   try {
-    await pressInBedFromNotification(db, wakeDate, DateTime.now());
+    final now = DateTime.now();
+    if (await pressInBedFromNotification(db, wakeDate, now)) {
+      await updateHomeWidgets(db, now);
+    }
   } finally {
     await db.close();
   }

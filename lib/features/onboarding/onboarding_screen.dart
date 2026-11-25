@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
 import '../shared/minutes_stepper.dart';
+import 'intro_page.dart';
 import '../settings/battery_optimization_sheet.dart';
 import '../../services/app_clock.dart';
 
@@ -22,6 +23,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _travelMinutes = 30;
   TimeOfDay _freeDayWake = const TimeOfDay(hour: 7, minute: 30);
   bool _notificationsRequested = false;
+  bool _showIntro = true;
 
   void _onAgeGroupChanged(AgeGroup group) {
     setState(() {
@@ -65,6 +67,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showIntro) {
+      return IntroPage(onStart: () => setState(() => _showIntro = false));
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('ยินดีต้อนรับสู่ Glow')),
       body: ListView(
