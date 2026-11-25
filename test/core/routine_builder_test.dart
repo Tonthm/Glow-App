@@ -25,7 +25,7 @@ Set<BodyPart> parts(List<Pose> poses) => {
 void main() {
   test('the library has unique ids and 2-3 short steps per pose', () {
     final all = [...poseLibrary, breathingPose];
-    expect(all.length, greaterThanOrEqualTo(10));
+    expect(all.length, inInclusiveRange(15, 18));
     expect({for (final p in all) p.id}.length, all.length);
     for (final pose in all) {
       expect(pose.steps.length, inInclusiveRange(2, 3), reason: pose.id);
@@ -88,7 +88,12 @@ void main() {
   });
 
   test('hidden poses are never chosen, even if a part has none left', () {
-    const hidden = {'childs_pose', 'knees_to_chest', 'neck_side'};
+    const hidden = {
+      'childs_pose',
+      'knees_to_chest',
+      'lying_twist',
+      'neck_side',
+    };
     final routine = build({DayActivityKind.relaxed}, hidden: hidden);
     expect(routine.any((p) => hidden.contains(p.id)), isFalse);
     expect(routine.length, 5);
@@ -112,7 +117,7 @@ void main() {
           on: DateTime(2026, 11, day),
         ).firstWhere((p) => p.part == BodyPart.lowerBack).id,
     };
-    expect(lowerBackPoses, {'childs_pose', 'knees_to_chest'});
+    expect(lowerBackPoses, {'childs_pose', 'knees_to_chest', 'lying_twist'});
   });
 
   test('order is standing, sitting, lying, then breathing last', () {

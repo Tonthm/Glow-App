@@ -123,6 +123,23 @@ class SettingsRepository {
     );
   }
 
+  Future<void> updateRoutineEnabled(bool enabled) async {
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      SettingsCompanion(routineEnabled: Value(enabled)),
+    );
+  }
+
+  /// A hidden pose is never picked again until unhidden (section 13).
+  Future<void> setPoseHidden(String poseId, bool hidden) {
+    return db.transaction(() async {
+      final ids = hiddenPoseSet(await get());
+      hidden ? ids.add(poseId) : ids.remove(poseId);
+      await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+        SettingsCompanion(hiddenPoseIds: Value(ids.join(','))),
+      );
+    });
+  }
+
   Future<void> markVoiceNoticeAccepted() async {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       const SettingsCompanion(voiceNoticeAccepted: Value(true)),
@@ -138,6 +155,9 @@ class SettingsRepository {
     );
   }
 }
+
+Set<String> hiddenPoseSet(SettingsRow row) =>
+    row.hiddenPoseIds.split(',').where((id) => id.isNotEmpty).toSet();
 
 SleepSettings toSleepSettings(SettingsRow row) => SleepSettings(
   targetMinMinutes: row.targetMinMinutes,

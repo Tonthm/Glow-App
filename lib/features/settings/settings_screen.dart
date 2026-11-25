@@ -3,12 +3,14 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database.dart';
+import '../../data/settings_repository.dart';
 import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../demo/demo_button.dart';
 import '../../theme/theme_gallery_screen.dart';
 import '../shared/minutes_stepper.dart';
 import '../shared/time_of_day_field.dart';
+import 'hidden_poses_sheet.dart';
 import 'setting_row.dart';
 import 'battery_optimization_sheet.dart';
 
@@ -155,6 +157,19 @@ class SettingsScreen extends ConsumerWidget {
               SettingRow(
                 title: 'ปิดการประหยัดแบตให้ Glow',
                 onTap: () => showBatteryOptimizationSheet(context),
+              ),
+              const _SectionHeader('ท่าก่อนนอน'),
+              SwitchListTile(
+                title: const Text('ท่าก่อนนอน'),
+                subtitle: const Text('ปิดแล้วการ์ดกิจกรรมและเควสท่าจะหายไป'),
+                value: settings.routineEnabled,
+                onChanged: repo.updateRoutineEnabled,
+              ),
+              const Divider(),
+              SettingRow(
+                title: 'ท่าที่ซ่อนไว้',
+                value: '${hiddenPoseSet(settings).length} ท่า',
+                onTap: () => showHiddenPosesSheet(context),
               ),
               const _SectionHeader('ลักษณะที่ปรากฏ'),
               SettingRow(

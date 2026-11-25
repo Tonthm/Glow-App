@@ -9,6 +9,7 @@ import 'package:glow/data/schedule_repository.dart';
 import 'package:glow/data/settings_repository.dart';
 import 'package:glow/data/wallet_repository.dart';
 import 'package:glow/services/backup_service.dart';
+import 'package:glow/services/notification_actions.dart';
 
 void main() {
   late AppDatabase db;
@@ -56,6 +57,24 @@ void main() {
       expect(await planning.setLowEnergy(friday, false, now: late), isFalse);
       expect(await planning.questModeFor(draft), QuestMode.minimum);
       expect((await planning.getPlanRow(friday))!.isRedNight, isFalse);
+    },
+  );
+
+  test(
+    'the notification button presses once, inside the window only',
+    () async {
+      final tomorrow = DateTime(2026, 11, 26);
+      Future<bool> tap(DateTime at) =>
+          pressInBedFromNotification(db, tomorrow, at);
+
+      // A reminder left in the tray until the next afternoon does nothing.
+      expect(await tap(DateTime(2026, 11, 26, 15)), isFalse);
+      expect(await tap(DateTime(2026, 11, 25, 23)), isTrue);
+      expect(await tap(DateTime(2026, 11, 25, 23, 30)), isFalse);
+      expect(
+        (await planning.getPlanRow(tomorrow))!.inBedAt,
+        DateTime(2026, 11, 25, 23),
+      );
     },
   );
 

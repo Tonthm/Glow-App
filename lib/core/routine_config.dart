@@ -43,6 +43,14 @@ const Map<DayActivityKind, String> activityLabels = {
   DayActivityKind.relaxed: 'วันสบาย ๆ',
 };
 
+/// Words in a class or activity name that suggest what the day involved.
+/// "บอล" also covers ฟุตบอล.
+const Map<DayActivityKind, List<String>> activityKeywords = {
+  DayActivityKind.sport: ['บอล', 'บาส', 'แบด', 'วอลเลย์', 'กีฬา', 'พละ'],
+  DayActivityKind.running: ['วิ่ง'],
+  DayActivityKind.lifting: ['ยิม', 'เวท', 'fitness'],
+};
+
 /// Used for a relaxed day, or when nothing is picked.
 const List<BodyPart> generalParts = [BodyPart.neck, BodyPart.lowerBack];
 
@@ -266,6 +274,56 @@ const List<Pose> poseLibrary = [
       'นั่งบนเตียง ยกเท้าข้างหนึ่งขึ้นเล็กน้อย',
       'หมุนข้อเท้าเป็นวงช้า ๆ',
       'ครบครึ่งเวลาแล้วหมุนกลับอีกทาง',
+    ],
+  ),
+  Pose(
+    id: 'chin_to_chest',
+    name: 'ก้มคางชิดอก',
+    part: BodyPart.neck,
+    position: PosePosition.sitting,
+    seconds: 45,
+    steps: [
+      'นั่งหลังตรง ปล่อยไหล่สบาย',
+      'ค่อย ๆ ก้มคางลงหาอก เท่าที่สบาย',
+      'ค้างไว้ หายใจช้า ๆ แล้วเงยกลับช้า ๆ',
+    ],
+  ),
+  Pose(
+    id: 'cross_arm',
+    name: 'ดึงแขนข้ามอก',
+    part: BodyPart.shoulders,
+    position: PosePosition.sitting,
+    seconds: 60,
+    bothSides: true,
+    steps: [
+      'เหยียดแขนข้างหนึ่งพาดผ่านหน้าอก',
+      'ใช้แขนอีกข้างประคองแล้วดึงเข้าหาตัวเบา ๆ',
+      'ปล่อยไหล่ลง ไม่ต้องยกไหล่',
+    ],
+  ),
+  Pose(
+    id: 'lying_twist',
+    name: 'นอนบิดตัวเบา ๆ',
+    part: BodyPart.lowerBack,
+    position: PosePosition.lying,
+    seconds: 60,
+    bothSides: true,
+    steps: [
+      'นอนหงาย ชันเข่าทั้งสองข้าง กางแขนออก',
+      'ค่อย ๆ เอนเข่าไปด้านหนึ่ง เท่าที่สบาย ไม่ต้องให้ถึงพื้น',
+      'หายใจช้า ๆ ให้ไหล่แนบที่นอน',
+    ],
+  ),
+  Pose(
+    id: 'legs_up_wall',
+    name: 'ขาพาดผนัง',
+    part: BodyPart.hamstrings,
+    position: PosePosition.lying,
+    seconds: 60,
+    steps: [
+      'นอนหงายใกล้ผนัง แล้วยกขาขึ้นพาดผนัง',
+      'งอเข่าได้ ขยับตัวออกห่างผนังได้ถ้าตึงไป',
+      'วางแขนข้างตัว หายใจช้า ๆ',
     ],
   ),
 ];

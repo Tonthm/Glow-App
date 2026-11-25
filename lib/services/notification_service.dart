@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
@@ -9,6 +10,7 @@ import '../core/sleep_calculator.dart';
 import '../data/check_in_repository.dart';
 import '../data/database.dart';
 import '../data/night_planning_repository.dart';
+import 'notification_actions.dart';
 import 'permissions_service.dart';
 
 enum NotificationKind { putPhoneDown, bedtime, checkIn, redNight }
@@ -31,6 +33,12 @@ const _putPhoneDownMessages = [
   'ถึงเวลาวางมือถือแล้ว เริ่มเข้านอนได้เลย',
   'ใกล้เวลานอนแล้ว ลองปิดหน้าจอดูนะ',
   'อีกไม่นานถึงเวลานอน วางมือถือแล้วเตรียมตัวได้แล้ว',
+];
+
+/// Used while today's activities haven't been told yet.
+const _askActivityMessages = [
+  'ใกล้เวลานอนแล้ว บอกหน่อยว่าวันนี้ทำอะไรมา แล้วมายืดตัวกัน',
+  'ได้เวลาพักแล้ว วันนี้ทำอะไรมาบ้าง Glow จะเลือกท่ายืดให้',
 ];
 
 const _bedtimeMessages = [
@@ -64,6 +72,16 @@ class NotificationService {
 
   NotificationService(this.permissions);
 
+  /// Set when "เริ่มท่าก่อนนอน" is tapped on a reminder; the Tonight screen
+  /// opens the routine and clears it.
+  final ValueNotifier<bool> routineRequested = ValueNotifier(false);
+
+  void _onTap(NotificationResponse response) {
+    if (response.actionId == startRoutineActionId) {
+      routineRequested.value = true;
+    }
+  }
+
   /// Re-read on every reschedule so a timezone change is picked up without
   /// restarting the app.
   Future<void> _syncTimeZone() async {
@@ -81,7 +99,16 @@ class NotificationService {
     );
     await _plugin.initialize(
       settings: const InitializationSettings(android: androidSettings),
+      onDidReceiveNotificationResponse: _onTap,
+      onDidReceiveBackgroundNotificationResponse:
+          onBackgroundNotificationAction,
     );
+    // The app may have been started by tapping an action.
+    final launch = await _plugin.getNotificationAppLaunchDetails();
+    final response = launch?.notificationResponse;
+    if (launch?.didNotificationLaunchApp == true && response != null) {
+      _onTap(response);
+    }
     _initialized = true;
   }
 
@@ -163,7 +190,11 @@ class NotificationService {
       final inBed = (await repo.getPlanRow(wakeDate))?.inBedAt != null;
       final alreadyCheckedIn =
           await checkInRepo.getForWakeDate(wakeDate) != null;
+      final dayRow = await (repo.db.select(
+        repo.db.dayActivities,
+      )..where((t) => t.wakeDate.equals(wakeDate))).getSingleOrNull();
       await _scheduleNight(
+        activitiesAnswered: dayRow?.confirmed == true,
         draft: draft,
         settings: settings,
         now: now,
@@ -181,6 +212,7 @@ class NotificationService {
     required AndroidScheduleMode scheduleMode,
     required bool alreadyCheckedIn,
     required bool inBed,
+    required bool activitiesAnswered,
   }) async {
     final notifyOffsetMinutes = draft.isPreExamNight ? 90 : 60;
     final notifyTime = draft.bedtime.subtract(
@@ -192,8 +224,21 @@ class NotificationService {
         id: notificationIdFor(NotificationKind.putPhoneDown, draft.wakeDate),
         at: notifyTime,
         title: 'Glow',
-        body: _randomMessage(_putPhoneDownMessages),
+        body: _randomMessage(
+          settings.routineEnabled && !activitiesAnswered
+              ? _askActivityMessages
+              : _putPhoneDownMessages,
+        ),
         scheduleMode: scheduleMode,
+        payload: draft.wakeDate.toIso8601String(),
+        actions: [
+          if (settings.routineEnabled)
+            const AndroidNotificationAction(
+              startRoutineActionId,
+              'เริ่มท่าก่อนนอน',
+              showsUserInterface: true,
+            ),
+        ],
       );
     }
     if (settings.notifyBedtime && !inBed && draft.bedtime.isAfter(now)) {
@@ -203,6 +248,11 @@ class NotificationService {
         title: 'Glow',
         body: _randomMessage(_bedtimeMessages),
         scheduleMode: scheduleMode,
+        payload: draft.wakeDate.toIso8601String(),
+        actions: const [
+          // Handled without opening the app.
+          AndroidNotificationAction(inBedActionId, 'เข้านอนแล้ว'),
+        ],
       );
     }
     final checkInTime = draft.wakeTime.add(const Duration(minutes: 30));
@@ -225,6 +275,8 @@ class NotificationService {
     required String title,
     required String body,
     required AndroidScheduleMode scheduleMode,
+    String? payload,
+    List<AndroidNotificationAction> actions = const [],
   }) async {
     await _plugin.zonedSchedule(
       id: id,
@@ -232,12 +284,14 @@ class NotificationService {
       title: title,
       body: body,
       androidScheduleMode: scheduleMode,
-      notificationDetails: const NotificationDetails(
+      payload: payload,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'glow_sleep_reminders',
           'การเตือนเรื่องการนอน',
           importance: Importance.high,
           priority: Priority.high,
+          actions: actions,
         ),
       ),
     );

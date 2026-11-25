@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/activity_guess.dart';
 import '../../core/bed_press.dart';
 import '../../core/economy_config.dart';
 import '../../core/night_date.dart';
@@ -17,6 +18,7 @@ import '../../core/sleep_calculator.dart';
 import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
 import '../../data/night_planning_repository.dart';
+import '../../data/settings_repository.dart';
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
@@ -45,7 +47,15 @@ class TonightPlanData {
   final QuestMode mode;
   final bool lowEnergy;
   final bool canChangeLowEnergy;
+
+  /// The saved chips, or the guess from today's schedule.
   final Set<DayActivityKind> activities;
+  final bool activitiesConfirmed;
+
+  /// When the activity card may appear this evening.
+  final DateTime activityCardFrom;
+  final bool routineEnabled;
+  final Set<String> hiddenPoseIds;
   final bool routineDone;
   final ScheduleEntry? firstAppointment;
   final List<HeatmapCell> weekCells;
@@ -62,6 +72,10 @@ class TonightPlanData {
     required this.lowEnergy,
     required this.canChangeLowEnergy,
     required this.activities,
+    required this.activitiesConfirmed,
+    required this.activityCardFrom,
+    required this.routineEnabled,
+    required this.hiddenPoseIds,
     required this.routineDone,
     required this.firstAppointment,
     required this.weekCells,
@@ -126,6 +140,9 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   final savedActivities = await routineRepo.activitiesFor(wakeDate);
   final routineLog = await routineRepo.logFor(wakeDate);
   final lowEnergy = planRow?.lowEnergy ?? false;
+  // "Today" for this night is the evening that leads into it.
+  final eveningDate = DateTime(wakeDate.year, wakeDate.month, wakeDate.day - 1);
+  final todaysEntries = await repo.entriesOn(eveningDate);
   return TonightPlanData(
     wakeDate: wakeDate,
     draft: draft,
@@ -147,7 +164,11 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
             wakeDate,
           ),
         ),
-    activities: savedActivities?.activities ?? const {},
+    activities: savedActivities?.activities ?? guessActivities(todaysEntries),
+    activitiesConfirmed: savedActivities?.confirmed ?? false,
+    activityCardFrom: activityCardFrom(eveningDate, todaysEntries),
+    routineEnabled: settings?.routineEnabled ?? true,
+    hiddenPoseIds: settings == null ? const {} : hiddenPoseSet(settings),
     routineDone: routineLog?.completed ?? false,
     firstAppointment: await repo.firstAppointment(wakeDate),
     weekCells: await ref
@@ -176,14 +197,20 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   bool? _notificationsOk;
   late final AppLifecycleListener _lifecycle;
   late final Timer _minuteTick;
+  late final _notifications = ref.read(notificationServiceProvider);
 
   /// Chips picked since the plan was last loaded.
   Set<DayActivityKind>? _picked;
   DateTime? _pickedFor;
 
+  /// True after the app is (re)opened, until answered. Pressing the button
+  /// during this visit doesn't count as coming back.
+  bool _cameBack = true;
+
   @override
   void initState() {
     super.initState();
+    _notifications.routineRequested.addListener(_onRoutineRequested);
     _checkPermissions();
     _minuteTick = Timer.periodic(const Duration(seconds: 20), (_) {
       if (mounted) setState(() {});
@@ -192,6 +219,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     // have changed, and permissions may have been switched off meanwhile.
     _lifecycle = AppLifecycleListener(
       onResume: () {
+        setState(() => _cameBack = true);
         ref.invalidate(tonightPlanProvider);
         _checkPermissions();
       },
@@ -200,9 +228,21 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
 
   @override
   void dispose() {
+    _notifications.routineRequested.removeListener(_onRoutineRequested);
     _minuteTick.cancel();
     _lifecycle.dispose();
     super.dispose();
+  }
+
+  /// "เริ่มท่าก่อนนอน" tapped on a reminder.
+  Future<void> _onRoutineRequested() async {
+    if (!_notifications.routineRequested.value) return;
+    _notifications.routineRequested.value = false;
+    final plan = await ref.read(tonightPlanProvider.future);
+    if (!mounted || plan.pendingCheckIn != null || !plan.routineEnabled) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    ref.read(selectedTabIndexProvider.notifier).state = 0;
+    await _startRoutine(plan);
   }
 
   Future<void> _checkPermissions() async {
@@ -272,6 +312,13 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     notifyTime: NightPlanningRepository.notifyTimeOf(plan.draft),
     plannedWakeTime: plan.draft.wakeTime,
   );
+
+  bool _asksIfStillUp(TonightPlanData plan) {
+    if (!_cameBack || plan.inBedAt == null) return false;
+    return ref
+        .read(clockProvider)()
+        .isBefore(bedPressWindowEnd(plan.draft.wakeTime));
+  }
 
   /// The main button, pinned above the tab bar.
   Widget _buildBedArea(TonightPlanData plan) {
@@ -350,19 +397,27 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
             },
           )
         else ...[
+          if (_asksIfStillUp(plan)) ...[
+            _StillUpBar(
+              onMove: () => _goToBed(plan),
+              onDismiss: () => setState(() => _cameBack = false),
+            ),
+            const SizedBox(height: GlowSpacing.md),
+          ],
           _PlanContent(plan: plan),
           const SizedBox(height: GlowSpacing.lg),
-          if (plan.inBedAt == null)
+          if (plan.inBedAt == null &&
+              plan.routineEnabled &&
+              !ref.read(clockProvider)().isBefore(plan.activityCardFrom))
             ActivityCard(
+              key: ValueKey(plan.wakeDate),
               selected: _picked ?? plan.activities,
+              confirmed: plan.activitiesConfirmed,
+              onConfirm: () =>
+                  _saveActivities(plan, _picked ?? plan.activities),
               done: plan.routineDone,
               minutes: _routineMinutes(plan),
-              onChanged: (value) {
-                setState(() => _picked = value);
-                ref
-                    .read(routineRepositoryProvider)
-                    .saveActivities(plan.wakeDate, value, confirmed: true);
-              },
+              onChanged: (value) => setState(() => _picked = value),
               onStart: () => _startRoutine(plan),
             ),
           if (plan.canChangeLowEnergy && plan.inBedAt == null)
@@ -381,6 +436,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     wakeDate: plan.wakeDate,
     activities: _picked ?? plan.activities,
     mode: plan.mode,
+    hiddenPoseIds: plan.hiddenPoseIds,
   );
 
   int _routineMinutes(TonightPlanData plan) {
@@ -388,7 +444,26 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     return (seconds / 60).round();
   }
 
+  Future<void> _saveActivities(
+    TonightPlanData plan,
+    Set<DayActivityKind> value,
+  ) async {
+    await ref
+        .read(routineRepositoryProvider)
+        .saveActivities(plan.wakeDate, value, confirmed: true);
+    if (mounted) ref.invalidate(tonightPlanProvider);
+  }
+
   Future<void> _startRoutine(TonightPlanData plan) async {
+    // Starting settles what today involved.
+    await ref
+        .read(routineRepositoryProvider)
+        .saveActivities(
+          plan.wakeDate,
+          _picked ?? plan.activities,
+          confirmed: true,
+        );
+    if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => RoutineScreen(
@@ -421,6 +496,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   }
 
   Future<void> _goToBed(TonightPlanData plan) async {
+    setState(() => _cameBack = false);
     final notifications = ref.read(notificationServiceProvider);
     HapticFeedback.lightImpact();
     await ref
@@ -437,6 +513,44 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     await ref.read(nightPlanningRepositoryProvider).undoInBed(plan.wakeDate);
     // Reloading also puts the bedtime reminder back.
     if (mounted) ref.invalidate(tonightPlanProvider);
+  }
+}
+
+/// Shown when Glow is opened again after "เข้านอนแล้ว". It never scolds.
+class _StillUpBar extends StatelessWidget {
+  final VoidCallback onMove;
+  final VoidCallback onDismiss;
+
+  const _StillUpBar({required this.onMove, required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(GlowSpacing.md),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.primary),
+        borderRadius: BorderRadius.circular(GlowRadius.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('ยังไม่นอนเหรอ', style: theme.textTheme.bodyLarge),
+          Wrap(
+            children: [
+              TextButton(
+                onPressed: onMove,
+                child: const Text('เลื่อนเวลาปิดไฟเป็นตอนนี้'),
+              ),
+              TextButton(
+                onPressed: onDismiss,
+                child: const Text('แค่เข้ามาดู'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -555,7 +669,10 @@ class _PlanContent extends StatelessWidget {
         const FireBadge(),
         const SizedBox(height: GlowSpacing.md),
         Text(_modeLine(plan), style: textTheme.bodyLarge),
-        Text(_questLine(plan.mode), style: textTheme.bodyMedium),
+        Text(
+          _questLine(plan.mode, routine: plan.routineEnabled),
+          style: textTheme.bodyMedium,
+        ),
         const SizedBox(height: GlowSpacing.sm),
         _QuestProgressDots(count: plan.weeklyPassCount),
       ],
@@ -572,11 +689,14 @@ String _modeLine(TonightPlanData plan) => switch (plan.mode) {
         : 'คืนนี้โหมดขั้นต่ำ: ตารางแน่น เควสเหลือข้อเดียว',
 };
 
-String _questLine(QuestMode mode) => mode == QuestMode.minimum
+String _questLine(QuestMode mode, {required bool routine}) =>
+    mode == QuestMode.minimum
     ? 'หลับตามแผน +${EconomyConfig.sleepOnPlanCoins} เหรียญ'
-    : 'นอนครบ +${EconomyConfig.dailyCompleteCoins} · '
-          'ตรงเวลา +${EconomyConfig.dailyOnTimeBonusCoins} · '
-          'ท่าก่อนนอน +${EconomyConfig.routineCoins}';
+    : [
+        'นอนครบ +${EconomyConfig.dailyCompleteCoins}',
+        'ตรงเวลา +${EconomyConfig.dailyOnTimeBonusCoins}',
+        if (routine) 'ท่าก่อนนอน +${EconomyConfig.routineCoins}',
+      ].join(' · ');
 
 /// ●●●○○ weekly "ตรงเวลา 5 ใน 7" quest progress (CLAUDE.md section 8).
 class _QuestProgressDots extends StatelessWidget {

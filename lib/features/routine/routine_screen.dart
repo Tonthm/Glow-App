@@ -11,6 +11,7 @@ import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/tokens.dart';
+import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import 'pose_illustration.dart';
 
@@ -123,6 +124,47 @@ class _RoutineScreenState extends ConsumerState<RoutineScreen> {
     );
   }
 
+  /// For a pose the user doesn't want, e.g. a sore knee.
+  Future<void> _hidePose(BuildContext context) async {
+    final pose = _pose;
+    _timer?.cancel();
+    final hide = await showGlowBottomSheet<bool>(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'ซ่อน "${pose.name}" ไม่ให้เลือกอีก',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          Text(
+            'เปิดกลับได้ในตั้งค่า',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: GlowSpacing.lg),
+          GlowPrimaryButton(
+            label: 'ซ่อนท่านี้',
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('ยกเลิก'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (_earned == null) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+    }
+    // The timer was stopped, so the same pose is still showing.
+    if (hide == true) {
+      await ref.read(settingsRepositoryProvider).setPoseHidden(pose.id, true);
+      if (mounted) _advance(skip: true);
+    }
+  }
+
   Widget _safetyNote(BuildContext context) => Text(
     routineSafetyNote,
     textAlign: TextAlign.center,
@@ -205,6 +247,11 @@ class _RoutineScreenState extends ConsumerState<RoutineScreen> {
               onPressed: () => _advance(skip: true),
               child: const Text('ข้าม'),
             ),
+            if (pose.part != null)
+              TextButton(
+                onPressed: () => _hidePose(context),
+                child: const Text('ซ่อนท่านี้'),
+              ),
             if (inDemo)
               TextButton(
                 onPressed: _advance,

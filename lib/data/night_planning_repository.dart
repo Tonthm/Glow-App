@@ -57,6 +57,20 @@ class NightPlanningRepository {
     return week.firstWhere((n) => n.wakeDate == target);
   }
 
+  /// Appointments on [date], with holidays and one-off changes applied.
+  Future<List<ScheduleEntry>> entriesOn(DateTime date) async {
+    final settingsRow = await settingsRepo.get();
+    return resolveScheduleForDate(
+      date: date,
+      weeklyEntries: toCoreWeeklyEntries(await scheduleRepo.getWeeklyItems()),
+      oneTimeEntries: toCoreOneTimeEntries(
+        await scheduleRepo.getOneTimeItems(),
+      ),
+      termStart: settingsRow.termStart,
+      termEnd: settingsRow.termEnd,
+    );
+  }
+
   /// The earliest appointment on [wakeDate], for the line under the bedtime.
   Future<ScheduleEntry?> firstAppointment(DateTime wakeDate) async {
     final settingsRow = await settingsRepo.get();
