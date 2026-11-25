@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../core/check_in.dart';
 import 'database.dart';
 
 DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -9,11 +10,13 @@ class HeatmapCell {
   final DateTime date;
   final CheckInRow? checkIn;
   final bool isPreExamNight;
+  final bool usedShield;
 
   const HeatmapCell({
     required this.date,
     required this.checkIn,
     required this.isPreExamNight,
+    this.usedShield = false,
   });
 }
 
@@ -76,6 +79,11 @@ class StatsRepository {
       for (final p in plans) _dateOnly(p.wakeDate): p.isPreExamNight,
     };
 
+    final shieldDates = {
+      for (final p in plans)
+        if (p.usedShield) _dateOnly(p.wakeDate),
+    };
+
     final cells = <HeatmapCell>[];
     for (
       var d = startDate;
@@ -87,22 +95,28 @@ class StatsRepository {
           date: d,
           checkIn: checkInByDate[d],
           isPreExamNight: preExamByDate[d] ?? false,
+          usedShield:
+              shieldDates.contains(d) || checkInByDate[d]?.usedShield == true,
         ),
       );
     }
     return cells;
   }
 
-  StatsSummary summarize(List<HeatmapCell> cells) {
+  StatsSummary summarize(
+    List<HeatmapCell> cells, {
+    required int fallAsleepMinutes,
+  }) {
     final withData = cells.where((c) => c.checkIn != null).toList();
     if (withData.isEmpty) return StatsSummary.empty;
 
     final sleepMinutes = withData
         .map(
-          (c) => c.checkIn!.actualWakeAt
-              .difference(c.checkIn!.lightsOffAt)
-              .inMinutes
-              .toDouble(),
+          (c) => actualSleepDuration(
+            lightsOffAt: c.checkIn!.lightsOffAt,
+            wakeAt: c.checkIn!.actualWakeAt,
+            fallAsleepMinutes: fallAsleepMinutes,
+          ).inMinutes.toDouble(),
         )
         .toList();
     final avgSleep =

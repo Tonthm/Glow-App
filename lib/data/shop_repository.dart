@@ -18,7 +18,18 @@ class ShopRepository {
 
   ShopRepository(this.walletRepo, this.fireRepo);
 
-  Future<PurchaseResult> buyBlanket(BlanketConfig blanket, DateTime now) async {
+  Future<PurchaseResult> buyBlanket(BlanketConfig blanket, DateTime now) {
+    return walletRepo.db.transaction(() => _buyBlanket(blanket, now));
+  }
+
+  Future<PurchaseResult> buyShield(DateTime now) {
+    return walletRepo.db.transaction(() => _buyShield(now));
+  }
+
+  Future<PurchaseResult> _buyBlanket(
+    BlanketConfig blanket,
+    DateTime now,
+  ) async {
     if (await walletRepo.owns(blanket.id)) return PurchaseResult.alreadyOwned;
     final wallet = await walletRepo.get();
     if (wallet.coins < blanket.priceCoins) return PurchaseResult.notEnoughCoins;
@@ -28,7 +39,7 @@ class ShopRepository {
     return PurchaseResult.success;
   }
 
-  Future<PurchaseResult> buyShield(DateTime now) async {
+  Future<PurchaseResult> _buyShield(DateTime now) async {
     final wallet = await walletRepo.get();
     if (wallet.coins < EconomyConfig.shieldPriceCoins) {
       return PurchaseResult.notEnoughCoins;

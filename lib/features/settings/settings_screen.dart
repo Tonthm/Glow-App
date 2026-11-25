@@ -125,11 +125,17 @@ class SettingsScreen extends ConsumerWidget {
                     title: 'นำเข้าข้อมูล',
                     message: 'ข้อมูลปัจจุบันทั้งหมดจะถูกแทนที่ด้วยไฟล์ที่เลือก ต้องการดำเนินการต่อไหม',
                   );
-                  if (!confirmed) return;
-                  final ok = await ref.read(backupServiceProvider).importFromFile();
+                  if (!confirmed || !context.mounted) return;
+                  String message;
+                  try {
+                    final ok = await ref.read(backupServiceProvider).importFromFile();
+                    message = ok ? 'นำเข้าข้อมูลแล้ว' : 'ยกเลิกการนำเข้า';
+                  } catch (_) {
+                    message = 'อ่านไฟล์นี้ไม่ได้ ข้อมูลเดิมยังอยู่ครบ';
+                  }
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(ok ? 'นำเข้าข้อมูลแล้ว' : 'ยกเลิกการนำเข้า')),
+                      SnackBar(content: Text(message)),
                     );
                   }
                 },
@@ -149,9 +155,14 @@ class SettingsScreen extends ConsumerWidget {
                     title: 'ลบข้อมูลทั้งหมด',
                     message: 'ข้อมูลทุกอย่างในแอปจะถูกลบและไม่สามารถกู้คืนได้ ต้องการดำเนินการต่อไหม',
                   );
-                  if (!confirmed) return;
-                  await ref.read(backupServiceProvider).deleteAllData();
-                  await ref.read(notificationServiceProvider).cancelAll();
+                  if (!confirmed || !context.mounted) return;
+                  final notifications = ref.read(notificationServiceProvider);
+                  final backup = ref.read(backupServiceProvider);
+                  // Back to the first screen, which becomes onboarding again.
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  await backup.deleteAllData();
+                  await notifications.init();
+                  await notifications.cancelAll();
                 },
               ),
               const SizedBox(height: 16),

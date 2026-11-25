@@ -125,4 +125,31 @@ void main() {
       expect(result.level, EveningLoadLevel.red);
     });
   });
+
+  group('exam mode', () {
+    final today = DateTime(2026, 11, 25);
+
+    test('is on from 7 days before an exam through the exam day', () {
+      for (final days in [0, 1, 7]) {
+        expect(
+          isExamModeOn(
+            date: today,
+            examDates: [today.add(Duration(days: days))],
+          ),
+          isTrue,
+          reason: '$days days ahead',
+        );
+      }
+    });
+
+    test('is off for far-off and past exams', () {
+      expect(
+        isExamModeOn(
+          date: today,
+          examDates: [DateTime(2026, 12, 3), DateTime(2026, 11, 24)],
+        ),
+        isFalse,
+      );
+    });
+  });
 }

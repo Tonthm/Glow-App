@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/check_in.dart';
 import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
@@ -39,6 +40,7 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
     final result = await showGlowBottomSheet<(DateTime, DateTime)>(
       context: context,
       builder: (context) => _EditTimesSheet(
+        wakeDate: widget.pending.wakeDate,
         initialLightsOff: _lightsOffAt,
         initialWake: _wakeAt,
       ),
@@ -84,7 +86,13 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final duration = _wakeAt.difference(_lightsOffAt);
+    final fallAsleepMinutes =
+        ref.watch(settingsStreamProvider).value?.fallAsleepMinutes ?? 15;
+    final duration = actualSleepDuration(
+      lightsOffAt: _lightsOffAt,
+      wakeAt: _wakeAt,
+      fallAsleepMinutes: fallAsleepMinutes,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -96,7 +104,7 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
         ),
         const SizedBox(height: GlowSpacing.xs),
         Text(
-          '${duration.inHours} ชม. ${duration.inMinutes % 60} นาที',
+          'นอน ${duration.inHours} ชม. ${duration.inMinutes % 60} นาที',
           style: textTheme.bodyMedium,
         ),
         const SizedBox(height: GlowSpacing.xl),
@@ -118,10 +126,12 @@ String _formatTime(DateTime t) =>
     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
 class _EditTimesSheet extends StatefulWidget {
+  final DateTime wakeDate;
   final DateTime initialLightsOff;
   final DateTime initialWake;
 
   const _EditTimesSheet({
+    required this.wakeDate,
     required this.initialLightsOff,
     required this.initialWake,
   });
@@ -136,14 +146,24 @@ class _EditTimesSheetState extends State<_EditTimesSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // The wheels only pick a clock time; the date is worked out from it.
+    final times = resolveCheckInTimes(
+      wakeDate: widget.wakeDate,
+      lightsOffHour: _lightsOff.hour,
+      lightsOffMinute: _lightsOff.minute,
+      wakeHour: _wake.hour,
+      wakeMinute: _wake.minute,
+    );
+    final isValid = times.wakeAt.isAfter(times.lightsOffAt);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text('ปิดไฟ', style: Theme.of(context).textTheme.bodyMedium),
         SizedBox(
-          height: 160,
+          height: 130,
           child: CupertinoDatePicker(
             mode: CupertinoDatePickerMode.time,
+            use24hFormat: true,
             initialDateTime: _lightsOff,
             onDateTimeChanged: (v) => setState(() => _lightsOff = v),
           ),
@@ -151,17 +171,25 @@ class _EditTimesSheetState extends State<_EditTimesSheet> {
         const SizedBox(height: GlowSpacing.md),
         Text('ตื่น', style: Theme.of(context).textTheme.bodyMedium),
         SizedBox(
-          height: 160,
+          height: 130,
           child: CupertinoDatePicker(
             mode: CupertinoDatePickerMode.time,
+            use24hFormat: true,
             initialDateTime: _wake,
             onDateTimeChanged: (v) => setState(() => _wake = v),
           ),
         ),
         const SizedBox(height: GlowSpacing.lg),
+        if (!isValid)
+          const Padding(
+            padding: EdgeInsets.only(bottom: GlowSpacing.sm),
+            child: Text('เวลาตื่นต้องอยู่หลังเวลาปิดไฟ'),
+          ),
         GlowPrimaryButton(
           label: 'บันทึก',
-          onPressed: () => Navigator.of(context).pop((_lightsOff, _wake)),
+          onPressed: isValid
+              ? () => Navigator.of(context).pop((times.lightsOffAt, times.wakeAt))
+              : null,
         ),
       ],
     );

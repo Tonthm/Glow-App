@@ -12,23 +12,35 @@ class BackupService {
 
   BackupService(this.db);
 
-  Future<Map<String, dynamic>> _buildSnapshot() async {
+  static const _version = 2;
+
+  Future<Map<String, dynamic>> buildSnapshot() async {
+    Future<List<Map<String, dynamic>>> dump<T extends Table, R extends DataClass>(
+      TableInfo<T, R> table,
+    ) async {
+      final rows = await db.select(table).get();
+      return [for (final row in rows) row.toJson()];
+    }
+
     final settings = await db.select(db.settings).getSingleOrNull();
-    final weekly = await db.select(db.weeklyItems).get();
-    final oneTime = await db.select(db.oneTimeItems).get();
-    final nightPlans = await db.select(db.nightPlans).get();
     return {
-      'version': 1,
+      'version': _version,
       'settings': settings?.toJson(),
-      'weeklyItems': weekly.map((e) => e.toJson()).toList(),
-      'oneTimeItems': oneTime.map((e) => e.toJson()).toList(),
-      'nightPlans': nightPlans.map((e) => e.toJson()).toList(),
+      'weeklyItems': await dump(db.weeklyItems),
+      'oneTimeItems': await dump(db.oneTimeItems),
+      'nightPlans': await dump(db.nightPlans),
+      'checkIns': await dump(db.checkIns),
+      'fireStates': await dump(db.fireStates),
+      'wallets': await dump(db.wallets),
+      'ownedItems': await dump(db.ownedItems),
+      'weeklyQuestProgresses': await dump(db.weeklyQuestProgresses),
+      'examPeriodClaims': await dump(db.examPeriodClaims),
     };
   }
 
   /// Returns true if the user picked a destination and the file was saved.
   Future<bool> exportToFile() async {
-    final snapshot = await _buildSnapshot();
+    final snapshot = await buildSnapshot();
     final bytes = Uint8List.fromList(utf8.encode(jsonEncode(snapshot)));
     final stamp = DateTime.now().toIso8601String().replaceAll(':', '-');
     final uri = await FilePicker.saveFile(
@@ -48,51 +60,103 @@ class BackupService {
     if (files.isEmpty) return false;
     final bytes = await files.first.readAsBytes();
     final map = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
-    await _restoreSnapshot(map);
+    await restoreSnapshot(map);
     return true;
   }
 
-  Future<void> _restoreSnapshot(Map<String, dynamic> map) async {
+  /// Replaces everything with [map]. All-or-nothing: a bad file throws and
+  /// leaves the current data untouched.
+  Future<void> restoreSnapshot(Map<String, dynamic> map) async {
+    final version = map['version'];
+    if (version is! int || version < 1 || version > _version) {
+      throw const FormatException('ไฟล์นี้ไม่ใช่ไฟล์สำรองของ Glow ที่รองรับ');
+    }
+
     await db.transaction(() async {
-      await db.delete(db.nightPlans).go();
-      await db.delete(db.oneTimeItems).go();
-      await db.delete(db.weeklyItems).go();
-      await db.delete(db.settings).go();
+      await deleteAllData();
+
+      Future<void> load<T extends Table, R extends DataClass>(
+        String key,
+        TableInfo<T, R> table,
+        Insertable<R> Function(Map<String, dynamic>) parse,
+      ) async {
+        for (final row in (map[key] as List? ?? [])) {
+          await db
+              .into(table)
+              .insert(
+                parse(row as Map<String, dynamic>),
+                mode: InsertMode.insertOrReplace,
+              );
+        }
+      }
 
       final settingsJson = map['settings'] as Map<String, dynamic>?;
       if (settingsJson != null) {
-        await db.into(db.settings).insert(
-          SettingsRow.fromJson(settingsJson).toCompanion(false),
-          mode: InsertMode.insertOrReplace,
-        );
+        // Defaults cover columns that older backups don't have.
+        await db
+            .into(db.settings)
+            .insert(
+              SettingsRow.fromJson({
+                'notifyCheckIn': true,
+                'themeMode': 0,
+                ...settingsJson,
+              }).toCompanion(false),
+              mode: InsertMode.insertOrReplace,
+            );
       }
-      for (final w in (map['weeklyItems'] as List? ?? [])) {
-        await db.into(db.weeklyItems).insert(
-          WeeklyItem.fromJson(w as Map<String, dynamic>).toCompanion(false),
-          mode: InsertMode.insertOrReplace,
-        );
-      }
-      for (final o in (map['oneTimeItems'] as List? ?? [])) {
-        await db.into(db.oneTimeItems).insert(
-          OneTimeItem.fromJson(o as Map<String, dynamic>).toCompanion(false),
-          mode: InsertMode.insertOrReplace,
-        );
-      }
-      for (final n in (map['nightPlans'] as List? ?? [])) {
-        await db.into(db.nightPlans).insert(
-          NightPlan.fromJson(n as Map<String, dynamic>).toCompanion(false),
-          mode: InsertMode.insertOrReplace,
-        );
-      }
+      await load(
+        'weeklyItems',
+        db.weeklyItems,
+        (j) => WeeklyItem.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'oneTimeItems',
+        db.oneTimeItems,
+        (j) => OneTimeItem.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'nightPlans',
+        db.nightPlans,
+        (j) => NightPlan.fromJson({'usedShield': false, ...j}).toCompanion(false),
+      );
+      await load(
+        'checkIns',
+        db.checkIns,
+        (j) => CheckInRow.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'fireStates',
+        db.fireStates,
+        (j) => FireStateRow.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'wallets',
+        db.wallets,
+        (j) => WalletRow.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'ownedItems',
+        db.ownedItems,
+        (j) => OwnedItem.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'weeklyQuestProgresses',
+        db.weeklyQuestProgresses,
+        (j) => WeeklyQuestProgressesData.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'examPeriodClaims',
+        db.examPeriodClaims,
+        (j) => ExamPeriodClaim.fromJson(j).toCompanion(false),
+      );
     });
   }
 
   Future<void> deleteAllData() async {
     await db.transaction(() async {
-      await db.delete(db.nightPlans).go();
-      await db.delete(db.oneTimeItems).go();
-      await db.delete(db.weeklyItems).go();
-      await db.delete(db.settings).go();
+      for (final table in db.allTables) {
+        await db.delete(table).go();
+      }
     });
   }
 }

@@ -55,8 +55,15 @@ class QuestRepository {
     return weeklyOnTimeCount(await _weekNights(monday));
   }
 
+  /// Checks last week too: Sunday's night can still be checked in until
+  /// Monday 14:00, after the week has already rolled over.
   Future<void> claimWeeklyRewardIfComplete(DateTime now) async {
     final monday = mondayOfWeek(now);
+    await _claimWeek(DateTime(monday.year, monday.month, monday.day - 7));
+    await _claimWeek(monday);
+  }
+
+  Future<void> _claimWeek(DateTime monday) async {
     final existing = await (db.select(
       db.weeklyQuestProgresses,
     )..where((t) => t.weekStart.equals(monday))).getSingleOrNull();

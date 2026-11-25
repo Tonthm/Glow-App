@@ -23,6 +23,7 @@ class TonightPlanData {
   final ({OneTimeItem exam, int daysUntil})? examCountdown;
   final PendingCheckIn? pendingCheckIn;
   final int weeklyOnTimeCount;
+  final bool inBed;
 
   const TonightPlanData({
     required this.wakeDate,
@@ -31,6 +32,7 @@ class TonightPlanData {
     required this.examCountdown,
     required this.pendingCheckIn,
     required this.weeklyOnTimeCount,
+    required this.inBed,
   });
 }
 
@@ -49,11 +51,18 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   final repo = ref.watch(nightPlanningRepositoryProvider);
   final now = DateTime.now();
 
-  await ref.watch(fireRepositoryProvider).grantFreeShieldIfNewWeek(now);
-  await ref.watch(checkInRepositoryProvider).sweepMissedNights(now);
+  final fireRepo = ref.watch(fireRepositoryProvider);
+  final checkInRepo = ref.watch(checkInRepositoryProvider);
   final questRepo = ref.watch(questRepositoryProvider);
-  await questRepo.claimWeeklyRewardIfComplete(now);
-  await questRepo.claimExamPeriodRewardsIfComplete(now);
+  // This provider can be rebuilt while an earlier run is still going; one
+  // transaction keeps the two from applying the same reward or penalty twice.
+  await ref.watch(databaseProvider).transaction(() async {
+    await repo.lockElapsedNights(now);
+    await fireRepo.grantFreeShieldIfNewWeek(now);
+    await checkInRepo.sweepMissedNights(now);
+    await questRepo.claimWeeklyRewardIfComplete(now);
+    await questRepo.claimExamPeriodRewardsIfComplete(now);
+  });
 
   if (settings != null) {
     final notificationService = ref.watch(notificationServiceProvider);
@@ -85,6 +94,7 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     examCountdown: examCountdown,
     pendingCheckIn: pendingCheckIn,
     weeklyOnTimeCount: weeklyOnTimeCount,
+    inBed: (await repo.getPlanRow(wakeDate))?.inBedAt != null,
   );
 });
 
@@ -102,13 +112,27 @@ class TonightScreen extends ConsumerStatefulWidget {
 }
 
 class _TonightScreenState extends ConsumerState<TonightScreen> {
-  bool _checkedIn = false;
   bool? _notificationsOk;
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
     _checkPermissions();
+    // Coming back from the background counts as opening the app: the day may
+    // have changed, and permissions may have been switched off meanwhile.
+    _lifecycle = AppLifecycleListener(
+      onResume: () {
+        ref.invalidate(tonightPlanProvider);
+        _checkPermissions();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   Future<void> _checkPermissions() async {
@@ -162,12 +186,15 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                       )
                     : _PlanContent(
                         plan: plan,
-                        checkedIn: _checkedIn,
+                        checkedIn: plan.inBed,
                         onCheckIn: () async {
+                          await ref
+                              .read(nightPlanningRepositoryProvider)
+                              .markInBed(plan.wakeDate, DateTime.now());
                           await ref
                               .read(notificationServiceProvider)
                               .cancelBedtimeNotification(plan.wakeDate);
-                          setState(() => _checkedIn = true);
+                          ref.invalidate(tonightPlanProvider);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('บันทึกแล้ว ฝันดีนะ')),

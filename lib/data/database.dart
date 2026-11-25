@@ -55,6 +55,9 @@ class Settings extends Table {
       boolean().withDefault(const Constant(false))();
   IntColumn get themeMode =>
       intEnum<AppThemeMode>().withDefault(const Constant(0))();
+  /// When onboarding finished. Nights that started before this are never
+  /// counted as missed check-ins.
+  DateTimeColumn get onboardedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -108,6 +111,12 @@ class NightPlans extends Table {
   /// real check-in or the no-check-in-past-window sweep — so it's applied
   /// exactly once.
   DateTimeColumn get fireAppliedAt => dateTime().nullable()();
+  /// When "เข้านอนแล้ว" was pressed, so the reminders stay cancelled and the
+  /// button stays pressed after an app restart.
+  DateTimeColumn get inBedAt => dateTime().nullable()();
+  /// A shield absorbed this night's miss. Kept on the plan because a missed
+  /// night has no check-in row to mark.
+  BoolColumn get usedShield => boolean().withDefault(const Constant(false))();
 
   @override
   List<Set<Column>> get uniqueKeys => [
@@ -222,7 +231,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -271,6 +280,11 @@ class AppDatabase extends _$AppDatabase {
           fireStates,
           fireStates.lastShieldPurchaseMonday,
         );
+      }
+      if (from < 9) {
+        await _addColumnIfMissing(m, settings, settings.onboardedAt);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.inBedAt);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.usedShield);
       }
     },
   );

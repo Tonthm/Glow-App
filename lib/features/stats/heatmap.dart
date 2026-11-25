@@ -108,7 +108,7 @@ class Heatmap extends StatelessWidget {
                   ),
                 ),
               ),
-            if (cell.checkIn?.usedShield == true)
+            if (cell.usedShield)
               const Positioned(
                 bottom: 0,
                 right: 0,

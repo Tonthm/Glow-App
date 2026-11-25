@@ -11,7 +11,9 @@ import '../data/database.dart';
 import '../data/night_planning_repository.dart';
 import 'permissions_service.dart';
 
-enum NotificationKind { putPhoneDown, bedtime, checkIn }
+enum NotificationKind { putPhoneDown, bedtime, checkIn, redNight }
+
+const int _testNotificationId = 999999;
 
 /// Stable per-night, per-kind notification ids so a reschedule can predict
 /// and cancel exactly the ones it set before (e.g. when "เข้านอนแล้ว" is
@@ -62,11 +64,17 @@ class NotificationService {
 
   NotificationService(this.permissions);
 
+  /// Re-read on every reschedule so a timezone change is picked up without
+  /// restarting the app.
+  Future<void> _syncTimeZone() async {
+    final localTz = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(localTz.identifier));
+  }
+
   Future<void> init() async {
     if (_initialized) return;
     tz_data.initializeTimeZones();
-    final localTz = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(localTz.identifier));
+    await _syncTimeZone();
 
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
@@ -95,6 +103,8 @@ class NotificationService {
     );
   }
 
+  Future<void> _lastReschedule = Future.value();
+
   /// Clears and re-schedules the next 7 nights' put-phone-down and bedtime
   /// reminders, per section 5's "ลบแล้วตั้งใหม่ทั้งชุด" rule. Call this on
   /// app open, after editing schedule/settings, on boot, and on
@@ -104,9 +114,30 @@ class NotificationService {
     required CheckInRepository checkInRepo,
     required SettingsRow settings,
     required DateTime now,
-  }) async {
+  }) {
+    // Queued, so two refreshes can't interleave their cancels and schedules.
+    final next = _lastReschedule
+        .catchError((_) {})
+        .then((_) => _reschedule(repo, checkInRepo, settings, now));
+    _lastReschedule = next;
+    return next;
+  }
+
+  Future<void> _reschedule(
+    NightPlanningRepository repo,
+    CheckInRepository checkInRepo,
+    SettingsRow settings,
+    DateTime now,
+  ) async {
     await init();
-    await cancelAll();
+    await _syncTimeZone();
+    // Only pending reminders: cancelAll() would also wipe an alert already in
+    // the tray and a test notification that hasn't fired yet.
+    for (final pending in await _plugin.pendingNotificationRequests()) {
+      if (pending.id != _testNotificationId) {
+        await _plugin.cancel(id: pending.id);
+      }
+    }
 
     final exactAlarmsGranted = await permissions.hasExactAlarmPermission();
     final scheduleMode = exactAlarmsGranted
@@ -116,7 +147,8 @@ class NotificationService {
     final today = DateTime(now.year, now.month, now.day);
     for (var i = 0; i < 7; i++) {
       final wakeDate = today.add(Duration(days: i));
-      final draft = await repo.computeDraftForWakeDate(wakeDate);
+      final draft = await repo.currentPlan(wakeDate);
+      final inBed = (await repo.getPlanRow(wakeDate))?.inBedAt != null;
       final alreadyCheckedIn =
           await checkInRepo.getForWakeDate(wakeDate) != null;
       await _scheduleNight(
@@ -125,6 +157,7 @@ class NotificationService {
         now: now,
         scheduleMode: scheduleMode,
         alreadyCheckedIn: alreadyCheckedIn,
+        inBed: inBed,
       );
     }
   }
@@ -135,13 +168,14 @@ class NotificationService {
     required DateTime now,
     required AndroidScheduleMode scheduleMode,
     required bool alreadyCheckedIn,
+    required bool inBed,
   }) async {
     final notifyOffsetMinutes = draft.isPreExamNight ? 90 : 60;
     final notifyTime = draft.bedtime.subtract(
       Duration(minutes: notifyOffsetMinutes),
     );
 
-    if (settings.notifyPutPhoneDown && notifyTime.isAfter(now)) {
+    if (settings.notifyPutPhoneDown && !inBed && notifyTime.isAfter(now)) {
       await _zonedSchedule(
         id: notificationIdFor(NotificationKind.putPhoneDown, draft.wakeDate),
         at: notifyTime,
@@ -150,7 +184,7 @@ class NotificationService {
         scheduleMode: scheduleMode,
       );
     }
-    if (settings.notifyBedtime && draft.bedtime.isAfter(now)) {
+    if (settings.notifyBedtime && !inBed && draft.bedtime.isAfter(now)) {
       await _zonedSchedule(
         id: notificationIdFor(NotificationKind.bedtime, draft.wakeDate),
         at: draft.bedtime,
@@ -211,7 +245,7 @@ class NotificationService {
     await init();
     for (final night in unalerted) {
       await _plugin.show(
-        id: notificationIdFor(NotificationKind.bedtime, night.wakeDate) + 1,
+        id: notificationIdFor(NotificationKind.redNight, night.wakeDate),
         title: 'Glow',
         body: _randomMessage(_redNightMessages),
         notificationDetails: const NotificationDetails(
@@ -232,7 +266,7 @@ class NotificationService {
     final exactAlarmsGranted = await permissions.hasExactAlarmPermission();
     final at = DateTime.now().add(const Duration(minutes: 1));
     await _zonedSchedule(
-      id: 999999,
+      id: _testNotificationId,
       at: at,
       title: 'Glow',
       body: 'นี่คือการแจ้งเตือนทดสอบ ตั้งไว้ล่วงหน้า 1 นาที',

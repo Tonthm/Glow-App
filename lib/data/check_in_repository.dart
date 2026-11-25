@@ -110,6 +110,24 @@ class CheckInRepository {
     required DateTime lightsOffAt,
     required DateTime actualWakeAt,
     required DateTime now,
+  }) {
+    // One transaction, so a crash or a second tap can't grant coins or fire
+    // for a half-recorded night.
+    return db.transaction(
+      () => _recordCheckIn(
+        wakeDate: wakeDate,
+        lightsOffAt: lightsOffAt,
+        actualWakeAt: actualWakeAt,
+        now: now,
+      ),
+    );
+  }
+
+  Future<CheckInRecordResult> _recordCheckIn({
+    required DateTime wakeDate,
+    required DateTime lightsOffAt,
+    required DateTime actualWakeAt,
+    required DateTime now,
   }) async {
     final target = _dateOnly(wakeDate);
     final plan = await nightPlanningRepo.getOrLockPlan(target, now: now);
@@ -252,7 +270,10 @@ class CheckInRepository {
     await (db.update(
       db.nightPlans,
     )..where((t) => t.id.equals(plan.id))).write(
-      NightPlansCompanion(fireAppliedAt: Value(now)),
+      NightPlansCompanion(
+        fireAppliedAt: Value(now),
+        usedShield: Value(after.shields < before.shields),
+      ),
     );
 
     // One-time reward the first time fire ever reaches a new level

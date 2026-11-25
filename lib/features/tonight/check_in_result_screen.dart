@@ -103,7 +103,13 @@ class CheckInResultScreen extends ConsumerWidget {
               const SizedBox(height: GlowSpacing.lg),
               Text('สัปดาห์นี้', style: textTheme.titleLarge),
               const SizedBox(height: GlowSpacing.md),
-              if (week != null) _WeekStats(week: week),
+              if (week != null)
+                _WeekStats(
+                  week: week,
+                  fallAsleepMinutes:
+                      ref.watch(settingsStreamProvider).value?.fallAsleepMinutes ??
+                      15,
+                ),
               const SizedBox(height: GlowSpacing.xl),
               GlowPrimaryButton(
                 label: 'ตกลง',
@@ -147,7 +153,8 @@ class _FireChangeRow extends StatelessWidget {
 
 class _WeekStats extends StatelessWidget {
   final List<WeekCheckInSummary> week;
-  const _WeekStats({required this.week});
+  final int fallAsleepMinutes;
+  const _WeekStats({required this.week, required this.fallAsleepMinutes});
 
   @override
   Widget build(BuildContext context) {
@@ -157,9 +164,11 @@ class _WeekStats extends StatelessWidget {
     final sleptMinutes = week
         .where((d) => d.checkIn != null)
         .map(
-          (d) => d.checkIn!.actualWakeAt
-              .difference(d.checkIn!.lightsOffAt)
-              .inMinutes,
+          (d) => actualSleepDuration(
+            lightsOffAt: d.checkIn!.lightsOffAt,
+            wakeAt: d.checkIn!.actualWakeAt,
+            fallAsleepMinutes: fallAsleepMinutes,
+          ).inMinutes,
         )
         .toList();
     final avgMinutes = sleptMinutes.isEmpty
@@ -184,6 +193,7 @@ class _WeekStats extends StatelessWidget {
                 _DayBar(
                   dayLabel: _dayLabels[i],
                   checkIn: week[i].checkIn,
+                  fallAsleepMinutes: fallAsleepMinutes,
                 ),
             ],
           ),
@@ -199,7 +209,13 @@ class _DayBar extends StatelessWidget {
   final String dayLabel;
   final CheckInRow? checkIn;
 
-  const _DayBar({required this.dayLabel, required this.checkIn});
+  final int fallAsleepMinutes;
+
+  const _DayBar({
+    required this.dayLabel,
+    required this.checkIn,
+    required this.fallAsleepMinutes,
+  });
 
   static const double _maxBarHeight = 90;
   static const double _minutesForFullBar = 12 * 60;
@@ -210,7 +226,11 @@ class _DayBar extends StatelessWidget {
     final checkIn = this.checkIn;
     final sleptMinutes = checkIn == null
         ? 0
-        : checkIn.actualWakeAt.difference(checkIn.lightsOffAt).inMinutes;
+        : actualSleepDuration(
+            lightsOffAt: checkIn.lightsOffAt,
+            wakeAt: checkIn.actualWakeAt,
+            fallAsleepMinutes: fallAsleepMinutes,
+          ).inMinutes;
     final barHeight = checkIn == null
         ? 0.0
         : (_maxBarHeight * sleptMinutes / _minutesForFullBar).clamp(

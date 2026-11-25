@@ -34,6 +34,7 @@ EveningLoadResult classifyEveningLoad({
   required DateTime plannedWakeTime,
   required bool isPreExamNight,
   required SleepSettings settings,
+  bool isExamMode = false,
 }) {
   final notifyOffsetMinutes = isPreExamNight ? 90 : 60;
   final notifyTime = plannedBedtime.subtract(
@@ -74,7 +75,7 @@ EveningLoadResult classifyEveningLoad({
   }
 
   final freeEveningMinutes = notifyTime.difference(arriveHome).inMinutes;
-  final normalThresholdMinutes = isPreExamNight ? 180 : 120;
+  final normalThresholdMinutes = isExamMode || isPreExamNight ? 180 : 120;
 
   final level = freeEveningMinutes >= normalThresholdMinutes
       ? EveningLoadLevel.normal
@@ -85,4 +86,21 @@ EveningLoadResult classifyEveningLoad({
     notifyTime: notifyTime,
     arriveHomeAt: arriveHome,
   );
+}
+
+/// Section 4: exam mode is on while an exam falls within the next 7 days of
+/// [date], and switches off by itself after the last one.
+bool isExamModeOn({
+  required DateTime date,
+  required Iterable<DateTime> examDates,
+}) {
+  final day = DateTime(date.year, date.month, date.day);
+  return examDates.any((exam) {
+    final days = DateTime(
+      exam.year,
+      exam.month,
+      exam.day,
+    ).difference(day).inDays;
+    return days >= 0 && days <= 7;
+  });
 }

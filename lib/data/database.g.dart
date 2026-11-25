@@ -238,6 +238,17 @@ class $SettingsTable extends Settings
         requiredDuringInsert: false,
         defaultValue: const Constant(0),
       ).withConverter<AppThemeMode>($SettingsTable.$converterthemeMode);
+  static const VerificationMeta _onboardedAtMeta = const VerificationMeta(
+    'onboardedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> onboardedAt = GeneratedColumn<DateTime>(
+    'onboarded_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -259,6 +270,7 @@ class $SettingsTable extends Settings
     notifyCheckIn,
     onboardingCompleted,
     themeMode,
+    onboardedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -413,6 +425,15 @@ class $SettingsTable extends Settings
         ),
       );
     }
+    if (data.containsKey('onboarded_at')) {
+      context.handle(
+        _onboardedAtMeta,
+        onboardedAt.isAcceptableOrUnknown(
+          data['onboarded_at']!,
+          _onboardedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -502,6 +523,10 @@ class $SettingsTable extends Settings
           data['${effectivePrefix}theme_mode'],
         )!,
       ),
+      onboardedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}onboarded_at'],
+      ),
     );
   }
 
@@ -536,6 +561,10 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   final bool notifyCheckIn;
   final bool onboardingCompleted;
   final AppThemeMode themeMode;
+
+  /// When onboarding finished. Nights that started before this are never
+  /// counted as missed check-ins.
+  final DateTime? onboardedAt;
   const SettingsRow({
     required this.id,
     required this.ageGroup,
@@ -556,6 +585,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.notifyCheckIn,
     required this.onboardingCompleted,
     required this.themeMode,
+    this.onboardedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -591,6 +621,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         $SettingsTable.$converterthemeMode.toSql(themeMode),
       );
     }
+    if (!nullToAbsent || onboardedAt != null) {
+      map['onboarded_at'] = Variable<DateTime>(onboardedAt);
+    }
     return map;
   }
 
@@ -619,6 +652,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       notifyCheckIn: Value(notifyCheckIn),
       onboardingCompleted: Value(onboardingCompleted),
       themeMode: Value(themeMode),
+      onboardedAt: onboardedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(onboardedAt),
     );
   }
 
@@ -659,6 +695,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       themeMode: $SettingsTable.$converterthemeMode.fromJson(
         serializer.fromJson<int>(json['themeMode']),
       ),
+      onboardedAt: serializer.fromJson<DateTime?>(json['onboardedAt']),
     );
   }
   @override
@@ -688,6 +725,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       'themeMode': serializer.toJson<int>(
         $SettingsTable.$converterthemeMode.toJson(themeMode),
       ),
+      'onboardedAt': serializer.toJson<DateTime?>(onboardedAt),
     };
   }
 
@@ -711,6 +749,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bool? notifyCheckIn,
     bool? onboardingCompleted,
     AppThemeMode? themeMode,
+    Value<DateTime?> onboardedAt = const Value.absent(),
   }) => SettingsRow(
     id: id ?? this.id,
     ageGroup: ageGroup ?? this.ageGroup,
@@ -731,6 +770,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     notifyCheckIn: notifyCheckIn ?? this.notifyCheckIn,
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
     themeMode: themeMode ?? this.themeMode,
+    onboardedAt: onboardedAt.present ? onboardedAt.value : this.onboardedAt,
   );
   SettingsRow copyWithCompanion(SettingsCompanion data) {
     return SettingsRow(
@@ -781,6 +821,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ? data.onboardingCompleted.value
           : this.onboardingCompleted,
       themeMode: data.themeMode.present ? data.themeMode.value : this.themeMode,
+      onboardedAt: data.onboardedAt.present
+          ? data.onboardedAt.value
+          : this.onboardedAt,
     );
   }
 
@@ -805,7 +848,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('notifyBusyNight: $notifyBusyNight, ')
           ..write('notifyCheckIn: $notifyCheckIn, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
-          ..write('themeMode: $themeMode')
+          ..write('themeMode: $themeMode, ')
+          ..write('onboardedAt: $onboardedAt')
           ..write(')'))
         .toString();
   }
@@ -831,6 +875,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     notifyCheckIn,
     onboardingCompleted,
     themeMode,
+    onboardedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -854,7 +899,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.notifyBusyNight == this.notifyBusyNight &&
           other.notifyCheckIn == this.notifyCheckIn &&
           other.onboardingCompleted == this.onboardingCompleted &&
-          other.themeMode == this.themeMode);
+          other.themeMode == this.themeMode &&
+          other.onboardedAt == this.onboardedAt);
 }
 
 class SettingsCompanion extends UpdateCompanion<SettingsRow> {
@@ -877,6 +923,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<bool> notifyCheckIn;
   final Value<bool> onboardingCompleted;
   final Value<AppThemeMode> themeMode;
+  final Value<DateTime?> onboardedAt;
   const SettingsCompanion({
     this.id = const Value.absent(),
     this.ageGroup = const Value.absent(),
@@ -897,6 +944,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.notifyCheckIn = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
+    this.onboardedAt = const Value.absent(),
   });
   SettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -918,6 +966,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.notifyCheckIn = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
+    this.onboardedAt = const Value.absent(),
   });
   static Insertable<SettingsRow> custom({
     Expression<int>? id,
@@ -939,6 +988,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<bool>? notifyCheckIn,
     Expression<bool>? onboardingCompleted,
     Expression<int>? themeMode,
+    Expression<DateTime>? onboardedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -966,6 +1016,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       if (onboardingCompleted != null)
         'onboarding_completed': onboardingCompleted,
       if (themeMode != null) 'theme_mode': themeMode,
+      if (onboardedAt != null) 'onboarded_at': onboardedAt,
     });
   }
 
@@ -989,6 +1040,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<bool>? notifyCheckIn,
     Value<bool>? onboardingCompleted,
     Value<AppThemeMode>? themeMode,
+    Value<DateTime?>? onboardedAt,
   }) {
     return SettingsCompanion(
       id: id ?? this.id,
@@ -1010,6 +1062,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       notifyCheckIn: notifyCheckIn ?? this.notifyCheckIn,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       themeMode: themeMode ?? this.themeMode,
+      onboardedAt: onboardedAt ?? this.onboardedAt,
     );
   }
 
@@ -1077,6 +1130,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
         $SettingsTable.$converterthemeMode.toSql(themeMode.value),
       );
     }
+    if (onboardedAt.present) {
+      map['onboarded_at'] = Variable<DateTime>(onboardedAt.value);
+    }
     return map;
   }
 
@@ -1101,7 +1157,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('notifyBusyNight: $notifyBusyNight, ')
           ..write('notifyCheckIn: $notifyCheckIn, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
-          ..write('themeMode: $themeMode')
+          ..write('themeMode: $themeMode, ')
+          ..write('onboardedAt: $onboardedAt')
           ..write(')'))
         .toString();
   }
@@ -2304,6 +2361,32 @@ class $NightPlansTable extends NightPlans
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _inBedAtMeta = const VerificationMeta(
+    'inBedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> inBedAt = GeneratedColumn<DateTime>(
+    'in_bed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _usedShieldMeta = const VerificationMeta(
+    'usedShield',
+  );
+  @override
+  late final GeneratedColumn<bool> usedShield = GeneratedColumn<bool>(
+    'used_shield',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("used_shield" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2317,6 +2400,8 @@ class $NightPlansTable extends NightPlans
     lockedAt,
     redAlertSentAt,
     fireAppliedAt,
+    inBedAt,
+    usedShield,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2420,6 +2505,18 @@ class $NightPlansTable extends NightPlans
         ),
       );
     }
+    if (data.containsKey('in_bed_at')) {
+      context.handle(
+        _inBedAtMeta,
+        inBedAt.isAcceptableOrUnknown(data['in_bed_at']!, _inBedAtMeta),
+      );
+    }
+    if (data.containsKey('used_shield')) {
+      context.handle(
+        _usedShieldMeta,
+        usedShield.isAcceptableOrUnknown(data['used_shield']!, _usedShieldMeta),
+      );
+    }
     return context;
   }
 
@@ -2477,6 +2574,14 @@ class $NightPlansTable extends NightPlans
         DriftSqlType.dateTime,
         data['${effectivePrefix}fire_applied_at'],
       ),
+      inBedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}in_bed_at'],
+      ),
+      usedShield: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}used_shield'],
+      )!,
     );
   }
 
@@ -2505,6 +2610,14 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
   /// real check-in or the no-check-in-past-window sweep — so it's applied
   /// exactly once.
   final DateTime? fireAppliedAt;
+
+  /// When "เข้านอนแล้ว" was pressed, so the reminders stay cancelled and the
+  /// button stays pressed after an app restart.
+  final DateTime? inBedAt;
+
+  /// A shield absorbed this night's miss. Kept on the plan because a missed
+  /// night has no check-in row to mark.
+  final bool usedShield;
   const NightPlan({
     required this.id,
     required this.wakeDate,
@@ -2517,6 +2630,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     this.lockedAt,
     this.redAlertSentAt,
     this.fireAppliedAt,
+    this.inBedAt,
+    required this.usedShield,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2538,6 +2653,10 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     if (!nullToAbsent || fireAppliedAt != null) {
       map['fire_applied_at'] = Variable<DateTime>(fireAppliedAt);
     }
+    if (!nullToAbsent || inBedAt != null) {
+      map['in_bed_at'] = Variable<DateTime>(inBedAt);
+    }
+    map['used_shield'] = Variable<bool>(usedShield);
     return map;
   }
 
@@ -2560,6 +2679,10 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       fireAppliedAt: fireAppliedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(fireAppliedAt),
+      inBedAt: inBedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(inBedAt),
+      usedShield: Value(usedShield),
     );
   }
 
@@ -2580,6 +2703,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       lockedAt: serializer.fromJson<DateTime?>(json['lockedAt']),
       redAlertSentAt: serializer.fromJson<DateTime?>(json['redAlertSentAt']),
       fireAppliedAt: serializer.fromJson<DateTime?>(json['fireAppliedAt']),
+      inBedAt: serializer.fromJson<DateTime?>(json['inBedAt']),
+      usedShield: serializer.fromJson<bool>(json['usedShield']),
     );
   }
   @override
@@ -2597,6 +2722,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       'lockedAt': serializer.toJson<DateTime?>(lockedAt),
       'redAlertSentAt': serializer.toJson<DateTime?>(redAlertSentAt),
       'fireAppliedAt': serializer.toJson<DateTime?>(fireAppliedAt),
+      'inBedAt': serializer.toJson<DateTime?>(inBedAt),
+      'usedShield': serializer.toJson<bool>(usedShield),
     };
   }
 
@@ -2612,6 +2739,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     Value<DateTime?> lockedAt = const Value.absent(),
     Value<DateTime?> redAlertSentAt = const Value.absent(),
     Value<DateTime?> fireAppliedAt = const Value.absent(),
+    Value<DateTime?> inBedAt = const Value.absent(),
+    bool? usedShield,
   }) => NightPlan(
     id: id ?? this.id,
     wakeDate: wakeDate ?? this.wakeDate,
@@ -2628,6 +2757,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     fireAppliedAt: fireAppliedAt.present
         ? fireAppliedAt.value
         : this.fireAppliedAt,
+    inBedAt: inBedAt.present ? inBedAt.value : this.inBedAt,
+    usedShield: usedShield ?? this.usedShield,
   );
   NightPlan copyWithCompanion(NightPlansCompanion data) {
     return NightPlan(
@@ -2656,6 +2787,10 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       fireAppliedAt: data.fireAppliedAt.present
           ? data.fireAppliedAt.value
           : this.fireAppliedAt,
+      inBedAt: data.inBedAt.present ? data.inBedAt.value : this.inBedAt,
+      usedShield: data.usedShield.present
+          ? data.usedShield.value
+          : this.usedShield,
     );
   }
 
@@ -2672,7 +2807,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ..write('isLocked: $isLocked, ')
           ..write('lockedAt: $lockedAt, ')
           ..write('redAlertSentAt: $redAlertSentAt, ')
-          ..write('fireAppliedAt: $fireAppliedAt')
+          ..write('fireAppliedAt: $fireAppliedAt, ')
+          ..write('inBedAt: $inBedAt, ')
+          ..write('usedShield: $usedShield')
           ..write(')'))
         .toString();
   }
@@ -2690,6 +2827,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     lockedAt,
     redAlertSentAt,
     fireAppliedAt,
+    inBedAt,
+    usedShield,
   );
   @override
   bool operator ==(Object other) =>
@@ -2705,7 +2844,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           other.isLocked == this.isLocked &&
           other.lockedAt == this.lockedAt &&
           other.redAlertSentAt == this.redAlertSentAt &&
-          other.fireAppliedAt == this.fireAppliedAt);
+          other.fireAppliedAt == this.fireAppliedAt &&
+          other.inBedAt == this.inBedAt &&
+          other.usedShield == this.usedShield);
 }
 
 class NightPlansCompanion extends UpdateCompanion<NightPlan> {
@@ -2720,6 +2861,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
   final Value<DateTime?> lockedAt;
   final Value<DateTime?> redAlertSentAt;
   final Value<DateTime?> fireAppliedAt;
+  final Value<DateTime?> inBedAt;
+  final Value<bool> usedShield;
   const NightPlansCompanion({
     this.id = const Value.absent(),
     this.wakeDate = const Value.absent(),
@@ -2732,6 +2875,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.lockedAt = const Value.absent(),
     this.redAlertSentAt = const Value.absent(),
     this.fireAppliedAt = const Value.absent(),
+    this.inBedAt = const Value.absent(),
+    this.usedShield = const Value.absent(),
   });
   NightPlansCompanion.insert({
     this.id = const Value.absent(),
@@ -2745,6 +2890,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.lockedAt = const Value.absent(),
     this.redAlertSentAt = const Value.absent(),
     this.fireAppliedAt = const Value.absent(),
+    this.inBedAt = const Value.absent(),
+    this.usedShield = const Value.absent(),
   }) : wakeDate = Value(wakeDate),
        plannedWakeAt = Value(plannedWakeAt),
        plannedBedtimeAt = Value(plannedBedtimeAt);
@@ -2760,6 +2907,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Expression<DateTime>? lockedAt,
     Expression<DateTime>? redAlertSentAt,
     Expression<DateTime>? fireAppliedAt,
+    Expression<DateTime>? inBedAt,
+    Expression<bool>? usedShield,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2773,6 +2922,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       if (lockedAt != null) 'locked_at': lockedAt,
       if (redAlertSentAt != null) 'red_alert_sent_at': redAlertSentAt,
       if (fireAppliedAt != null) 'fire_applied_at': fireAppliedAt,
+      if (inBedAt != null) 'in_bed_at': inBedAt,
+      if (usedShield != null) 'used_shield': usedShield,
     });
   }
 
@@ -2788,6 +2939,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Value<DateTime?>? lockedAt,
     Value<DateTime?>? redAlertSentAt,
     Value<DateTime?>? fireAppliedAt,
+    Value<DateTime?>? inBedAt,
+    Value<bool>? usedShield,
   }) {
     return NightPlansCompanion(
       id: id ?? this.id,
@@ -2801,6 +2954,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       lockedAt: lockedAt ?? this.lockedAt,
       redAlertSentAt: redAlertSentAt ?? this.redAlertSentAt,
       fireAppliedAt: fireAppliedAt ?? this.fireAppliedAt,
+      inBedAt: inBedAt ?? this.inBedAt,
+      usedShield: usedShield ?? this.usedShield,
     );
   }
 
@@ -2840,6 +2995,12 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     if (fireAppliedAt.present) {
       map['fire_applied_at'] = Variable<DateTime>(fireAppliedAt.value);
     }
+    if (inBedAt.present) {
+      map['in_bed_at'] = Variable<DateTime>(inBedAt.value);
+    }
+    if (usedShield.present) {
+      map['used_shield'] = Variable<bool>(usedShield.value);
+    }
     return map;
   }
 
@@ -2856,7 +3017,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
           ..write('isLocked: $isLocked, ')
           ..write('lockedAt: $lockedAt, ')
           ..write('redAlertSentAt: $redAlertSentAt, ')
-          ..write('fireAppliedAt: $fireAppliedAt')
+          ..write('fireAppliedAt: $fireAppliedAt, ')
+          ..write('inBedAt: $inBedAt, ')
+          ..write('usedShield: $usedShield')
           ..write(')'))
         .toString();
   }
@@ -4911,6 +5074,7 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<bool> notifyCheckIn,
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
+  Value<DateTime?> onboardedAt,
 });
 typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<int> id,
@@ -4932,6 +5096,7 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<bool> notifyCheckIn,
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
+  Value<DateTime?> onboardedAt,
 });
 
 class $$SettingsTableFilterComposer
@@ -5039,6 +5204,11 @@ class $$SettingsTableFilterComposer
     column: $table.themeMode,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
+
+  ColumnFilters<DateTime> get onboardedAt => $composableBuilder(
+    column: $table.onboardedAt,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$SettingsTableOrderingComposer
@@ -5144,6 +5314,11 @@ class $$SettingsTableOrderingComposer
     column: $table.themeMode,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get onboardedAt => $composableBuilder(
+    column: $table.onboardedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SettingsTableAnnotationComposer
@@ -5239,6 +5414,11 @@ class $$SettingsTableAnnotationComposer
 
   GeneratedColumnWithTypeConverter<AppThemeMode, int> get themeMode =>
       $composableBuilder(column: $table.themeMode, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get onboardedAt => $composableBuilder(
+    column: $table.onboardedAt,
+    builder: (column) => column,
+  );
 }
 
 class $$SettingsTableTableManager
@@ -5291,6 +5471,7 @@ class $$SettingsTableTableManager
                 Value<bool> notifyCheckIn = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
+                Value<DateTime?> onboardedAt = const Value.absent(),
               }) => SettingsCompanion(
                 id: id,
                 ageGroup: ageGroup,
@@ -5311,6 +5492,7 @@ class $$SettingsTableTableManager
                 notifyCheckIn: notifyCheckIn,
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
+                onboardedAt: onboardedAt,
               ),
           createCompanionCallback:
               ({
@@ -5333,6 +5515,7 @@ class $$SettingsTableTableManager
                 Value<bool> notifyCheckIn = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
+                Value<DateTime?> onboardedAt = const Value.absent(),
               }) => SettingsCompanion.insert(
                 id: id,
                 ageGroup: ageGroup,
@@ -5353,6 +5536,7 @@ class $$SettingsTableTableManager
                 notifyCheckIn: notifyCheckIn,
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
+                onboardedAt: onboardedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -5933,6 +6117,8 @@ typedef $$NightPlansTableCreateCompanionBuilder = NightPlansCompanion Function({
   Value<DateTime?> lockedAt,
   Value<DateTime?> redAlertSentAt,
   Value<DateTime?> fireAppliedAt,
+  Value<DateTime?> inBedAt,
+  Value<bool> usedShield,
 });
 typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
   Value<int> id,
@@ -5946,6 +6132,8 @@ typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
   Value<DateTime?> lockedAt,
   Value<DateTime?> redAlertSentAt,
   Value<DateTime?> fireAppliedAt,
+  Value<DateTime?> inBedAt,
+  Value<bool> usedShield,
 });
 
 class $$NightPlansTableFilterComposer
@@ -6009,6 +6197,16 @@ class $$NightPlansTableFilterComposer
 
   ColumnFilters<DateTime> get fireAppliedAt => $composableBuilder(
     column: $table.fireAppliedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get inBedAt => $composableBuilder(
+    column: $table.inBedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get usedShield => $composableBuilder(
+    column: $table.usedShield,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -6076,6 +6274,16 @@ class $$NightPlansTableOrderingComposer
     column: $table.fireAppliedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get inBedAt => $composableBuilder(
+    column: $table.inBedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get usedShield => $composableBuilder(
+    column: $table.usedShield,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$NightPlansTableAnnotationComposer
@@ -6133,6 +6341,14 @@ class $$NightPlansTableAnnotationComposer
     column: $table.fireAppliedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get inBedAt =>
+      $composableBuilder(column: $table.inBedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get usedShield => $composableBuilder(
+    column: $table.usedShield,
+    builder: (column) => column,
+  );
 }
 
 class $$NightPlansTableTableManager
@@ -6177,6 +6393,8 @@ class $$NightPlansTableTableManager
                 Value<DateTime?> lockedAt = const Value.absent(),
                 Value<DateTime?> redAlertSentAt = const Value.absent(),
                 Value<DateTime?> fireAppliedAt = const Value.absent(),
+                Value<DateTime?> inBedAt = const Value.absent(),
+                Value<bool> usedShield = const Value.absent(),
               }) => NightPlansCompanion(
                 id: id,
                 wakeDate: wakeDate,
@@ -6189,6 +6407,8 @@ class $$NightPlansTableTableManager
                 lockedAt: lockedAt,
                 redAlertSentAt: redAlertSentAt,
                 fireAppliedAt: fireAppliedAt,
+                inBedAt: inBedAt,
+                usedShield: usedShield,
               ),
           createCompanionCallback:
               ({
@@ -6203,6 +6423,8 @@ class $$NightPlansTableTableManager
                 Value<DateTime?> lockedAt = const Value.absent(),
                 Value<DateTime?> redAlertSentAt = const Value.absent(),
                 Value<DateTime?> fireAppliedAt = const Value.absent(),
+                Value<DateTime?> inBedAt = const Value.absent(),
+                Value<bool> usedShield = const Value.absent(),
               }) => NightPlansCompanion.insert(
                 id: id,
                 wakeDate: wakeDate,
@@ -6215,6 +6437,8 @@ class $$NightPlansTableTableManager
                 lockedAt: lockedAt,
                 redAlertSentAt: redAlertSentAt,
                 fireAppliedAt: fireAppliedAt,
+                inBedAt: inBedAt,
+                usedShield: usedShield,
               ),
           withReferenceMapper: (p0) => p0
               .map(

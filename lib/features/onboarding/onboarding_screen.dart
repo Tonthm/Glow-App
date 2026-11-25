@@ -55,7 +55,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     await settingsRepo.updateFreeDayWakeMinutes(
       _freeDayWake.hour * 60 + _freeDayWake.minute,
     );
-    await settingsRepo.markOnboardingCompleted();
+    // Section 1: onboarding ends with entering the first schedule.
+    ref.read(selectedTabIndexProvider.notifier).state = 1;
+    await settingsRepo.markOnboardingCompleted(DateTime.now());
   }
 
   @override

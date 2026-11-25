@@ -31,9 +31,11 @@ CheckInOutcome classifyCheckIn({
   required DateTime plannedBedtime,
   required SleepSettings settings,
 }) {
-  final sleepDuration =
-      actualWakeAt.difference(lightsOffAt) -
-      Duration(minutes: settings.fallAsleepMinutes);
+  final sleepDuration = actualSleepDuration(
+    lightsOffAt: lightsOffAt,
+    wakeAt: actualWakeAt,
+    fallAsleepMinutes: settings.fallAsleepMinutes,
+  );
   final sleepMinutes = sleepDuration.inMinutes;
 
   final CheckInResult result;
@@ -82,4 +84,46 @@ bool isCheckInWindowOpen({
     DateTime(plannedWakeTime.year, plannedWakeTime.month, plannedWakeTime.day),
   );
   return !now.isBefore(start) && !now.isAfter(end);
+}
+
+/// ชั่วโมงนอน = ตื่น − ปิดไฟ − เวลากว่าจะหลับ (section 6). Every place that
+/// shows "hours slept" must use this so the numbers agree.
+Duration actualSleepDuration({
+  required DateTime lightsOffAt,
+  required DateTime wakeAt,
+  required int fallAsleepMinutes,
+}) {
+  final slept =
+      wakeAt.difference(lightsOffAt) - Duration(minutes: fallAsleepMinutes);
+  return slept.isNegative ? Duration.zero : slept;
+}
+
+/// Turns the two clock times picked on the "แก้เวลา" wheels into full
+/// date-times for the night that ends on [wakeDate]. A lights-off from noon
+/// onward is the evening before; one before noon is after midnight, i.e.
+/// already on the wake date.
+({DateTime lightsOffAt, DateTime wakeAt}) resolveCheckInTimes({
+  required DateTime wakeDate,
+  required int lightsOffHour,
+  required int lightsOffMinute,
+  required int wakeHour,
+  required int wakeMinute,
+}) {
+  final lightsOffDay = lightsOffHour >= 12 ? wakeDate.day - 1 : wakeDate.day;
+  return (
+    lightsOffAt: DateTime(
+      wakeDate.year,
+      wakeDate.month,
+      lightsOffDay,
+      lightsOffHour,
+      lightsOffMinute,
+    ),
+    wakeAt: DateTime(
+      wakeDate.year,
+      wakeDate.month,
+      wakeDate.day,
+      wakeHour,
+      wakeMinute,
+    ),
+  );
 }

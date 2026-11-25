@@ -65,13 +65,89 @@ class NightPlanningRepository {
       termStart: settingsRow.termStart,
       termEnd: settingsRow.termEnd,
     );
+    final examDates = (await scheduleRepo.getOneTimeItems())
+        .where((i) => i.type == OneTimeItemType.exam)
+        .map((i) => i.date);
     return classifyEveningLoad(
+      isExamMode: isExamModeOn(date: eveningDate, examDates: examDates),
       entriesForEveningDate: entries,
       plannedBedtime: draft.bedtime,
       plannedWakeTime: draft.wakeTime,
       isPreExamNight: draft.isPreExamNight,
       settings: settings,
     );
+  }
+
+  static NightPlanDraft _fromRow(NightPlan row) => NightPlanDraft(
+    wakeDate: row.wakeDate,
+    wakeTime: row.plannedWakeAt,
+    bedtime: row.plannedBedtimeAt,
+    wakeWasCapped: false,
+    bedtimeWasCapped: false,
+    isPreExamNight: row.isPreExamNight,
+  );
+
+  static DateTime _notifyTimeOf(NightPlanDraft draft) =>
+      draft.bedtime.subtract(Duration(minutes: draft.isPreExamNight ? 90 : 60));
+
+  Future<NightPlan?> getPlanRow(DateTime wakeDate) {
+    final target = _dateOnly(wakeDate);
+    return (db.select(
+      db.nightPlans,
+    )..where((t) => t.wakeDate.equals(target))).getSingleOrNull();
+  }
+
+  /// The locked snapshot if there is one, else a live draft. Never locks.
+  Future<NightPlanDraft> currentPlan(DateTime wakeDate) async {
+    final row = await getPlanRow(wakeDate);
+    if (row != null && row.isLocked) return _fromRow(row);
+    return computeDraftForWakeDate(_dateOnly(wakeDate));
+  }
+
+  /// Locks every recent night whose put-the-phone-down time has passed, even
+  /// if the app wasn't open then. Without this, a night the app was never
+  /// opened for would have no plan: no check-in card and no missed-night
+  /// effect, so staying away would beat answering honestly.
+  Future<void> lockElapsedNights(DateTime now, {int lookbackDays = 10}) async {
+    final onboardedAt = (await settingsRepo.get()).onboardedAt;
+    if (onboardedAt == null) return;
+    final today = _dateOnly(now);
+    for (var i = lookbackDays; i >= 0; i--) {
+      final wakeDate = DateTime(today.year, today.month, today.day - i);
+      if ((await getPlanRow(wakeDate))?.isLocked == true) continue;
+      final draft = await computeDraftForWakeDate(wakeDate);
+      if (_notifyTimeOf(draft).isBefore(onboardedAt)) continue;
+      await getOrLockPlan(wakeDate, now: now);
+    }
+  }
+
+  /// Records that "เข้านอนแล้ว" was pressed for [wakeDate]'s night.
+  Future<void> markInBed(DateTime wakeDate, DateTime now) {
+    return _upsertPlan(wakeDate, NightPlansCompanion(inBedAt: Value(now)));
+  }
+
+  /// Writes [changes] to the night's row, first creating an unlocked row from
+  /// the current draft if there isn't one.
+  Future<void> _upsertPlan(DateTime wakeDate, NightPlansCompanion changes) {
+    final target = _dateOnly(wakeDate);
+    return db.transaction(() async {
+      if (await getPlanRow(target) == null) {
+        final draft = await computeDraftForWakeDate(target);
+        await db
+            .into(db.nightPlans)
+            .insert(
+              NightPlansCompanion.insert(
+                wakeDate: target,
+                plannedWakeAt: draft.wakeTime,
+                plannedBedtimeAt: draft.bedtime,
+                isPreExamNight: Value(draft.isPreExamNight),
+              ),
+            );
+      }
+      await (db.update(
+        db.nightPlans,
+      )..where((t) => t.wakeDate.equals(target))).write(changes);
+    });
   }
 
   /// Returns the plan for [wakeDate]: the locked snapshot if one already
@@ -87,24 +163,12 @@ class NightPlanningRepository {
     )..where((t) => t.wakeDate.equals(target))).getSingleOrNull();
 
     if (existing != null && existing.isLocked) {
-      return NightPlanDraft(
-        wakeDate: existing.wakeDate,
-        wakeTime: existing.plannedWakeAt,
-        bedtime: existing.plannedBedtimeAt,
-        wakeWasCapped: false,
-        bedtimeWasCapped: false,
-        isPreExamNight: existing.isPreExamNight,
-      );
+      return _fromRow(existing);
     }
 
     final draft = await computeDraftForWakeDate(target);
     final load = await computeEveningLoad(draft);
-    final notifyOffsetMinutes = draft.isPreExamNight ? 90 : 60;
-    final notifyTime = draft.bedtime.subtract(
-      Duration(minutes: notifyOffsetMinutes),
-    );
-
-    if (!now.isBefore(notifyTime)) {
+    if (!now.isBefore(_notifyTimeOf(draft))) {
       final companion = NightPlansCompanion(
         wakeDate: Value(target),
         plannedWakeAt: Value(draft.wakeTime),
@@ -148,48 +212,35 @@ class NightPlanningRepository {
     return result;
   }
 
-  Future<void> markRedAlertSent(DateTime wakeDate, DateTime sentAt) async {
-    final target = _dateOnly(wakeDate);
-    final existing = await (db.select(
-      db.nightPlans,
-    )..where((t) => t.wakeDate.equals(target))).getSingleOrNull();
-    if (existing != null) {
-      await (db.update(
-        db.nightPlans,
-      )..where((t) => t.id.equals(existing.id))).write(
-        NightPlansCompanion(redAlertSentAt: Value(sentAt)),
-      );
-      return;
-    }
-    final draft = await computeDraftForWakeDate(target);
-    await db.into(db.nightPlans).insert(
-      NightPlansCompanion.insert(
-        wakeDate: target,
-        plannedWakeAt: draft.wakeTime,
-        plannedBedtimeAt: draft.bedtime,
-        isPreExamNight: Value(draft.isPreExamNight),
+  Future<void> markRedAlertSent(DateTime wakeDate, DateTime sentAt) {
+    return _upsertPlan(
+      wakeDate,
+      NightPlansCompanion(
         isRedNight: const Value(true),
         redAlertSentAt: Value(sentAt),
       ),
     );
   }
 
-  /// True if any exam is within the next 7 days (inclusive), per section 4.
-  Future<bool> isExamModeActive(DateTime now) async {
-    final exams = await _upcomingExams(now);
-    return exams.any((e) => e.date.difference(_dateOnly(now)).inDays <= 7);
-  }
-
-  /// The soonest upcoming exam and days until it, for the countdown banner.
+  /// The next exam that hasn't finished yet, for the countdown banner. Null
+  /// outside exam mode (section 4).
   Future<({OneTimeItem exam, int daysUntil})?> nextExamCountdown(
     DateTime now,
   ) async {
-    final exams = await _upcomingExams(now);
+    final today = _dateOnly(now);
+    final nowMinutes = now.hour * 60 + now.minute;
+    final exams = (await _upcomingExams(now)).where(
+      (e) =>
+          _dateOnly(e.date) != today ||
+          e.endMinutes == null ||
+          e.endMinutes! > nowMinutes,
+    );
     if (exams.isEmpty) return null;
     final soonest = exams.first;
+    if (!isExamModeOn(date: today, examDates: [soonest.date])) return null;
     return (
       exam: soonest,
-      daysUntil: soonest.date.difference(_dateOnly(now)).inDays,
+      daysUntil: _dateOnly(soonest.date).difference(today).inDays,
     );
   }
 

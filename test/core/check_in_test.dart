@@ -130,4 +130,56 @@ void main() {
       );
     });
   });
+
+  group('resolveCheckInTimes', () {
+    final wakeDate = d(2026, 11, 23);
+
+    test('lights off before midnight belongs to the evening before', () {
+      final times = resolveCheckInTimes(
+        wakeDate: wakeDate,
+        lightsOffHour: 21,
+        lightsOffMinute: 50,
+        wakeHour: 6,
+        wakeMinute: 35,
+      );
+      expect(times.lightsOffAt, d(2026, 11, 22, 21, 50));
+      expect(times.wakeAt, d(2026, 11, 23, 6, 35));
+    });
+
+    test('lights off after midnight belongs to the wake date', () {
+      final times = resolveCheckInTimes(
+        wakeDate: wakeDate,
+        lightsOffHour: 0,
+        lightsOffMinute: 30,
+        wakeHour: 6,
+        wakeMinute: 35,
+      );
+      expect(times.lightsOffAt, d(2026, 11, 23, 0, 30));
+      expect(times.wakeAt.difference(times.lightsOffAt).inMinutes, 365);
+    });
+  });
+
+  group('actualSleepDuration', () {
+    test('subtracts the time it takes to fall asleep', () {
+      expect(
+        actualSleepDuration(
+          lightsOffAt: d(2026, 11, 22, 21, 50),
+          wakeAt: d(2026, 11, 23, 6, 35),
+          fallAsleepMinutes: 15,
+        ),
+        const Duration(hours: 8, minutes: 30),
+      );
+    });
+
+    test('never goes negative', () {
+      expect(
+        actualSleepDuration(
+          lightsOffAt: d(2026, 11, 23, 6, 30),
+          wakeAt: d(2026, 11, 23, 6, 35),
+          fallAsleepMinutes: 15,
+        ),
+        Duration.zero,
+      );
+    });
+  });
 }

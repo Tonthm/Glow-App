@@ -105,9 +105,13 @@ class SettingsRepository {
         .write(SettingsCompanion(themeMode: Value(mode)));
   }
 
-  Future<void> markOnboardingCompleted() async {
-    await (db.update(db.settings)..where((t) => t.id.equals(0)))
-        .write(const SettingsCompanion(onboardingCompleted: Value(true)));
+  Future<void> markOnboardingCompleted(DateTime now) async {
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      SettingsCompanion(
+        onboardingCompleted: const Value(true),
+        onboardedAt: Value(now),
+      ),
+    );
   }
 }
 
