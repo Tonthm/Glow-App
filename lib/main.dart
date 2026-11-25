@@ -8,7 +8,9 @@ import 'providers.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  runApp(const ProviderScope(child: GlowApp()));
+  // Riverpod's automatic retry keeps a failed provider in "loading", which
+  // hides errors (e.g. a database that can't open) behind an endless spinner.
+  runApp(ProviderScope(retry: (_, _) => null, child: const GlowApp()));
 }
 
 class GlowApp extends StatelessWidget {

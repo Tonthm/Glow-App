@@ -224,25 +224,40 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 8;
 
+  /// createTable() builds a table from the *latest* definition, so a column
+  /// added in a later version may already be there. A migration that stopped
+  /// halfway also leaves columns behind. Both make a plain addColumn throw.
+  Future<void> _addColumnIfMissing(
+    Migrator m,
+    TableInfo table,
+    GeneratedColumn column,
+  ) async {
+    final columns = await customSelect(
+      'PRAGMA table_info(${table.actualTableName})',
+    ).get();
+    final exists = columns.any((row) => row.data['name'] == column.name);
+    if (!exists) await m.addColumn(table, column);
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2) {
-        await m.addColumn(nightPlans, nightPlans.redAlertSentAt);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.redAlertSentAt);
       }
       if (from < 3) {
-        await m.addColumn(settings, settings.themeMode);
+        await _addColumnIfMissing(m, settings, settings.themeMode);
       }
       if (from < 4) {
         await m.createTable(checkIns);
         await m.createTable(fireStates);
       }
       if (from < 5) {
-        await m.addColumn(nightPlans, nightPlans.fireAppliedAt);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.fireAppliedAt);
       }
       if (from < 6) {
-        await m.addColumn(settings, settings.notifyCheckIn);
+        await _addColumnIfMissing(m, settings, settings.notifyCheckIn);
       }
       if (from < 7) {
         await m.createTable(wallets);
@@ -251,7 +266,11 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(examPeriodClaims);
       }
       if (from < 8) {
-        await m.addColumn(fireStates, fireStates.lastShieldPurchaseMonday);
+        await _addColumnIfMissing(
+          m,
+          fireStates,
+          fireStates.lastShieldPurchaseMonday,
+        );
       }
     },
   );
