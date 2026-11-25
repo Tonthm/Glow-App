@@ -84,6 +84,17 @@ class CheckInRepository {
     )..where((t) => t.wakeDate.equals(target))).getSingleOrNull();
   }
 
+  /// Most recent check-in, for the bed character's condition (section 9:
+  /// "สภาพเตียงเปลี่ยนตามการนอน").
+  Future<CheckInRow?> latestCheckIn() async {
+    final rows =
+        await (db.select(db.checkIns)
+              ..orderBy([(t) => OrderingTerm.desc(t.wakeDate)])
+              ..limit(1))
+            .get();
+    return rows.isEmpty ? null : rows.first;
+  }
+
   Stream<CheckInRow?> watchForWakeDate(DateTime wakeDate) {
     final target = _dateOnly(wakeDate);
     return (db.select(

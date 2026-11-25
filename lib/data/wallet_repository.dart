@@ -51,6 +51,13 @@ class WalletRepository {
     return rows.map((r) => r.itemId).toSet();
   }
 
+  Stream<Set<String>> watchOwnedItemIds() {
+    return db
+        .select(db.ownedItems)
+        .watch()
+        .map((rows) => rows.map((r) => r.itemId).toSet());
+  }
+
   Future<bool> owns(String itemId) async {
     if (itemId == defaultBlanketId) return true;
     final row = await (db.select(
