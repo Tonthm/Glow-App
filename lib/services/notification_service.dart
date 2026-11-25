@@ -194,7 +194,9 @@ class NotificationService {
       );
     }
     final checkInTime = draft.wakeTime.add(const Duration(minutes: 30));
-    if (settings.notifyCheckIn && !alreadyCheckedIn && checkInTime.isAfter(now)) {
+    if (settings.notifyCheckIn &&
+        !alreadyCheckedIn &&
+        checkInTime.isAfter(now)) {
       await _zonedSchedule(
         id: notificationIdFor(NotificationKind.checkIn, draft.wakeDate),
         at: checkInTime,

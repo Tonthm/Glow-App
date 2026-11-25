@@ -15,9 +15,8 @@ class BackupService {
   static const _version = 2;
 
   Future<Map<String, dynamic>> buildSnapshot() async {
-    Future<List<Map<String, dynamic>>> dump<T extends Table, R extends DataClass>(
-      TableInfo<T, R> table,
-    ) async {
+    Future<List<Map<String, dynamic>>>
+    dump<T extends Table, R extends DataClass>(TableInfo<T, R> table) async {
       final rows = await db.select(table).get();
       return [for (final row in rows) row.toJson()];
     }
@@ -117,7 +116,8 @@ class BackupService {
       await load(
         'nightPlans',
         db.nightPlans,
-        (j) => NightPlan.fromJson({'usedShield': false, ...j}).toCompanion(false),
+        (j) =>
+            NightPlan.fromJson({'usedShield': false, ...j}).toCompanion(false),
       );
       await load(
         'checkIns',

@@ -7,12 +7,7 @@ import 'features/stats/stats_screen.dart';
 import 'features/tonight/tonight_screen.dart';
 import 'providers.dart';
 
-const _tabs = [
-  TonightScreen(),
-  ScheduleScreen(),
-  StatsScreen(),
-  RoomScreen(),
-];
+const _tabs = [TonightScreen(), ScheduleScreen(), StatsScreen(), RoomScreen()];
 
 class _TabSpec {
   final IconData outlined;
@@ -60,7 +55,9 @@ class AppShell extends ConsumerWidget {
       body: IndexedStack(index: index, children: _tabs),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: theme.dividerColor, width: 0.5)),
+          border: Border(
+            top: BorderSide(color: theme.dividerColor, width: 0.5),
+          ),
         ),
         child: BottomNavigationBar(
           currentIndex: index,
@@ -70,10 +67,7 @@ class AppShell extends ConsumerWidget {
           items: [
             for (final spec in _tabSpecs)
               BottomNavigationBarItem(
-                icon: Semantics(
-                  label: spec.label,
-                  child: Icon(spec.outlined),
-                ),
+                icon: Semantics(label: spec.label, child: Icon(spec.outlined)),
                 activeIcon: Semantics(
                   label: spec.label,
                   child: Icon(spec.filled),

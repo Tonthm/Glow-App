@@ -29,7 +29,10 @@ class WalletRepository {
   Future<WalletRow> ensureRowExists() async {
     await db
         .into(db.wallets)
-        .insert(const WalletsCompanion(id: Value(0)), mode: InsertMode.insertOrIgnore);
+        .insert(
+          const WalletsCompanion(id: Value(0)),
+          mode: InsertMode.insertOrIgnore,
+        );
     return await (db.select(
       db.wallets,
     )..where((t) => t.id.equals(0))).getSingle();
@@ -41,9 +44,9 @@ class WalletRepository {
   Future<void> addCoins(int delta) async {
     final current = await get();
     final next = (current.coins + delta).clamp(0, 1 << 31);
-    await (db.update(
-      db.wallets,
-    )..where((t) => t.id.equals(0))).write(WalletsCompanion(coins: Value(next)));
+    await (db.update(db.wallets)..where((t) => t.id.equals(0))).write(
+      WalletsCompanion(coins: Value(next)),
+    );
   }
 
   Future<Set<String>> ownedItemIds() async {
@@ -80,9 +83,7 @@ class WalletRepository {
   Future<bool> equipBlanket(String itemId) async {
     if (!await owns(itemId)) return false;
     await ensureRowExists();
-    await (db.update(
-      db.wallets,
-    )..where((t) => t.id.equals(0))).write(
+    await (db.update(db.wallets)..where((t) => t.id.equals(0))).write(
       WalletsCompanion(equippedBlanketId: Value(itemId)),
     );
     return true;

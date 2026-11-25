@@ -29,11 +29,7 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(icon, size: 48, color: textSecondary?.color),
             const SizedBox(height: GlowSpacing.lg),
-            Text(
-              message,
-              style: textSecondary,
-              textAlign: TextAlign.center,
-            ),
+            Text(message, style: textSecondary, textAlign: TextAlign.center),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: GlowSpacing.lg),
               TextButton(onPressed: onAction, child: Text(actionLabel!)),

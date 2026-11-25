@@ -24,7 +24,10 @@ class ThemeGalleryScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Theme gallery'),
           bottom: const TabBar(
-            tabs: [Tab(text: 'สว่าง'), Tab(text: 'มืด')],
+            tabs: [
+              Tab(text: 'สว่าง'),
+              Tab(text: 'มืด'),
+            ],
           ),
         ),
         body: const TabBarView(

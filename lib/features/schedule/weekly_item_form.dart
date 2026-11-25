@@ -6,7 +6,15 @@ import '../../providers.dart';
 import '../shared/time_of_day_field.dart';
 import '../shared/title_autocomplete_field.dart';
 
-const _dayLabels = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+const _dayLabels = [
+  'จันทร์',
+  'อังคาร',
+  'พุธ',
+  'พฤหัส',
+  'ศุกร์',
+  'เสาร์',
+  'อาทิตย์',
+];
 
 Future<void> showWeeklyItemForm(
   BuildContext context, {
@@ -17,6 +25,7 @@ Future<void> showWeeklyItemForm(
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     builder: (_) => _WeeklyItemForm(
       existing: existing,
       initialDayOfWeek: initialDayOfWeek,
@@ -53,14 +62,21 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
     super.initState();
     final existing = widget.existing;
     _title = existing?.title ?? '';
-    _dayOfWeek = existing?.dayOfWeek ?? widget.initialDayOfWeek ?? DateTime.monday;
-    final startMinutes = existing?.startMinutes ?? _timeOfDayToMinutes(widget.initialStart) ?? 8 * 60;
+    _dayOfWeek =
+        existing?.dayOfWeek ?? widget.initialDayOfWeek ?? DateTime.monday;
+    final startMinutes =
+        existing?.startMinutes ??
+        _timeOfDayToMinutes(widget.initialStart) ??
+        8 * 60;
     _start = _minutesToTimeOfDay(startMinutes);
     _end = _minutesToTimeOfDay(existing?.endMinutes ?? (startMinutes + 60));
     _type = existing?.type ?? WeeklyItemType.classSession;
   }
 
   bool get _isEdit => widget.existing != null;
+
+  bool get _hasValidTimes =>
+      _timeOfDayToMinutes(_end)! > _timeOfDayToMinutes(_start)!;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +106,7 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
             TitleAutocompleteField(
               initialValue: _title,
               suggestions: suggestions,
-              onChanged: (v) => _title = v,
+              onChanged: (v) => setState(() => _title = v),
             ),
             const SizedBox(height: 12),
             SegmentedButton<WeeklyItemType>(
@@ -122,7 +138,13 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
             TimeOfDayField(
               label: 'เวลาเริ่ม',
               time: _start,
-              onChanged: (t) => setState(() => _start = t),
+              // Moving the start keeps the length of the class.
+              onChanged: (t) => setState(() {
+                final length =
+                    _timeOfDayToMinutes(_end)! - _timeOfDayToMinutes(_start)!;
+                _start = t;
+                if (length > 0) _end = stepTimeOfDay(t, length);
+              }),
             ),
             TimeOfDayField(
               label: 'เวลาจบ',
@@ -151,6 +173,11 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
                 }),
               ),
             ],
+            if (!_hasValidTimes)
+              Text(
+                'เวลาจบต้องอยู่หลังเวลาเริ่ม',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -164,12 +191,16 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
                     },
                     child: Text(
                       'ลบ',
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: _title.trim().isEmpty ? null : _save,
+                  onPressed: _title.trim().isEmpty || !_hasValidTimes
+                      ? null
+                      : _save,
                   child: const Text('บันทึก'),
                 ),
               ],
@@ -217,7 +248,8 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
   }
 }
 
-int? _timeOfDayToMinutes(TimeOfDay? t) => t == null ? null : t.hour * 60 + t.minute;
+int? _timeOfDayToMinutes(TimeOfDay? t) =>
+    t == null ? null : t.hour * 60 + t.minute;
 
 TimeOfDay _minutesToTimeOfDay(int minutes) =>
     TimeOfDay(hour: (minutes ~/ 60) % 24, minute: minutes % 60);

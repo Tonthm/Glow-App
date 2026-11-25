@@ -20,16 +20,14 @@ class TitleAutocompleteField extends StatelessWidget {
       initialValue: TextEditingValue(text: initialValue),
       optionsBuilder: (textEditingValue) {
         if (textEditingValue.text.isEmpty) return suggestions;
-        return suggestions.where(
-          (s) => s.contains(textEditingValue.text),
-        );
+        return suggestions.where((s) => s.contains(textEditingValue.text));
       },
       onSelected: onChanged,
       fieldViewBuilder: (context, controller, focusNode, onSubmit) {
-        controller.addListener(() => onChanged(controller.text));
         return TextField(
           controller: controller,
           focusNode: focusNode,
+          onChanged: onChanged,
           decoration: const InputDecoration(
             labelText: 'ชื่อวิชา/กิจกรรม',
             border: OutlineInputBorder(),

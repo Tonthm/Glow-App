@@ -119,15 +119,19 @@ class StatsRepository {
           ).inMinutes.toDouble(),
         )
         .toList();
-    final avgSleep =
-        sleepMinutes.reduce((a, b) => a + b) / sleepMinutes.length;
+    final avgSleep = sleepMinutes.reduce((a, b) => a + b) / sleepMinutes.length;
 
     final completeCount = withData
         .where((c) => c.checkIn!.result == CheckInResultDb.enough)
         .length;
 
     final lightsOffMinutes = withData
-        .map((c) => _continuousLightsOffMinutes(c.date, c.checkIn!.lightsOffAt).toDouble())
+        .map(
+          (c) => _continuousLightsOffMinutes(
+            c.date,
+            c.checkIn!.lightsOffAt,
+          ).toDouble(),
+        )
         .toList();
     final avgLightsOff =
         lightsOffMinutes.reduce((a, b) => a + b) / lightsOffMinutes.length;

@@ -32,7 +32,10 @@ class SettingsRepository {
   Future<SettingsRow> ensureRowExists() async {
     await db
         .into(db.settings)
-        .insert(const SettingsCompanion(id: Value(0)), mode: InsertMode.insertOrIgnore);
+        .insert(
+          const SettingsCompanion(id: Value(0)),
+          mode: InsertMode.insertOrIgnore,
+        );
     return await (db.select(
       db.settings,
     )..where((t) => t.id.equals(0))).getSingle();
@@ -53,25 +56,36 @@ class SettingsRepository {
   Future<void> updateTargetHours({int? minMinutes, int? maxMinutes}) async {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(
-        targetMinMinutes: minMinutes == null ? const Value.absent() : Value(minMinutes),
-        targetMaxMinutes: maxMinutes == null ? const Value.absent() : Value(maxMinutes),
+        targetMinMinutes: minMinutes == null
+            ? const Value.absent()
+            : Value(minMinutes),
+        targetMaxMinutes: maxMinutes == null
+            ? const Value.absent()
+            : Value(maxMinutes),
       ),
     );
   }
 
-  Future<void> updatePrepAndTravel({int? prepMinutes, int? travelMinutes}) async {
+  Future<void> updatePrepAndTravel({
+    int? prepMinutes,
+    int? travelMinutes,
+  }) async {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(
-        prepMinutes: prepMinutes == null ? const Value.absent() : Value(prepMinutes),
-        defaultTravelMinutes:
-            travelMinutes == null ? const Value.absent() : Value(travelMinutes),
+        prepMinutes: prepMinutes == null
+            ? const Value.absent()
+            : Value(prepMinutes),
+        defaultTravelMinutes: travelMinutes == null
+            ? const Value.absent()
+            : Value(travelMinutes),
       ),
     );
   }
 
   Future<void> updateFreeDayWakeMinutes(int minutes) async {
-    await (db.update(db.settings)..where((t) => t.id.equals(0)))
-        .write(SettingsCompanion(freeDayWakeMinutes: Value(minutes)));
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      SettingsCompanion(freeDayWakeMinutes: Value(minutes)),
+    );
   }
 
   Future<void> updateTermDates({DateTime? start, DateTime? end}) async {
@@ -91,18 +105,22 @@ class SettingsRepository {
   }) async {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(
-        notifyPutPhoneDown:
-            putPhoneDown == null ? const Value.absent() : Value(putPhoneDown),
+        notifyPutPhoneDown: putPhoneDown == null
+            ? const Value.absent()
+            : Value(putPhoneDown),
         notifyBedtime: bedtime == null ? const Value.absent() : Value(bedtime),
-        notifyBusyNight: busyNight == null ? const Value.absent() : Value(busyNight),
+        notifyBusyNight: busyNight == null
+            ? const Value.absent()
+            : Value(busyNight),
         notifyCheckIn: checkIn == null ? const Value.absent() : Value(checkIn),
       ),
     );
   }
 
   Future<void> updateThemeMode(AppThemeMode mode) async {
-    await (db.update(db.settings)..where((t) => t.id.equals(0)))
-        .write(SettingsCompanion(themeMode: Value(mode)));
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      SettingsCompanion(themeMode: Value(mode)),
+    );
   }
 
   Future<void> markOnboardingCompleted(DateTime now) async {

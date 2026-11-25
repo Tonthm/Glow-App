@@ -12,9 +12,9 @@ class SettingsButton extends StatelessWidget {
     return IconButton(
       icon: const Icon(Icons.settings_outlined),
       tooltip: 'ตั้งค่า',
-      onPressed: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-      ),
+      onPressed: () =>
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
     );
   }
 }

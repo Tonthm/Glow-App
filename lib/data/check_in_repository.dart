@@ -189,10 +189,7 @@ class CheckInRepository {
     for (final wakeDate in [today, today.subtract(const Duration(days: 1))]) {
       final plan = await _getNightPlanRow(wakeDate);
       if (plan == null || !plan.isLocked) continue;
-      if (!isCheckInWindowOpen(
-        plannedWakeTime: plan.plannedWakeAt,
-        now: now,
-      )) {
+      if (!isCheckInWindowOpen(plannedWakeTime: plan.plannedWakeAt, now: now)) {
         continue;
       }
       final existing = await getForWakeDate(wakeDate);
@@ -210,9 +207,8 @@ class CheckInRepository {
   /// its check-in if one exists — for the post-check-in weekly summary and
   /// 7-day bar chart (section 6).
   Future<List<WeekCheckInSummary>> weekSummary(DateTime wakeDate) async {
-    final monday = _dateOnly(
-      wakeDate,
-    ).subtract(Duration(days: wakeDate.weekday - DateTime.monday));
+    final monday = _dateOnly(wakeDate)
+        .subtract(Duration(days: wakeDate.weekday - DateTime.monday));
     final result = <WeekCheckInSummary>[];
     for (var i = 0; i < 7; i++) {
       final day = monday.add(Duration(days: i));
@@ -267,9 +263,7 @@ class CheckInRepository {
     );
     final before = await fireRepo.get();
     final after = await fireRepo.applyEffect(effect);
-    await (db.update(
-      db.nightPlans,
-    )..where((t) => t.id.equals(plan.id))).write(
+    await (db.update(db.nightPlans)..where((t) => t.id.equals(plan.id))).write(
       NightPlansCompanion(
         fireAppliedAt: Value(now),
         usedShield: Value(after.shields < before.shields),
@@ -278,9 +272,11 @@ class CheckInRepository {
 
     // One-time reward the first time fire ever reaches a new level
     // (section 9: "...จากการถึงระดับไฟใหม่ครั้งแรก").
-    for (var level = before.maxLevelEverReached + 1;
-        level <= after.maxLevelEverReached;
-        level++) {
+    for (
+      var level = before.maxLevelEverReached + 1;
+      level <= after.maxLevelEverReached;
+      level++
+    ) {
       final blanket = EconomyConfig.fireLevelRewardBlankets[level];
       if (blanket != null) {
         await walletRepo.grantItem(blanket.id, now);

@@ -25,11 +25,7 @@ class StatTile extends StatelessWidget {
           ),
         ),
         const SizedBox(height: GlowSpacing.xs),
-        Text(
-          label,
-          style: textTheme.labelSmall,
-          textAlign: TextAlign.center,
-        ),
+        Text(label, style: textTheme.labelSmall, textAlign: TextAlign.center),
       ],
     );
   }

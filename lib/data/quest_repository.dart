@@ -104,7 +104,8 @@ class QuestRepository {
             ))
             .get();
     final completeByDate = {
-      for (final row in checkIns) _dateOnly(row.wakeDate): nightPassesDaily(_toQuestInput(row)),
+      for (final row in checkIns)
+        _dateOnly(row.wakeDate): nightPassesDaily(_toQuestInput(row)),
     };
     bool isComplete(DateTime wakeDate) => completeByDate[wakeDate] ?? false;
 
@@ -126,10 +127,7 @@ class QuestRepository {
           .insertOnConflictUpdate(
             ExamPeriodClaimsCompanion.insert(periodStartDate: periodKey),
           );
-      await walletRepo.grantItem(
-        EconomyConfig.examPeriodRewardBlanket.id,
-        now,
-      );
+      await walletRepo.grantItem(EconomyConfig.examPeriodRewardBlanket.id, now);
     }
   }
 }

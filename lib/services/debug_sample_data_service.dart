@@ -37,7 +37,9 @@ class DebugSampleDataService {
               plannedBedtimeAt: plannedBedtime,
               isPreExamNight: Value(isPreExamNight),
               isLocked: const Value(true),
-              lockedAt: Value(plannedBedtime.subtract(const Duration(hours: 1))),
+              lockedAt: Value(
+                plannedBedtime.subtract(const Duration(hours: 1)),
+              ),
               fireAppliedAt: Value(now),
             ),
           );
@@ -79,7 +81,8 @@ class DebugSampleDataService {
               result: result,
               onTime: onTime,
               usedShield: Value(
-                result == CheckInResultDb.notEnough && random.nextDouble() < 0.3,
+                result == CheckInResultDb.notEnough &&
+                    random.nextDouble() < 0.3,
               ),
               checkedInAt: actualWakeAt.add(const Duration(minutes: 10)),
             ),

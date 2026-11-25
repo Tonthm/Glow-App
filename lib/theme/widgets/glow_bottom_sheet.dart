@@ -13,6 +13,7 @@ Future<T?> showGlowBottomSheet<T>({
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
+    useSafeArea: true,
     builder: (context) => GlowBottomSheet(child: builder(context)),
   );
 }

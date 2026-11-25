@@ -8,6 +8,7 @@ Future<void> showBatteryOptimizationSheet(BuildContext context) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     builder: (_) => const _BatteryOptimizationSheet(),
   );
 }

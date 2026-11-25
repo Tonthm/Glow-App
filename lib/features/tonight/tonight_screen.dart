@@ -1,17 +1,24 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/economy_config.dart';
 import '../../core/night_date.dart';
 import '../../core/quests.dart';
 import '../../core/schedule_load.dart';
+import '../../core/schedule_models.dart';
 import '../../core/sleep_calculator.dart';
 import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
+import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
+import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
+import '../../theme/widgets/night_ring.dart';
 import '../../theme/widgets/warning_bar.dart';
 import '../shared/settings_button.dart';
+import '../stats/heatmap.dart';
+import '../stats/night_detail_sheet.dart';
 import 'check_in_card.dart';
 import 'check_in_result_screen.dart';
 import 'fire_badge.dart';
@@ -24,6 +31,8 @@ class TonightPlanData {
   final PendingCheckIn? pendingCheckIn;
   final int weeklyOnTimeCount;
   final bool inBed;
+  final ScheduleEntry? firstAppointment;
+  final List<HeatmapCell> weekCells;
 
   const TonightPlanData({
     required this.wakeDate,
@@ -33,6 +42,8 @@ class TonightPlanData {
     required this.pendingCheckIn,
     required this.weeklyOnTimeCount,
     required this.inBed,
+    required this.firstAppointment,
+    required this.weekCells,
   });
 }
 
@@ -95,6 +106,13 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     pendingCheckIn: pendingCheckIn,
     weeklyOnTimeCount: weeklyOnTimeCount,
     inBed: (await repo.getPlanRow(wakeDate))?.inBedAt != null,
+    firstAppointment: await repo.firstAppointment(wakeDate),
+    weekCells: await ref
+        .watch(statsRepositoryProvider)
+        .rangeCells(
+          mondayOfWeek(wakeDate),
+          mondayOfWeek(wakeDate).add(const Duration(days: 6)),
+        ),
   );
 });
 
@@ -136,7 +154,9 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   }
 
   Future<void> _checkPermissions() async {
-    final ok = await ref.read(permissionsServiceProvider).hasNotificationsPermission();
+    final ok = await ref
+        .read(permissionsServiceProvider)
+        .hasNotificationsPermission();
     if (mounted) setState(() => _notificationsOk = ok);
   }
 
@@ -145,81 +165,146 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     final hasSchedule = ref.watch(_hasAnyScheduleProvider);
     final planAsync = ref.watch(tonightPlanProvider);
 
+    final plan = hasSchedule ? planAsync.value : null;
+    final showBedButton = plan != null && plan.pendingCheckIn == null;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('คืนนี้'),
+        // The one place that uses the wordmark font (THEME.md).
+        title: const Text(
+          'Glow',
+          style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w800),
+        ),
         actions: const [SettingsButton()],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(tonightPlanProvider),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            if (_notificationsOk == false) const _PermissionWarningBanner(),
-            if (!hasSchedule) const _EmptyScheduleCard(),
-            const FireBadge(),
-            const SizedBox(height: GlowSpacing.lg),
-            if (hasSchedule)
-              planAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 48),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
-                data: (plan) => plan.pendingCheckIn != null
-                    ? CheckInCard(
-                        pending: plan.pendingCheckIn!,
-                        onSubmitted: (result, fireBefore, fireAfter) {
-                          ref.invalidate(tonightPlanProvider);
-                          if (!context.mounted) return;
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => CheckInResultScreen(
-                                wakeDate: plan.pendingCheckIn!.wakeDate,
-                                result: result,
-                                fireBefore: fireBefore,
-                                fireAfter: fireAfter,
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    : _PlanContent(
-                        plan: plan,
-                        checkedIn: plan.inBed,
-                        onCheckIn: () async {
-                          await ref
-                              .read(nightPlanningRepositoryProvider)
-                              .markInBed(plan.wakeDate, DateTime.now());
-                          await ref
-                              .read(notificationServiceProvider)
-                              .cancelBedtimeNotification(plan.wakeDate);
-                          ref.invalidate(tonightPlanProvider);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('บันทึกแล้ว ฝันดีนะ')),
-                            );
-                          }
-                        },
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => ref.invalidate(tonightPlanProvider),
+              child: ListView(
+                padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+                children: [
+                  if (_notificationsOk == false)
+                    const WarningBar(
+                      severity: WarningBarSeverity.red,
+                      message:
+                          'สิทธิ์แจ้งเตือนถูกปิดอยู่ แจ้งเตือนจะไม่ทำงาน '
+                          'เปิดได้ในตั้งค่าเครื่อง',
+                    ),
+                  if (!hasSchedule) ...[
+                    const _EmptyScheduleCard(),
+                    const SizedBox(height: GlowSpacing.lg),
+                    const FireBadge(),
+                  ] else
+                    planAsync.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 48),
+                        child: Center(child: CircularProgressIndicator()),
                       ),
+                      error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
+                      data: _buildPlan,
+                    ),
+                ],
               ),
-          ],
-        ),
+            ),
+          ),
+          if (showBedButton)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                GlowSpacing.pageMargin,
+                GlowSpacing.sm,
+                GlowSpacing.pageMargin,
+                GlowSpacing.md,
+              ),
+              child: GlowPrimaryButton(
+                label: plan.inBed ? 'เข้านอนแล้ว ✓' : 'เข้านอนแล้ว',
+                onPressed: plan.inBed ? null : () => _goToBed(plan),
+              ),
+            ),
+        ],
       ),
     );
   }
+
+  Widget _buildPlan(TonightPlanData plan) {
+    final pending = plan.pendingCheckIn;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _WeekRings(cells: plan.weekCells, tonight: plan.wakeDate),
+        const SizedBox(height: GlowSpacing.xl),
+        if (pending != null)
+          CheckInCard(
+            pending: pending,
+            onSubmitted: (result, fireBefore, fireAfter) {
+              ref.invalidate(tonightPlanProvider);
+              if (!mounted) return;
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => CheckInResultScreen(
+                    wakeDate: pending.wakeDate,
+                    result: result,
+                    fireBefore: fireBefore,
+                    fireAfter: fireAfter,
+                  ),
+                ),
+              );
+            },
+          )
+        else
+          _PlanContent(plan: plan),
+      ],
+    );
+  }
+
+  Future<void> _goToBed(TonightPlanData plan) async {
+    final notifications = ref.read(notificationServiceProvider);
+    await ref
+        .read(nightPlanningRepositoryProvider)
+        .markInBed(plan.wakeDate, DateTime.now());
+    await notifications.cancelBedtimeNotification(plan.wakeDate);
+    if (!mounted) return;
+    ref.invalidate(tonightPlanProvider);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('บันทึกแล้ว ฝันดีนะ')));
+  }
 }
 
-class _PermissionWarningBanner extends StatelessWidget {
-  const _PermissionWarningBanner();
+/// The week's seven nights (THEME.md "วงคืนในสัปดาห์"). Tap one for details.
+class _WeekRings extends StatelessWidget {
+  final List<HeatmapCell> cells;
+  final DateTime tonight;
+
+  const _WeekRings({required this.cells, required this.tonight});
+
+  static const _labels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.errorContainer,
-      child: const Padding(
-        padding: EdgeInsets.all(12),
-        child: Text('สิทธิ์แจ้งเตือนถูกปิดอยู่ แจ้งเตือนจะไม่ทำงาน ไปเปิดในตั้งค่าเครื่องได้'),
+    return Consumer(
+      builder: (context, ref, _) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (final cell in cells)
+            NightRing(
+              dayLabel: _labels[cell.date.weekday - 1],
+              result: toSleepResult(cell.checkIn),
+              isTonight: cell.date == tonight,
+              onTap: () => showGlowBottomSheet(
+                context: context,
+                builder: (_) => NightDetailSheet(
+                  cell: cell,
+                  fallAsleepMinutes:
+                      ref
+                          .read(settingsStreamProvider)
+                          .value
+                          ?.fallAsleepMinutes ??
+                      15,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -235,10 +320,13 @@ class _EmptyScheduleCard extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Text('ยังไม่มีตารางเรียน ใส่ตารางก่อนเพื่อให้ Glow แนะนำเวลานอนได้'),
+            const Text(
+              'ยังไม่มีตารางเรียน ใส่ตารางก่อนเพื่อให้ Glow แนะนำเวลานอนได้',
+            ),
             const SizedBox(height: 12),
             FilledButton(
-              onPressed: () => ref.read(selectedTabIndexProvider.notifier).state = 1,
+              onPressed: () =>
+                  ref.read(selectedTabIndexProvider.notifier).state = 1,
               child: const Text('ไปตั้งตาราง'),
             ),
           ],
@@ -250,31 +338,34 @@ class _EmptyScheduleCard extends ConsumerWidget {
 
 class _PlanContent extends StatelessWidget {
   final TonightPlanData plan;
-  final bool checkedIn;
-  final VoidCallback onCheckIn;
 
-  const _PlanContent({
-    required this.plan,
-    required this.checkedIn,
-    required this.onCheckIn,
-  });
+  const _PlanContent({required this.plan});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final duration = plan.draft.wakeTime.difference(plan.draft.bedtime);
+    final first = plan.firstAppointment;
+    final firstLabel = first == null
+        ? 'วันว่าง'
+        : '${switch (first.kind) {
+            ItemKind.exam => 'สอบ',
+            ItemKind.classSession => 'เรียนคาบแรก',
+            _ => 'นัดแรก',
+          }} ${_formatTime(first.start)}';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (plan.examCountdown != null) _ExamCountdownBanner(plan.examCountdown!),
-        const SizedBox(height: GlowSpacing.md),
+        if (plan.examCountdown != null) ...[
+          _ExamCountdownBanner(plan.examCountdown!),
+          const SizedBox(height: GlowSpacing.md),
+        ],
         Text('เข้านอนคืนนี้', style: textTheme.bodyMedium),
         const SizedBox(height: GlowSpacing.xs),
         Text(_formatTime(plan.draft.bedtime), style: textTheme.displayLarge),
         const SizedBox(height: GlowSpacing.xs),
         Text(
-          'ตื่น ${_formatTime(plan.draft.wakeTime)} '
-          '· รวม ${duration.inHours} ชม. ${duration.inMinutes % 60} นาที',
+          'ตื่น ${_formatTime(plan.draft.wakeTime)} · $firstLabel',
           style: textTheme.bodyMedium,
         ),
         const SizedBox(height: GlowSpacing.xl),
@@ -287,16 +378,20 @@ class _PlanContent extends StatelessWidget {
         if (plan.load.level == EveningLoadLevel.red)
           const WarningBar(
             severity: WarningBarSeverity.red,
-            message: 'คืนนั้นนอนครบไม่ได้ตามตาราง ลองย้ายกิจกรรม, '
+            message:
+                'คืนนั้นนอนครบไม่ได้ตามตาราง ลองย้ายกิจกรรม, '
                 'ลดเวลาเตรียมตัววันนั้น, หรือเข้านอนเร็วขึ้นคืนก่อนหน้า',
           ),
         const SizedBox(height: GlowSpacing.lg),
-        _QuestProgressDots(count: plan.weeklyOnTimeCount),
-        const SizedBox(height: GlowSpacing.xl),
-        GlowPrimaryButton(
-          label: checkedIn ? 'เข้านอนแล้ว ✓' : 'เข้านอนแล้ว',
-          onPressed: checkedIn ? null : onCheckIn,
+        const FireBadge(),
+        const SizedBox(height: GlowSpacing.md),
+        Text(
+          'เควสวันนี้: นอนครบ +${EconomyConfig.dailyCompleteCoins} เหรียญ '
+          '· ตรงเวลา +${EconomyConfig.dailyOnTimeBonusCoins}',
+          style: textTheme.bodyMedium,
         ),
+        const SizedBox(height: GlowSpacing.sm),
+        _QuestProgressDots(count: plan.weeklyOnTimeCount),
       ],
     );
   }
@@ -325,9 +420,11 @@ class _QuestProgressDots extends StatelessWidget {
             ),
           ),
         const SizedBox(width: GlowSpacing.xs),
-        Text(
-          'ตรงเวลา $count/$target สัปดาห์นี้',
-          style: Theme.of(context).textTheme.labelSmall,
+        Expanded(
+          child: Text(
+            'ตรงเวลา $count/$target สัปดาห์นี้',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
         ),
       ],
     );

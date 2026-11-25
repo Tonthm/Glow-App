@@ -6,8 +6,10 @@ enum EveningLoadLevel { normal, yellow, red }
 /// Result of classifying tonight's evening load, per CLAUDE.md section 4.
 class EveningLoadResult {
   final EveningLoadLevel level;
+
   /// Null when there is nothing scheduled that evening (always normal).
   final DateTime? arriveHomeAt;
+
   /// The "วางมือถือ" reminder time, shown in the yellow warning as the
   /// deadline to finish other tasks by.
   final DateTime notifyTime;

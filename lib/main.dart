@@ -26,6 +26,10 @@ class GlowApp extends StatelessWidget {
       theme: GlowAppTheme.light(),
       darkTheme: GlowAppTheme.dark(),
       themeMode: ThemeMode.system,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
       home: const _RootGate(),
     );
   }
@@ -38,8 +42,10 @@ class _RootGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsStreamProvider);
     return settingsAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('เกิดข้อผิดพลาด: $e'))),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) =>
+          Scaffold(body: Center(child: Text('เกิดข้อผิดพลาด: $e'))),
       data: (settings) => _ThemedApp(
         themeMode: settings.themeMode,
         child: settings.onboardingCompleted

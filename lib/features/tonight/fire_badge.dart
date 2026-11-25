@@ -35,9 +35,16 @@ class FireBadge extends ConsumerWidget {
             ),
             if (fire.shields > 0) ...[
               const SizedBox(width: GlowSpacing.sm),
-              Icon(Icons.shield_outlined, size: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
+              Icon(
+                Icons.shield_outlined,
+                size: 18,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
               const SizedBox(width: GlowSpacing.xs),
-              Text('${fire.shields}', style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                '${fire.shields}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ],
           ],
         );

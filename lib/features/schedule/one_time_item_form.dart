@@ -15,7 +15,9 @@ Future<void> showOneTimeItemForm(
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _OneTimeItemForm(existing: existing, initialDate: initialDate),
+    useSafeArea: true,
+    builder: (_) =>
+        _OneTimeItemForm(existing: existing, initialDate: initialDate),
   );
 }
 
@@ -51,6 +53,11 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
 
   bool get _isEdit => widget.existing != null;
 
+  bool get _hasValidTimes =>
+      _type == OneTimeItemType.holiday ||
+      !_hasTime ||
+      _end.hour * 60 + _end.minute > _start.hour * 60 + _start.minute;
+
   @override
   Widget build(BuildContext context) {
     final weeklyAsync = ref.watch(weeklyItemsStreamProvider);
@@ -79,7 +86,7 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
             TitleAutocompleteField(
               initialValue: _title,
               suggestions: suggestions,
-              onChanged: (v) => _title = v,
+              onChanged: (v) => setState(() => _title = v),
             ),
             const SizedBox(height: 12),
             SegmentedButton<OneTimeItemType>(
@@ -106,7 +113,10 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
               title: const Text('วันที่'),
               subtitle: Text(
                 '${_date.day}/${_date.month}/${_date.year}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
@@ -130,7 +140,15 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
                 TimeOfDayField(
                   label: 'เวลาเริ่ม',
                   time: _start,
-                  onChanged: (t) => setState(() => _start = t),
+                  // Moving the start keeps the length.
+                  onChanged: (t) => setState(() {
+                    final length =
+                        (_end.hour - _start.hour) * 60 +
+                        _end.minute -
+                        _start.minute;
+                    _start = t;
+                    if (length > 0) _end = stepTimeOfDay(t, length);
+                  }),
                 ),
                 TimeOfDayField(
                   label: 'เวลาจบ',
@@ -139,6 +157,11 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
                 ),
               ],
             ],
+            if (!_hasValidTimes)
+              Text(
+                'เวลาจบต้องอยู่หลังเวลาเริ่ม',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -152,12 +175,16 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
                     },
                     child: Text(
                       'ลบ',
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: _title.trim().isEmpty ? null : _save,
+                  onPressed: _title.trim().isEmpty || !_hasValidTimes
+                      ? null
+                      : _save,
                   child: const Text('บันทึก'),
                 ),
               ],

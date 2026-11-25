@@ -25,15 +25,6 @@ class PermissionsService {
     return Permission.scheduleExactAlarm.isGranted;
   }
 
-  Future<bool> requestCalendarRead() async {
-    final status = await Permission.calendarFullAccess.request();
-    return status.isGranted;
-  }
-
-  Future<bool> hasCalendarReadPermission() async {
-    return Permission.calendarFullAccess.isGranted;
-  }
-
   Future<void> openSystemAppSettings() => openAppSettings();
 }
 

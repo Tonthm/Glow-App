@@ -40,10 +40,7 @@ class Heatmap extends StatelessWidget {
 
     // Pad the front so the first column starts on a Monday.
     final leadingPad = cells.first.date.weekday - DateTime.monday;
-    final padded = [
-      ...List.generate(leadingPad, (_) => null),
-      ...cells,
-    ];
+    final padded = [...List.generate(leadingPad, (_) => null), ...cells];
     final weekCount = (padded.length / 7).ceil();
 
     return SingleChildScrollView(
@@ -84,7 +81,8 @@ class Heatmap extends StatelessWidget {
     return GestureDetector(
       onTap: () => onCellTap(cell),
       child: Semantics(
-        label: '${_dayLabels[cell.date.weekday - 1]} ${cell.date.day}/${cell.date.month}',
+        label:
+            '${_dayLabels[cell.date.weekday - 1]} ${cell.date.day}/${cell.date.month}',
         child: Stack(
           children: [
             Container(

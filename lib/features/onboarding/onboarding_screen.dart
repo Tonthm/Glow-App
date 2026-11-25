@@ -36,7 +36,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _requestNotifications() async {
-    final granted = await ref.read(permissionsServiceProvider).requestNotifications();
+    final granted = await ref
+        .read(permissionsServiceProvider)
+        .requestNotifications();
     await ref.read(permissionsServiceProvider).requestExactAlarms();
     setState(() => _notificationsRequested = granted);
   }
@@ -154,7 +156,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           FilledButton.tonal(
             onPressed: _notificationsRequested ? null : _requestNotifications,
             child: Text(
-              _notificationsRequested ? 'ขอสิทธิ์แจ้งเตือนแล้ว' : 'ขอสิทธิ์แจ้งเตือน',
+              _notificationsRequested
+                  ? 'ขอสิทธิ์แจ้งเตือนแล้ว'
+                  : 'ขอสิทธิ์แจ้งเตือน',
             ),
           ),
           const SizedBox(height: 8),
@@ -177,4 +181,3 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 }
-

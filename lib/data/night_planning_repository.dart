@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../core/night_date.dart';
 import '../core/schedule_load.dart';
+import '../core/schedule_models.dart';
 import '../core/schedule_resolver.dart';
 import '../core/sleep_calculator.dart';
 import 'database.dart';
@@ -54,6 +55,21 @@ class NightPlanningRepository {
     return week.firstWhere((n) => n.wakeDate == target);
   }
 
+  /// The earliest appointment on [wakeDate], for the line under the bedtime.
+  Future<ScheduleEntry?> firstAppointment(DateTime wakeDate) async {
+    final settingsRow = await settingsRepo.get();
+    final entries = resolveScheduleForDate(
+      date: wakeDate,
+      weeklyEntries: toCoreWeeklyEntries(await scheduleRepo.getWeeklyItems()),
+      oneTimeEntries: toCoreOneTimeEntries(
+        await scheduleRepo.getOneTimeItems(),
+      ),
+      termStart: settingsRow.termStart,
+      termEnd: settingsRow.termEnd,
+    );
+    return entries.isEmpty ? null : entries.first;
+  }
+
   Future<EveningLoadResult> computeEveningLoad(NightPlanDraft draft) async {
     final settingsRow = await settingsRepo.get();
     final settings = toSleepSettings(settingsRow);
@@ -61,7 +77,9 @@ class NightPlanningRepository {
     final entries = resolveScheduleForDate(
       date: eveningDate,
       weeklyEntries: toCoreWeeklyEntries(await scheduleRepo.getWeeklyItems()),
-      oneTimeEntries: toCoreOneTimeEntries(await scheduleRepo.getOneTimeItems()),
+      oneTimeEntries: toCoreOneTimeEntries(
+        await scheduleRepo.getOneTimeItems(),
+      ),
       termStart: settingsRow.termStart,
       termEnd: settingsRow.termEnd,
     );
@@ -193,9 +211,7 @@ class NightPlanningRepository {
 
   /// Red nights in the next 7 days (today included) that haven't had their
   /// one-time "คืนแดงข้างหน้า" alert sent yet.
-  Future<List<NightPlanDraft>> findUnalertedRedNightsAhead(
-    DateTime now,
-  ) async {
+  Future<List<NightPlanDraft>> findUnalertedRedNightsAhead(DateTime now) async {
     final today = _dateOnly(now);
     final result = <NightPlanDraft>[];
     for (var i = 0; i < 7; i++) {
@@ -248,7 +264,9 @@ class NightPlanningRepository {
     final today = _dateOnly(now);
     final rows =
         await (db.select(db.oneTimeItems)..where(
-              (t) => t.type.equalsValue(OneTimeItemType.exam) & t.date.isBiggerOrEqualValue(today),
+              (t) =>
+                  t.type.equalsValue(OneTimeItemType.exam) &
+                  t.date.isBiggerOrEqualValue(today),
             ))
             .get();
     rows.sort((a, b) => a.date.compareTo(b.date));

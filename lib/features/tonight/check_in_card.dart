@@ -188,7 +188,8 @@ class _EditTimesSheetState extends State<_EditTimesSheet> {
         GlowPrimaryButton(
           label: 'บันทึก',
           onPressed: isValid
-              ? () => Navigator.of(context).pop((times.lightsOffAt, times.wakeAt))
+              ? () =>
+                    Navigator.of(context).pop((times.lightsOffAt, times.wakeAt))
               : null,
         ),
       ],

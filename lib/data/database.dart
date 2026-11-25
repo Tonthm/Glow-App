@@ -45,16 +45,15 @@ class Settings extends Table {
   DateTimeColumn get termEnd => dateTime().nullable()();
   BoolColumn get notifyPutPhoneDown =>
       boolean().withDefault(const Constant(true))();
-  BoolColumn get notifyBedtime =>
-      boolean().withDefault(const Constant(true))();
+  BoolColumn get notifyBedtime => boolean().withDefault(const Constant(true))();
   BoolColumn get notifyBusyNight =>
       boolean().withDefault(const Constant(true))();
-  BoolColumn get notifyCheckIn =>
-      boolean().withDefault(const Constant(true))();
+  BoolColumn get notifyCheckIn => boolean().withDefault(const Constant(true))();
   BoolColumn get onboardingCompleted =>
       boolean().withDefault(const Constant(false))();
   IntColumn get themeMode =>
       intEnum<AppThemeMode>().withDefault(const Constant(0))();
+
   /// When onboarding finished. Nights that started before this are never
   /// counted as missed check-ins.
   DateTimeColumn get onboardedAt => dateTime().nullable()();
@@ -67,6 +66,7 @@ class Settings extends Table {
 class WeeklyItems extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text()();
+
   /// 1 = Monday .. 7 = Sunday.
   IntColumn get dayOfWeek => integer()();
   IntColumn get startMinutes => integer()();
@@ -104,16 +104,20 @@ class NightPlans extends Table {
       boolean().withDefault(const Constant(false))();
   BoolColumn get isLocked => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lockedAt => dateTime().nullable()();
+
   /// When the once-per-night "คืนแดงข้างหน้า" alert was shown, so it isn't
   /// repeated (CLAUDE.md section 5).
   DateTimeColumn get redAlertSentAt => dateTime().nullable()();
+
   /// When this night's fire/streak effect (section 7) was applied — from a
   /// real check-in or the no-check-in-past-window sweep — so it's applied
   /// exactly once.
   DateTimeColumn get fireAppliedAt => dateTime().nullable()();
+
   /// When "เข้านอนแล้ว" was pressed, so the reminders stay cancelled and the
   /// button stays pressed after an app restart.
   DateTimeColumn get inBedAt => dateTime().nullable()();
+
   /// A shield absorbed this night's miss. Kept on the plan because a missed
   /// night has no check-in row to mark.
   BoolColumn get usedShield => boolean().withDefault(const Constant(false))();
@@ -133,8 +137,7 @@ class CheckIns extends Table {
   DateTimeColumn get actualWakeAt => dateTime()();
   IntColumn get result => intEnum<CheckInResultDb>()();
   BoolColumn get onTime => boolean()();
-  BoolColumn get usedShield =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get usedShield => boolean().withDefault(const Constant(false))();
   DateTimeColumn get checkedInAt => dateTime()();
 
   @override
@@ -155,9 +158,11 @@ class FireStates extends Table {
       integer().withDefault(const Constant(0))();
   IntColumn get currentStreak => integer().withDefault(const Constant(0))();
   IntColumn get longestStreak => integer().withDefault(const Constant(0))();
+
   /// Monday (date-only) the free weekly shield was last granted, so it's
   /// only granted once per week (section 7: "ได้ฟรี 1 อันทุกวันจันทร์").
   DateTimeColumn get lastFreeShieldMonday => dateTime().nullable()();
+
   /// Monday (date-only) a shield was last bought with coins, so the shop
   /// enforces "ซื้อเพิ่มด้วยเหรียญได้ 1 อันต่อสัปดาห์" (section 7).
   DateTimeColumn get lastShieldPurchaseMonday => dateTime().nullable()();

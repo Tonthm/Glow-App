@@ -1,11 +1,10 @@
-import 'package:device_calendar/device_calendar.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/calendar_events.dart';
 import '../../providers.dart';
 import '../../services/calendar_import_service.dart';
-import '../schedule/one_time_item_form.dart';
-import '../schedule/weekly_item_form.dart';
+import '../schedule/add_item_sheet.dart';
 
 /// Section 2 "นำเข้าจากปฏิทินในมือถือ" flow: ask for read-only permission on
 /// entry, pick a calendar + date range, review guessed types, then save.
@@ -15,14 +14,15 @@ class CalendarImportScreen extends ConsumerStatefulWidget {
   const CalendarImportScreen({super.key});
 
   @override
-  ConsumerState<CalendarImportScreen> createState() => _CalendarImportScreenState();
+  ConsumerState<CalendarImportScreen> createState() =>
+      _CalendarImportScreenState();
 }
 
 class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
   bool _loading = true;
   String? _error;
-  List<Calendar> _calendars = [];
-  Calendar? _selectedCalendar;
+  List<DeviceCalendar> _calendars = [];
+  DeviceCalendar? _selectedCalendar;
   DateTime _start = DateTime.now();
   DateTime _end = DateTime.now().add(const Duration(days: 90));
   List<ProposedImportItem>? _proposals;
@@ -38,19 +38,32 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
     if (settings.termStart != null) _start = settings.termStart!;
     if (settings.termEnd != null) _end = settings.termEnd!;
 
-    final granted = await ref.read(permissionsServiceProvider).requestCalendarRead();
-    if (!granted) {
+    final service = ref.read(calendarImportServiceProvider);
+    if (!await service.requestPermission()) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'ไม่ได้รับสิทธิ์อ่านปฏิทิน กรุณาอนุญาตในตั้งค่าเครื่อง';
+        _error =
+            'ต้องอนุญาตให้อ่านปฏิทินก่อนจึงจะนำเข้าได้ '
+            'เปิดสิทธิ์ได้ในตั้งค่าเครื่อง';
       });
       return;
     }
-    final calendars = await ref.read(calendarImportServiceProvider).listCalendars();
-    setState(() {
-      _calendars = calendars;
-      _loading = false;
-    });
+    try {
+      final calendars = await service.listCalendars();
+      if (!mounted) return;
+      setState(() {
+        _calendars = calendars;
+        _selectedCalendar = calendars.length == 1 ? calendars.first : null;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'อ่านปฏิทินในเครื่องไม่ได้';
+      });
+    }
   }
 
   @override
@@ -62,17 +75,22 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
           IconButton(
             icon: const Icon(Icons.keyboard_outlined),
             tooltip: 'เพิ่มด้วยการพิมพ์',
-            onPressed: () => _showTypedEntryChooser(context),
+            onPressed: () => showTypedEntryChooser(context),
           ),
         ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(_error!)))
-              : _proposals != null
-                  ? _buildReview(_proposals!)
-                  : _buildPickCalendarAndRange(),
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(_error!),
+              ),
+            )
+          : _proposals != null
+          ? _buildReview(_proposals!)
+          : _buildPickCalendarAndRange(),
     );
   }
 
@@ -80,9 +98,15 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('เลือกปฏิทิน', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'เลือกปฏิทิน',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         if (_calendars.isEmpty)
-          Text('ไม่พบปฏิทินในเครื่อง', style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            'ไม่พบปฏิทินในเครื่อง',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         RadioGroup<String>(
           groupValue: _selectedCalendar?.id,
           onChanged: (id) => setState(
@@ -92,14 +116,18 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
             children: [
               for (final cal in _calendars)
                 RadioListTile<String>(
-                  title: Text(cal.name ?? 'ไม่มีชื่อ'),
-                  value: cal.id ?? '',
+                  title: Text(cal.name),
+                  subtitle: Text(cal.account),
+                  value: cal.id,
                 ),
             ],
           ),
         ),
         const Divider(height: 32),
-        const Text('ช่วงวันที่นำเข้า', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'ช่วงวันที่นำเข้า',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         ListTile(
           title: const Text('วันเริ่ม'),
           subtitle: Text(_formatDate(_start)),
@@ -110,7 +138,12 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
               firstDate: DateTime(2020),
               lastDate: DateTime(2035),
             );
-            if (picked != null) setState(() => _start = picked);
+            if (picked != null) {
+              setState(() {
+                _start = picked;
+                if (_end.isBefore(picked)) _end = picked;
+              });
+            }
           },
         ),
         ListTile(
@@ -119,7 +152,7 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
           onTap: () async {
             final picked = await showDatePicker(
               context: context,
-              initialDate: _end,
+              initialDate: _end.isBefore(_start) ? _start : _end,
               firstDate: _start,
               lastDate: DateTime(2035),
             );
@@ -135,41 +168,15 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
     );
   }
 
-  Future<void> _showTypedEntryChooser(BuildContext context) async {
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.repeat),
-              title: const Text('คาบเรียน/กิจกรรมรายสัปดาห์'),
-              onTap: () => Navigator.of(context).pop('weekly'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.event_outlined),
-              title: const Text('สอบ/กิจกรรม/วันหยุด (ครั้งเดียว)'),
-              onTap: () => Navigator.of(context).pop('oneTime'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (!context.mounted || choice == null) return;
-    if (choice == 'weekly') {
-      await showWeeklyItemForm(context);
-    } else {
-      await showOneTimeItemForm(context);
-    }
-  }
-
   Future<void> _loadProposals() async {
     setState(() => _loading = true);
-    final proposals = await ref.read(calendarImportServiceProvider).fetchProposedItems(
-      calendarId: _selectedCalendar!.id!,
-      start: _start,
-      end: _end,
-    );
+    final proposals = await ref
+        .read(calendarImportServiceProvider)
+        .fetchProposedItems(
+          calendarId: _selectedCalendar!.id,
+          start: _start,
+          end: _end,
+        );
     setState(() {
       _proposals = proposals;
       _loading = false;
@@ -181,7 +188,9 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Text('ไม่มีรายการใหม่ให้นำเข้าในช่วงนี้ (รายการที่นำเข้าไปแล้วจะถูกข้าม)'),
+          child: Text(
+            'ไม่มีรายการใหม่ให้นำเข้าในช่วงนี้ (รายการที่นำเข้าไปแล้วจะถูกข้าม)',
+          ),
         ),
       );
     }
@@ -195,19 +204,27 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
               return CheckboxListTile(
                 value: item.selected,
                 onChanged: (v) => setState(() => item.selected = v ?? false),
-                title: Text(item.event.title ?? 'ไม่มีชื่อ'),
-                subtitle: Text(
-                  '${_formatDate(item.event.start!)} • ${_kindLabel(item.kind)}'
-                  '${item.event.allDay == true ? ' • ทั้งวัน' : ''}',
-                ),
-                secondary: DropdownButton<ProposedKind>(
-                  value: item.kind,
-                  items: const [
-                    DropdownMenuItem(value: ProposedKind.classSession, child: Text('คาบเรียน')),
-                    DropdownMenuItem(value: ProposedKind.exam, child: Text('สอบ')),
-                    DropdownMenuItem(value: ProposedKind.activity, child: Text('กิจกรรม')),
+                title: Text(item.event.title),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_formatDate(item.event.start)}'
+                      '${item.event.allDay ? ' • ทั้งวัน' : ''}',
+                    ),
+                    DropdownButton<ImportKind>(
+                      value: item.kind,
+                      items: [
+                        for (final kind in ImportKind.values)
+                          DropdownMenuItem(
+                            value: kind,
+                            child: Text(_kindLabel(kind)),
+                          ),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => item.kind = v ?? item.kind),
+                    ),
                   ],
-                  onChanged: (v) => setState(() => item.kind = v ?? item.kind),
                 ),
               );
             },
@@ -217,10 +234,14 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
           padding: const EdgeInsets.all(16),
           child: FilledButton(
             onPressed: () async {
-              await ref.read(calendarImportServiceProvider).importSelected(proposals);
+              await ref
+                  .read(calendarImportServiceProvider)
+                  .importSelected(proposals);
               if (mounted) Navigator.of(context).pop();
             },
-            child: Text('บันทึก ${proposals.where((p) => p.selected).length} รายการ'),
+            child: Text(
+              'บันทึก ${proposals.where((p) => p.selected).length} รายการ',
+            ),
           ),
         ),
       ],
@@ -228,10 +249,10 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
   }
 }
 
-String _kindLabel(ProposedKind kind) => switch (kind) {
-  ProposedKind.classSession => 'คาบเรียน',
-  ProposedKind.exam => 'สอบ',
-  ProposedKind.activity => 'กิจกรรม',
+String _kindLabel(ImportKind kind) => switch (kind) {
+  ImportKind.classSession => 'คาบเรียน',
+  ImportKind.exam => 'สอบ',
+  ImportKind.activity => 'กิจกรรม',
 };
 
 String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';

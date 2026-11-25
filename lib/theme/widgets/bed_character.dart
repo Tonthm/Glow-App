@@ -26,7 +26,9 @@ class BedCharacter extends StatelessWidget {
       painter: _BedPainter(
         blanketColor: blanketColor,
         isFluffy: isFluffy,
-        lampColor: glow.lampGlow.withValues(alpha: lampOpacity.clamp(0.15, 1.0)),
+        lampColor: glow.lampGlow.withValues(
+          alpha: lampOpacity.clamp(0.15, 1.0),
+        ),
         frameColor: Theme.of(context).dividerColor,
       ),
     );
@@ -55,14 +57,24 @@ class _BedPainter extends CustomPainter {
     final lampCenter = Offset(w * 0.85, h * 0.28);
     canvas.drawCircle(lampCenter, w * 0.07, Paint()..color = lampColor);
     canvas.drawRect(
-      Rect.fromCenter(center: Offset(lampCenter.dx, h * 0.5), width: w * 0.1, height: h * 0.22),
+      Rect.fromCenter(
+        center: Offset(lampCenter.dx, h * 0.5),
+        width: w * 0.1,
+        height: h * 0.22,
+      ),
       Paint()..color = frameColor,
     );
 
     // Bed frame.
     final bedRect = Rect.fromLTWH(w * 0.05, h * 0.45, w * 0.65, h * 0.4);
-    final bedRRect = RRect.fromRectAndRadius(bedRect, Radius.circular(w * 0.05));
-    canvas.drawRRect(bedRRect, Paint()..color = frameColor.withValues(alpha: 0.5));
+    final bedRRect = RRect.fromRectAndRadius(
+      bedRect,
+      Radius.circular(w * 0.05),
+    );
+    canvas.drawRRect(
+      bedRRect,
+      Paint()..color = frameColor.withValues(alpha: 0.5),
+    );
 
     // Pillow.
     final pillowRect = Rect.fromLTWH(w * 0.1, h * 0.42, w * 0.22, h * 0.16);

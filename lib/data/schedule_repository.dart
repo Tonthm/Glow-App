@@ -8,14 +8,16 @@ class ScheduleRepository {
 
   ScheduleRepository(this.db);
 
-  Stream<List<WeeklyItem>> watchWeeklyItems() => db.select(db.weeklyItems).watch();
+  Stream<List<WeeklyItem>> watchWeeklyItems() =>
+      db.select(db.weeklyItems).watch();
 
   Stream<List<OneTimeItem>> watchOneTimeItems() =>
       db.select(db.oneTimeItems).watch();
 
   Future<List<WeeklyItem>> getWeeklyItems() => db.select(db.weeklyItems).get();
 
-  Future<List<OneTimeItem>> getOneTimeItems() => db.select(db.oneTimeItems).get();
+  Future<List<OneTimeItem>> getOneTimeItems() =>
+      db.select(db.oneTimeItems).get();
 
   Future<int> addWeeklyItem({
     required String title,
@@ -26,17 +28,19 @@ class ScheduleRepository {
     ItemSource source = ItemSource.typed,
     String? calendarEventId,
   }) {
-    return db.into(db.weeklyItems).insert(
-      WeeklyItemsCompanion.insert(
-        title: title,
-        dayOfWeek: dayOfWeek,
-        startMinutes: startMinutes,
-        endMinutes: endMinutes,
-        type: type,
-        source: Value(source),
-        calendarEventId: Value(calendarEventId),
-      ),
-    );
+    return db
+        .into(db.weeklyItems)
+        .insert(
+          WeeklyItemsCompanion.insert(
+            title: title,
+            dayOfWeek: dayOfWeek,
+            startMinutes: startMinutes,
+            endMinutes: endMinutes,
+            type: type,
+            source: Value(source),
+            calendarEventId: Value(calendarEventId),
+          ),
+        );
   }
 
   /// Copies [item] onto each day in [dayOfWeekTargets] (1=Mon..7=Sun).
@@ -71,17 +75,19 @@ class ScheduleRepository {
     ItemSource source = ItemSource.typed,
     String? calendarEventId,
   }) {
-    return db.into(db.oneTimeItems).insert(
-      OneTimeItemsCompanion.insert(
-        title: title,
-        date: date,
-        type: type,
-        startMinutes: Value(startMinutes),
-        endMinutes: Value(endMinutes),
-        source: Value(source),
-        calendarEventId: Value(calendarEventId),
-      ),
-    );
+    return db
+        .into(db.oneTimeItems)
+        .insert(
+          OneTimeItemsCompanion.insert(
+            title: title,
+            date: date,
+            type: type,
+            startMinutes: Value(startMinutes),
+            endMinutes: Value(endMinutes),
+            source: Value(source),
+            calendarEventId: Value(calendarEventId),
+          ),
+        );
   }
 
   Future<void> updateOneTimeItem(OneTimeItem item) =>
@@ -105,14 +111,16 @@ class ScheduleRepository {
   /// True if a calendar event was already imported before (used by "นำเข้า
   /// อีกครั้ง" to skip duplicates).
   Future<bool> hasImportedCalendarEvent(String calendarEventId) async {
+    // A series can map to several rows (one per weekday), so don't assume
+    // there is at most one.
     final weekly = await (db.select(
       db.weeklyItems,
-    )..where((t) => t.calendarEventId.equals(calendarEventId))).getSingleOrNull();
-    if (weekly != null) return true;
+    )..where((t) => t.calendarEventId.equals(calendarEventId))).get();
+    if (weekly.isNotEmpty) return true;
     final oneTime = await (db.select(
       db.oneTimeItems,
-    )..where((t) => t.calendarEventId.equals(calendarEventId))).getSingleOrNull();
-    return oneTime != null;
+    )..where((t) => t.calendarEventId.equals(calendarEventId))).get();
+    return oneTime.isNotEmpty;
   }
 }
 

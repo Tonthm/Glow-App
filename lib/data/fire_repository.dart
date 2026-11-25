@@ -47,7 +47,10 @@ class FireRepository {
   Future<FireStateRow> ensureRowExists() async {
     await db
         .into(db.fireStates)
-        .insert(const FireStatesCompanion(id: Value(0)), mode: InsertMode.insertOrIgnore);
+        .insert(
+          const FireStatesCompanion(id: Value(0)),
+          mode: InsertMode.insertOrIgnore,
+        );
     return await (db.select(
       db.fireStates,
     )..where((t) => t.id.equals(0))).getSingle();
@@ -56,8 +59,9 @@ class FireRepository {
   Future<FireStateRow> applyEffect(core.NightFireEffect effect) async {
     final current = await get();
     final next = core.applyNightFireEffect(_toCore(current), effect);
-    await (db.update(db.fireStates)..where((t) => t.id.equals(0)))
-        .write(_toCompanion(next));
+    await (db.update(
+      db.fireStates,
+    )..where((t) => t.id.equals(0))).write(_toCompanion(next));
     return await get();
   }
 

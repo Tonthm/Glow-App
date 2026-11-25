@@ -27,7 +27,9 @@ class GlowAppTheme {
     final divider = isDark
         ? GlowBaseColors.dividerDark
         : GlowBaseColors.dividerLight;
-    final accent = isDark ? GlowBaseColors.accentDark : GlowBaseColors.accentLight;
+    final accent = isDark
+        ? GlowBaseColors.accentDark
+        : GlowBaseColors.accentLight;
     final onAccent = isDark
         ? GlowBaseColors.onAccentDark
         : GlowBaseColors.onAccentLight;
@@ -96,7 +98,11 @@ class GlowAppTheme {
       fontFamily: 'NotoSansThai',
       textTheme: baseTextTheme,
       dividerColor: divider,
-      dividerTheme: DividerThemeData(color: divider, thickness: 0.5, space: 0.5),
+      dividerTheme: DividerThemeData(
+        color: divider,
+        thickness: 0.5,
+        space: 0.5,
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: background,
         foregroundColor: textPrimary,
@@ -104,8 +110,8 @@ class GlowAppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontFamily: 'Nunito',
-          fontWeight: FontWeight.w800,
+          fontFamily: 'NotoSansThai',
+          fontWeight: FontWeight.w700,
           fontSize: GlowFontSize.heading,
           color: textPrimary,
         ),

@@ -107,7 +107,10 @@ class CheckInResultScreen extends ConsumerWidget {
                 _WeekStats(
                   week: week,
                   fallAsleepMinutes:
-                      ref.watch(settingsStreamProvider).value?.fallAsleepMinutes ??
+                      ref
+                          .watch(settingsStreamProvider)
+                          .value
+                          ?.fallAsleepMinutes ??
                       15,
                 ),
               const SizedBox(height: GlowSpacing.xl),
@@ -139,11 +142,16 @@ class _FireChangeRow extends StatelessWidget {
     } else if (after.shields < before.shields) {
       message = 'ใช้โล่ไปแล้ว 1 อัน ไฟคงเดิมที่ ${fireLevelNames[after.level]}';
     } else {
-      message = 'ไฟยังอยู่ที่ ${fireLevelNames[after.level]} (${after.points} แต้ม)';
+      message =
+          'ไฟยังอยู่ที่ ${fireLevelNames[after.level]} (${after.points} แต้ม)';
     }
     return Row(
       children: [
-        Icon(Icons.local_fire_department, color: context.glowColors.lampGlow, size: 28),
+        Icon(
+          Icons.local_fire_department,
+          color: context.glowColors.lampGlow,
+          size: 28,
+        ),
         const SizedBox(width: GlowSpacing.sm),
         Expanded(child: Text(message, style: textTheme.bodyLarge)),
       ],
