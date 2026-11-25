@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,11 +8,13 @@ import 'data/database.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'providers.dart';
 import 'services/app_clock.dart';
+import 'services/background_refresh.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final clockOffset = await loadClockOffset();
+  unawaited(registerBackgroundRefresh());
   // Riverpod's automatic retry keeps a failed provider in "loading", which
   // hides errors (e.g. a database that can't open) behind an endless spinner.
   runApp(
