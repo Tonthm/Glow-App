@@ -244,6 +244,14 @@ class NightPlanningRepository {
   Future<NightPlanDraft> getOrLockPlan(
     DateTime wakeDate, {
     required DateTime now,
+  }) {
+    // One transaction, so two loads at the same moment can't both insert.
+    return db.transaction(() => _getOrLockPlan(wakeDate, now: now));
+  }
+
+  Future<NightPlanDraft> _getOrLockPlan(
+    DateTime wakeDate, {
+    required DateTime now,
   }) async {
     final target = _dateOnly(wakeDate);
     final existing = await (db.select(

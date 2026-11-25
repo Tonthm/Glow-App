@@ -37,6 +37,16 @@ void main() {
 
   tearDown(() => db.close());
 
+  test('two screens loading at once lock a night only once', () async {
+    final evening = DateTime(2026, 11, 25, 23);
+    final tomorrow = DateTime(2026, 11, 26);
+    await Future.wait([
+      planning.getOrLockPlan(tomorrow, now: evening),
+      planning.getOrLockPlan(tomorrow, now: evening),
+    ]);
+    expect(await db.select(db.nightPlans).get(), hasLength(1));
+  });
+
   test('nights from before onboarding are never locked', () async {
     await planning.lockElapsedNights(onboarding);
     expect(await db.select(db.nightPlans).get(), isEmpty);

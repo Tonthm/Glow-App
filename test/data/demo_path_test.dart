@@ -30,13 +30,7 @@ void main() {
       final planning = NightPlanningRepository(db, schedule, settings);
       final fire = FireRepository(db);
       final wallet = WalletRepository(db);
-      final checkIns = CheckInRepository(
-        db,
-        planning,
-        fire,
-        settings,
-        wallet,
-      );
+      final checkIns = CheckInRepository(db, planning, fire, settings, wallet);
       final quests = QuestRepository(db, wallet, schedule);
       final routines = RoutineRepository(db, wallet);
 
