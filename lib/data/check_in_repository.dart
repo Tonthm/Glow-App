@@ -112,11 +112,15 @@ class CheckInRepository {
           ),
         );
 
-    await _applyFireIfNotYetApplied(
+    final shieldConsumed = await _applyFireIfNotYetApplied(
       wakeDate: target,
       result: outcome.result,
       now: now,
     );
+    if (shieldConsumed) {
+      await (db.update(db.checkIns)..where((t) => t.wakeDate.equals(target)))
+          .write(const CheckInsCompanion(usedShield: Value(true)));
+    }
 
     return outcome;
   }
@@ -169,7 +173,10 @@ class CheckInRepository {
   /// "ไม่เช็กอินนับเหมือน 'ไม่ครบ' ในระบบไฟ").
   Future<void> sweepMissedNights(DateTime now) async {
     final today = _dateOnly(now);
-    for (var i = 1; i <= _missedNightsLookbackDays; i++) {
+    // Oldest to newest, so fire effects apply in chronological order — the
+    // streak math in core/fire depends on that ordering when several
+    // nights need sweeping at once (e.g. the app was unused for days).
+    for (var i = _missedNightsLookbackDays; i >= 1; i--) {
       final wakeDate = today.subtract(Duration(days: i));
       final plan = await _getNightPlanRow(wakeDate);
       if (plan == null || !plan.isLocked || plan.fireAppliedAt != null) {
@@ -187,24 +194,29 @@ class CheckInRepository {
     }
   }
 
-  Future<void> _applyFireIfNotYetApplied({
+  /// Applies this night's fire effect exactly once. Returns whether a
+  /// shield absorbed the miss, so [recordCheckIn] can mark it on the
+  /// check-in row for the heatmap's shield icon (section 10).
+  Future<bool> _applyFireIfNotYetApplied({
     required DateTime wakeDate,
     required CheckInResult? result,
     required DateTime now,
   }) async {
     final plan = await _getNightPlanRow(wakeDate);
-    if (plan == null || plan.fireAppliedAt != null) return;
+    if (plan == null || plan.fireAppliedAt != null) return false;
 
     final effect = determineFireEffect(
       isRedNightFromSchedule: plan.isRedNight,
       result: result,
     );
-    await fireRepo.applyEffect(effect);
+    final shieldsBefore = (await fireRepo.get()).shields;
+    final after = await fireRepo.applyEffect(effect);
     await (db.update(
       db.nightPlans,
     )..where((t) => t.id.equals(plan.id))).write(
       NightPlansCompanion(fireAppliedAt: Value(now)),
     );
+    return after.shields < shieldsBefore;
   }
 
   Future<NightPlan?> _getNightPlanRow(DateTime wakeDate) {

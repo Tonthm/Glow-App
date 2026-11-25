@@ -6,11 +6,12 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../core/sleep_calculator.dart';
+import '../data/check_in_repository.dart';
 import '../data/database.dart';
 import '../data/night_planning_repository.dart';
 import 'permissions_service.dart';
 
-enum NotificationKind { putPhoneDown, bedtime }
+enum NotificationKind { putPhoneDown, bedtime, checkIn }
 
 /// Stable per-night, per-kind notification ids so a reschedule can predict
 /// and cancel exactly the ones it set before (e.g. when "เข้านอนแล้ว" is
@@ -34,6 +35,12 @@ const _bedtimeMessages = [
   'ถึงเวลาเข้านอนแล้ว ฝันดีนะ',
   'เวลานอนมาถึงแล้ว ปิดไฟได้เลย',
   'ได้เวลาเข้านอนแล้ว พรุ่งนี้สดชื่นแน่นอน',
+];
+
+const _checkInMessages = [
+  'เมื่อคืนนอนเป็นยังไง แวะเช็กอินหน่อยนะ',
+  'อย่าลืมเช็กอินเมื่อคืนที่ผ่านมา',
+  'เช็กอินตอนเช้าเพื่อดูผลการนอนเมื่อคืนนี้',
 ];
 
 const _redNightMessages = [
@@ -80,12 +87,21 @@ class NotificationService {
     );
   }
 
+  /// Cancels the check-in reminder for one night, called once a check-in is
+  /// recorded for it (section 5: "ไม่ส่งถ้าเช็กอินแล้ว").
+  Future<void> cancelCheckInNotification(DateTime wakeDate) {
+    return _plugin.cancel(
+      id: notificationIdFor(NotificationKind.checkIn, wakeDate),
+    );
+  }
+
   /// Clears and re-schedules the next 7 nights' put-phone-down and bedtime
   /// reminders, per section 5's "ลบแล้วตั้งใหม่ทั้งชุด" rule. Call this on
   /// app open, after editing schedule/settings, on boot, and on
   /// timezone/clock change.
   Future<void> rescheduleAll({
     required NightPlanningRepository repo,
+    required CheckInRepository checkInRepo,
     required SettingsRow settings,
     required DateTime now,
   }) async {
@@ -101,11 +117,14 @@ class NotificationService {
     for (var i = 0; i < 7; i++) {
       final wakeDate = today.add(Duration(days: i));
       final draft = await repo.computeDraftForWakeDate(wakeDate);
+      final alreadyCheckedIn =
+          await checkInRepo.getForWakeDate(wakeDate) != null;
       await _scheduleNight(
         draft: draft,
         settings: settings,
         now: now,
         scheduleMode: scheduleMode,
+        alreadyCheckedIn: alreadyCheckedIn,
       );
     }
   }
@@ -115,6 +134,7 @@ class NotificationService {
     required SettingsRow settings,
     required DateTime now,
     required AndroidScheduleMode scheduleMode,
+    required bool alreadyCheckedIn,
   }) async {
     final notifyOffsetMinutes = draft.isPreExamNight ? 90 : 60;
     final notifyTime = draft.bedtime.subtract(
@@ -136,6 +156,16 @@ class NotificationService {
         at: draft.bedtime,
         title: 'Glow',
         body: _randomMessage(_bedtimeMessages),
+        scheduleMode: scheduleMode,
+      );
+    }
+    final checkInTime = draft.wakeTime.add(const Duration(minutes: 30));
+    if (settings.notifyCheckIn && !alreadyCheckedIn && checkInTime.isAfter(now)) {
+      await _zonedSchedule(
+        id: notificationIdFor(NotificationKind.checkIn, draft.wakeDate),
+        at: checkInTime,
+        title: 'Glow',
+        body: _randomMessage(_checkInMessages),
         scheduleMode: scheduleMode,
       );
     }

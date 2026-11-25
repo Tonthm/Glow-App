@@ -87,6 +87,7 @@ class SettingsRepository {
     bool? putPhoneDown,
     bool? bedtime,
     bool? busyNight,
+    bool? checkIn,
   }) async {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(
@@ -94,6 +95,7 @@ class SettingsRepository {
             putPhoneDown == null ? const Value.absent() : Value(putPhoneDown),
         notifyBedtime: bedtime == null ? const Value.absent() : Value(bedtime),
         notifyBusyNight: busyNight == null ? const Value.absent() : Value(busyNight),
+        notifyCheckIn: checkIn == null ? const Value.absent() : Value(checkIn),
       ),
     );
   }

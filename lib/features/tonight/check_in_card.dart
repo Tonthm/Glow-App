@@ -54,21 +54,32 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
 
   Future<void> _confirm() async {
     setState(() => _submitting = true);
-    final fireRepo = ref.read(fireRepositoryProvider);
-    final checkInRepo = ref.read(checkInRepositoryProvider);
-    final now = DateTime.now();
+    try {
+      final fireRepo = ref.read(fireRepositoryProvider);
+      final checkInRepo = ref.read(checkInRepositoryProvider);
+      final now = DateTime.now();
 
-    final fireBefore = await fireRepo.get();
-    final outcome = await checkInRepo.recordCheckIn(
-      wakeDate: widget.pending.wakeDate,
-      lightsOffAt: _lightsOffAt,
-      actualWakeAt: _wakeAt,
-      now: now,
-    );
-    final fireAfter = await fireRepo.get();
+      final fireBefore = await fireRepo.get();
+      final outcome = await checkInRepo.recordCheckIn(
+        wakeDate: widget.pending.wakeDate,
+        lightsOffAt: _lightsOffAt,
+        actualWakeAt: _wakeAt,
+        now: now,
+      );
+      final fireAfter = await fireRepo.get();
+      await ref
+          .read(notificationServiceProvider)
+          .cancelCheckInNotification(widget.pending.wakeDate);
 
-    if (!mounted) return;
-    widget.onSubmitted(outcome, fireBefore, fireAfter);
+      if (!mounted) return;
+      widget.onSubmitted(outcome, fireBefore, fireAfter);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง: $e')),
+      );
+    }
   }
 
   @override

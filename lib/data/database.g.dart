@@ -199,6 +199,21 @@ class $SettingsTable extends Settings
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _notifyCheckInMeta = const VerificationMeta(
+    'notifyCheckIn',
+  );
+  @override
+  late final GeneratedColumn<bool> notifyCheckIn = GeneratedColumn<bool>(
+    'notify_check_in',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("notify_check_in" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _onboardingCompletedMeta =
       const VerificationMeta('onboardingCompleted');
   @override
@@ -241,6 +256,7 @@ class $SettingsTable extends Settings
     notifyPutPhoneDown,
     notifyBedtime,
     notifyBusyNight,
+    notifyCheckIn,
     onboardingCompleted,
     themeMode,
   ];
@@ -379,6 +395,15 @@ class $SettingsTable extends Settings
         ),
       );
     }
+    if (data.containsKey('notify_check_in')) {
+      context.handle(
+        _notifyCheckInMeta,
+        notifyCheckIn.isAcceptableOrUnknown(
+          data['notify_check_in']!,
+          _notifyCheckInMeta,
+        ),
+      );
+    }
     if (data.containsKey('onboarding_completed')) {
       context.handle(
         _onboardingCompletedMeta,
@@ -463,6 +488,10 @@ class $SettingsTable extends Settings
         DriftSqlType.bool,
         data['${effectivePrefix}notify_busy_night'],
       )!,
+      notifyCheckIn: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}notify_check_in'],
+      )!,
       onboardingCompleted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}onboarding_completed'],
@@ -504,6 +533,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   final bool notifyPutPhoneDown;
   final bool notifyBedtime;
   final bool notifyBusyNight;
+  final bool notifyCheckIn;
   final bool onboardingCompleted;
   final AppThemeMode themeMode;
   const SettingsRow({
@@ -523,6 +553,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.notifyPutPhoneDown,
     required this.notifyBedtime,
     required this.notifyBusyNight,
+    required this.notifyCheckIn,
     required this.onboardingCompleted,
     required this.themeMode,
   });
@@ -553,6 +584,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     map['notify_put_phone_down'] = Variable<bool>(notifyPutPhoneDown);
     map['notify_bedtime'] = Variable<bool>(notifyBedtime);
     map['notify_busy_night'] = Variable<bool>(notifyBusyNight);
+    map['notify_check_in'] = Variable<bool>(notifyCheckIn);
     map['onboarding_completed'] = Variable<bool>(onboardingCompleted);
     {
       map['theme_mode'] = Variable<int>(
@@ -584,6 +616,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       notifyPutPhoneDown: Value(notifyPutPhoneDown),
       notifyBedtime: Value(notifyBedtime),
       notifyBusyNight: Value(notifyBusyNight),
+      notifyCheckIn: Value(notifyCheckIn),
       onboardingCompleted: Value(onboardingCompleted),
       themeMode: Value(themeMode),
     );
@@ -619,6 +652,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       notifyPutPhoneDown: serializer.fromJson<bool>(json['notifyPutPhoneDown']),
       notifyBedtime: serializer.fromJson<bool>(json['notifyBedtime']),
       notifyBusyNight: serializer.fromJson<bool>(json['notifyBusyNight']),
+      notifyCheckIn: serializer.fromJson<bool>(json['notifyCheckIn']),
       onboardingCompleted: serializer.fromJson<bool>(
         json['onboardingCompleted'],
       ),
@@ -649,6 +683,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       'notifyPutPhoneDown': serializer.toJson<bool>(notifyPutPhoneDown),
       'notifyBedtime': serializer.toJson<bool>(notifyBedtime),
       'notifyBusyNight': serializer.toJson<bool>(notifyBusyNight),
+      'notifyCheckIn': serializer.toJson<bool>(notifyCheckIn),
       'onboardingCompleted': serializer.toJson<bool>(onboardingCompleted),
       'themeMode': serializer.toJson<int>(
         $SettingsTable.$converterthemeMode.toJson(themeMode),
@@ -673,6 +708,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bool? notifyPutPhoneDown,
     bool? notifyBedtime,
     bool? notifyBusyNight,
+    bool? notifyCheckIn,
     bool? onboardingCompleted,
     AppThemeMode? themeMode,
   }) => SettingsRow(
@@ -692,6 +728,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     notifyPutPhoneDown: notifyPutPhoneDown ?? this.notifyPutPhoneDown,
     notifyBedtime: notifyBedtime ?? this.notifyBedtime,
     notifyBusyNight: notifyBusyNight ?? this.notifyBusyNight,
+    notifyCheckIn: notifyCheckIn ?? this.notifyCheckIn,
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
     themeMode: themeMode ?? this.themeMode,
   );
@@ -737,6 +774,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       notifyBusyNight: data.notifyBusyNight.present
           ? data.notifyBusyNight.value
           : this.notifyBusyNight,
+      notifyCheckIn: data.notifyCheckIn.present
+          ? data.notifyCheckIn.value
+          : this.notifyCheckIn,
       onboardingCompleted: data.onboardingCompleted.present
           ? data.onboardingCompleted.value
           : this.onboardingCompleted,
@@ -763,6 +803,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('notifyPutPhoneDown: $notifyPutPhoneDown, ')
           ..write('notifyBedtime: $notifyBedtime, ')
           ..write('notifyBusyNight: $notifyBusyNight, ')
+          ..write('notifyCheckIn: $notifyCheckIn, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode')
           ..write(')'))
@@ -787,6 +828,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     notifyPutPhoneDown,
     notifyBedtime,
     notifyBusyNight,
+    notifyCheckIn,
     onboardingCompleted,
     themeMode,
   );
@@ -810,6 +852,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.notifyPutPhoneDown == this.notifyPutPhoneDown &&
           other.notifyBedtime == this.notifyBedtime &&
           other.notifyBusyNight == this.notifyBusyNight &&
+          other.notifyCheckIn == this.notifyCheckIn &&
           other.onboardingCompleted == this.onboardingCompleted &&
           other.themeMode == this.themeMode);
 }
@@ -831,6 +874,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<bool> notifyPutPhoneDown;
   final Value<bool> notifyBedtime;
   final Value<bool> notifyBusyNight;
+  final Value<bool> notifyCheckIn;
   final Value<bool> onboardingCompleted;
   final Value<AppThemeMode> themeMode;
   const SettingsCompanion({
@@ -850,6 +894,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.notifyPutPhoneDown = const Value.absent(),
     this.notifyBedtime = const Value.absent(),
     this.notifyBusyNight = const Value.absent(),
+    this.notifyCheckIn = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
   });
@@ -870,6 +915,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.notifyPutPhoneDown = const Value.absent(),
     this.notifyBedtime = const Value.absent(),
     this.notifyBusyNight = const Value.absent(),
+    this.notifyCheckIn = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
   });
@@ -890,6 +936,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<bool>? notifyPutPhoneDown,
     Expression<bool>? notifyBedtime,
     Expression<bool>? notifyBusyNight,
+    Expression<bool>? notifyCheckIn,
     Expression<bool>? onboardingCompleted,
     Expression<int>? themeMode,
   }) {
@@ -915,6 +962,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
         'notify_put_phone_down': notifyPutPhoneDown,
       if (notifyBedtime != null) 'notify_bedtime': notifyBedtime,
       if (notifyBusyNight != null) 'notify_busy_night': notifyBusyNight,
+      if (notifyCheckIn != null) 'notify_check_in': notifyCheckIn,
       if (onboardingCompleted != null)
         'onboarding_completed': onboardingCompleted,
       if (themeMode != null) 'theme_mode': themeMode,
@@ -938,6 +986,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<bool>? notifyPutPhoneDown,
     Value<bool>? notifyBedtime,
     Value<bool>? notifyBusyNight,
+    Value<bool>? notifyCheckIn,
     Value<bool>? onboardingCompleted,
     Value<AppThemeMode>? themeMode,
   }) {
@@ -958,6 +1007,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       notifyPutPhoneDown: notifyPutPhoneDown ?? this.notifyPutPhoneDown,
       notifyBedtime: notifyBedtime ?? this.notifyBedtime,
       notifyBusyNight: notifyBusyNight ?? this.notifyBusyNight,
+      notifyCheckIn: notifyCheckIn ?? this.notifyCheckIn,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       themeMode: themeMode ?? this.themeMode,
     );
@@ -1016,6 +1066,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     if (notifyBusyNight.present) {
       map['notify_busy_night'] = Variable<bool>(notifyBusyNight.value);
     }
+    if (notifyCheckIn.present) {
+      map['notify_check_in'] = Variable<bool>(notifyCheckIn.value);
+    }
     if (onboardingCompleted.present) {
       map['onboarding_completed'] = Variable<bool>(onboardingCompleted.value);
     }
@@ -1046,6 +1099,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('notifyPutPhoneDown: $notifyPutPhoneDown, ')
           ..write('notifyBedtime: $notifyBedtime, ')
           ..write('notifyBusyNight: $notifyBusyNight, ')
+          ..write('notifyCheckIn: $notifyCheckIn, ')
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode')
           ..write(')'))
@@ -3897,6 +3951,7 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<bool> notifyPutPhoneDown,
   Value<bool> notifyBedtime,
   Value<bool> notifyBusyNight,
+  Value<bool> notifyCheckIn,
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
 });
@@ -3917,6 +3972,7 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<bool> notifyPutPhoneDown,
   Value<bool> notifyBedtime,
   Value<bool> notifyBusyNight,
+  Value<bool> notifyCheckIn,
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
 });
@@ -4008,6 +4064,11 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<bool> get notifyBusyNight => $composableBuilder(
     column: $table.notifyBusyNight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get notifyCheckIn => $composableBuilder(
+    column: $table.notifyCheckIn,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4112,6 +4173,11 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get notifyCheckIn => $composableBuilder(
+    column: $table.notifyCheckIn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get onboardingCompleted => $composableBuilder(
     column: $table.onboardingCompleted,
     builder: (column) => ColumnOrderings(column),
@@ -4204,6 +4270,11 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get notifyCheckIn => $composableBuilder(
+    column: $table.notifyCheckIn,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get onboardingCompleted => $composableBuilder(
     column: $table.onboardingCompleted,
     builder: (column) => column,
@@ -4260,6 +4331,7 @@ class $$SettingsTableTableManager
                 Value<bool> notifyPutPhoneDown = const Value.absent(),
                 Value<bool> notifyBedtime = const Value.absent(),
                 Value<bool> notifyBusyNight = const Value.absent(),
+                Value<bool> notifyCheckIn = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
               }) => SettingsCompanion(
@@ -4279,6 +4351,7 @@ class $$SettingsTableTableManager
                 notifyPutPhoneDown: notifyPutPhoneDown,
                 notifyBedtime: notifyBedtime,
                 notifyBusyNight: notifyBusyNight,
+                notifyCheckIn: notifyCheckIn,
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
               ),
@@ -4300,6 +4373,7 @@ class $$SettingsTableTableManager
                 Value<bool> notifyPutPhoneDown = const Value.absent(),
                 Value<bool> notifyBedtime = const Value.absent(),
                 Value<bool> notifyBusyNight = const Value.absent(),
+                Value<bool> notifyCheckIn = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
               }) => SettingsCompanion.insert(
@@ -4319,6 +4393,7 @@ class $$SettingsTableTableManager
                 notifyPutPhoneDown: notifyPutPhoneDown,
                 notifyBedtime: notifyBedtime,
                 notifyBusyNight: notifyBusyNight,
+                notifyCheckIn: notifyCheckIn,
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
               ),

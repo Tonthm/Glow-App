@@ -53,6 +53,7 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     final notificationService = ref.watch(notificationServiceProvider);
     await notificationService.rescheduleAll(
       repo: repo,
+      checkInRepo: ref.watch(checkInRepositoryProvider),
       settings: settings,
       now: now,
     );

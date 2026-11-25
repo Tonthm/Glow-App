@@ -66,6 +66,11 @@ class SettingsScreen extends ConsumerWidget {
                 value: settings.notifyBusyNight,
                 onChanged: (v) => repo.updateNotificationToggles(busyNight: v),
               ),
+              SwitchListTile(
+                title: const Text('เตือนเช็กอิน'),
+                value: settings.notifyCheckIn,
+                onChanged: (v) => repo.updateNotificationToggles(checkIn: v),
+              ),
               ListTile(
                 title: const Text('ทดสอบแจ้งเตือน'),
                 subtitle: const Text('ตั้งเตือนในอีก 1 นาที'),
@@ -166,6 +171,21 @@ class SettingsScreen extends ConsumerWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ThemeGalleryScreen()),
                   ),
+                ),
+                ListTile(
+                  title: const Text('สร้างข้อมูลตัวอย่าง 60 คืน'),
+                  subtitle: const Text('สำหรับทดสอบ heatmap เท่านั้น'),
+                  trailing: const Icon(Icons.dataset_outlined),
+                  onTap: () async {
+                    await ref
+                        .read(debugSampleDataServiceProvider)
+                        .generateSampleNights(DateTime.now());
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('สร้างข้อมูลตัวอย่างแล้ว')),
+                      );
+                    }
+                  },
                 ),
               ],
               const SizedBox(height: 24),

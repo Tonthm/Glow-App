@@ -49,6 +49,8 @@ class Settings extends Table {
       boolean().withDefault(const Constant(true))();
   BoolColumn get notifyBusyNight =>
       boolean().withDefault(const Constant(true))();
+  BoolColumn get notifyCheckIn =>
+      boolean().withDefault(const Constant(true))();
   BoolColumn get onboardingCompleted =>
       boolean().withDefault(const Constant(false))();
   IntColumn get themeMode =>
@@ -161,7 +163,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -179,6 +181,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 5) {
         await m.addColumn(nightPlans, nightPlans.fireAppliedAt);
+      }
+      if (from < 6) {
+        await m.addColumn(settings, settings.notifyCheckIn);
       }
     },
   );

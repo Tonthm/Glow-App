@@ -7,8 +7,10 @@ import 'data/fire_repository.dart';
 import 'data/night_planning_repository.dart';
 import 'data/schedule_repository.dart';
 import 'data/settings_repository.dart';
+import 'data/stats_repository.dart';
 import 'services/backup_service.dart';
 import 'services/calendar_import_service.dart';
+import 'services/debug_sample_data_service.dart';
 import 'services/notification_service.dart';
 import 'services/permissions_service.dart';
 
@@ -51,6 +53,14 @@ final checkInRepositoryProvider = Provider<CheckInRepository>((ref) {
 
 final fireStateStreamProvider = StreamProvider<FireStateRow>((ref) {
   return ref.watch(fireRepositoryProvider).watch();
+});
+
+final statsRepositoryProvider = Provider<StatsRepository>((ref) {
+  return StatsRepository(ref.watch(databaseProvider));
+});
+
+final debugSampleDataServiceProvider = Provider<DebugSampleDataService>((ref) {
+  return DebugSampleDataService(ref.watch(databaseProvider));
 });
 
 final settingsStreamProvider = StreamProvider<SettingsRow>((ref) {
