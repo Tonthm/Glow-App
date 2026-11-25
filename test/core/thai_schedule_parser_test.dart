@@ -197,6 +197,15 @@ void main() {
     });
   });
 
+  group('month abbreviations are not weekdays', () {
+    test('"พ.ย." and "พ.ค." without a day number stay out of the days', () {
+      for (final sentence in ['พ.ย. 9.00-10.00 ค่าย', 'พ.ค. 9.00-10.00 ค่าย']) {
+        final item = parseThaiSchedule(sentence, now: now).items.single;
+        expect(item.uncertain, contains(ParsedField.day), reason: sentence);
+      }
+    });
+  });
+
   group('exams', () {
     check({
       'พรุ่งนี้สอบเลข 9 โมงถึง 11 โมง': ['26/11/2026 09:00-11:00 สอบเลข [สอบ]'],

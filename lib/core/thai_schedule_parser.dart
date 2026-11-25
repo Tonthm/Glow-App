@@ -208,15 +208,24 @@ final _datePattern = RegExp(
 
 final _relativePattern = RegExp('(พรุ่งนี้|มะรืน(?:นี้)?|วันนี้)');
 
-/// Full names, then abbreviations (which must stand alone).
+/// Full names, then abbreviations. An abbreviation must stand alone: "พ." is
+/// not the start of "พ.ย." (November) or "พ.ค." (May).
+const _alone = r'(?![ก-๙]{1,2}\.)';
 const _weekdayPatterns = [
-  r'จันทร์|(?<![ก-๙.])จ\.',
-  r'อังคาร|(?<![ก-๙.])อ\.',
-  r'พุธ|(?<![ก-๙.])พ\.',
-  r'พฤหัส(?:บดี)?|(?<![ก-๙.])พฤ\.',
-  r'ศุกร์|(?<![ก-๙.])ศ\.',
-  r'เสาร์|(?<![ก-๙.])ส\.',
-  r'อาทิตย์|(?<![ก-๙.])อา\.',
+  r'จันทร์|(?<![ก-๙.])จ\.'
+      '$_alone',
+  r'อังคาร|(?<![ก-๙.])อ\.'
+      '$_alone',
+  r'พุธ|(?<![ก-๙.])พ\.'
+      '$_alone',
+  r'พฤหัส(?:บดี)?|(?<![ก-๙.])พฤ\.'
+      '$_alone',
+  r'ศุกร์|(?<![ก-๙.])ศ\.'
+      '$_alone',
+  r'เสาร์|(?<![ก-๙.])ส\.'
+      '$_alone',
+  r'อาทิตย์|(?<![ก-๙.])อา\.'
+      '$_alone',
 ];
 
 final _oneWeekday = '(?:วัน\\s*)?(?:${_weekdayPatterns.join('|')})';
@@ -406,6 +415,45 @@ String _cleanTitle(String fragment) {
 
 const _activityWords = ['ชมรม', 'ซ้อม', 'กิจกรรม', 'ประชุม', 'ทำงาน'];
 final _holidayPattern = RegExp(r'งดเรียน|วันหยุด|หยุด');
+
+// ------------------------------------------------- shared with the task parser
+
+/// A number as digits or Thai words, as a regular-expression fragment.
+const String thaiNumberPattern = _number;
+
+int thaiNumberValue(String text) => _numberValue(text);
+
+/// Thai digits to Arabic, and whitespace collapsed.
+String normalizeThaiSpeech(String input) => _normalize(input);
+
+/// Day phrases in [text] ("พรุ่งนี้", "วันศุกร์", "15 ธันวา") as dates. A
+/// weekday name means its next occurrence, today included.
+List<({int from, int to, DateTime date})> findThaiDates(
+  String text,
+  DateTime now,
+) {
+  final today = DateTime(now.year, now.month, now.day);
+  final tokens = <_DayToken>[..._findDates(text, today)];
+  for (final token in _findWeekdays(text)) {
+    if (!_overlaps(tokens, token.from, token.to)) tokens.add(token);
+  }
+  tokens.sort((a, b) => a.from.compareTo(b.from));
+  return [
+    for (final t in tokens)
+      if (!t.uncertain)
+        (
+          from: t.from,
+          to: t.to,
+          date:
+              t.date ??
+              DateTime(
+                today.year,
+                today.month,
+                today.day + (t.weekdays.first - today.weekday + 7) % 7,
+              ),
+        ),
+  ];
+}
 
 // ---------------------------------------------------------------- parsing
 
