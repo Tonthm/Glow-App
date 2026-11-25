@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../core/day_overrides.dart';
 import '../core/evening_planner.dart';
 import '../core/schedule_load.dart';
 import '../core/schedule_models.dart';
@@ -96,7 +97,9 @@ class EveningRepository {
     final windowStart = eveningWindowStart(
       eveningDate,
       entries,
-      travelMinutes: row.defaultTravelMinutes,
+      travelMinutes:
+          parseTravelOverrides(row.travelOverrides)[eveningDate.weekday] ??
+          row.defaultTravelMinutes,
       startNow: planRow?.eveningStartedAt,
     );
     final rows = await _tasksFor(eveningDate, _todo);

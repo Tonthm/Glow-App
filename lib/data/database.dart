@@ -58,6 +58,8 @@ class Settings extends Table {
   /// counted as missed check-ins.
   DateTimeColumn get onboardedAt => dateTime().nullable()();
 
+  /// Travel time that differs by weekday, e.g. "1:60,5:0".
+  TextColumn get travelOverrides => text().withDefault(const Constant(''))();
   // Evening planner values (section 14).
   BoolColumn get eveningEnabled =>
       boolean().withDefault(const Constant(true))();
@@ -153,6 +155,9 @@ class NightPlans extends Table {
 
   /// "วันนี้หมดแรง" was chosen for this night.
   BoolColumn get lowEnergy => boolean().withDefault(const Constant(false))();
+
+  /// Prep time shortened for this one morning.
+  IntColumn get prepOverrideMinutes => integer().nullable()();
 
   /// Evening tasks are laid out no earlier than this (after "เสร็จ" or
   /// "จัดใหม่").
@@ -349,7 +354,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -439,6 +444,14 @@ class AppDatabase extends _$AppDatabase {
         );
         await _addColumnIfMissing(m, nightPlans, nightPlans.eveningFrom);
         await _addColumnIfMissing(m, nightPlans, nightPlans.eveningStartedAt);
+      }
+      if (from < 13) {
+        await _addColumnIfMissing(m, settings, settings.travelOverrides);
+        await _addColumnIfMissing(
+          m,
+          nightPlans,
+          nightPlans.prepOverrideMinutes,
+        );
       }
     },
   );

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/day_overrides.dart';
 import '../../data/database.dart';
 import '../../data/settings_repository.dart';
 import '../../providers.dart';
@@ -13,6 +14,7 @@ import '../shared/time_of_day_field.dart';
 import 'evening_settings_rows.dart';
 import 'hidden_poses_sheet.dart';
 import 'setting_row.dart';
+import 'travel_by_day_sheet.dart';
 import 'battery_optimization_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -87,6 +89,15 @@ class SettingsScreen extends ConsumerWidget {
                 min: 0,
                 max: 4 * 60,
                 onSave: (v) => repo.updatePrepAndTravel(travelMinutes: v),
+              ),
+              SettingRow(
+                title: 'เวลาเดินทางแยกรายวัน',
+                value: switch (parseTravelOverrides(settings.travelOverrides)
+                    .length) {
+                  0 => 'ไม่มี',
+                  final n => '$n วัน',
+                },
+                onTap: () => showTravelByDaySheet(context),
               ),
               SettingRow(
                 title: 'เวลาตื่นวันว่าง',

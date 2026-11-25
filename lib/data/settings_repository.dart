@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../core/day_overrides.dart';
 import '../core/evening_planner.dart';
 import '../core/sleep_calculator.dart';
 import 'database.dart';
@@ -122,6 +123,21 @@ class SettingsRepository {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(themeMode: Value(mode)),
     );
+  }
+
+  /// Travel time for one weekday; null goes back to the usual time.
+  Future<void> setTravelOverride(int weekday, int? minutes) {
+    return db.transaction(() async {
+      final overrides = parseTravelOverrides((await get()).travelOverrides);
+      minutes == null
+          ? overrides.remove(weekday)
+          : overrides[weekday] = minutes;
+      await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+        SettingsCompanion(
+          travelOverrides: Value(encodeTravelOverrides(overrides)),
+        ),
+      );
+    });
   }
 
   Future<void> updateRoutineEnabled(bool enabled) async {

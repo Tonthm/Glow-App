@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
 const _rewindFrom12 = [
+  'ALTER TABLE settings DROP COLUMN travel_overrides',
+  'ALTER TABLE night_plans DROP COLUMN prep_override_minutes',
   'ALTER TABLE settings DROP COLUMN evening_enabled',
   'ALTER TABLE settings DROP COLUMN rest_minutes',
   'ALTER TABLE settings DROP COLUMN dinner_minutes',

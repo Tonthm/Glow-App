@@ -78,6 +78,28 @@ void main() {
     },
   );
 
+  test('shorter prep and weekday travel change the plan', () async {
+    final thursday = DateTime(2026, 11, 26);
+    await ScheduleRepository(db).addWeeklyItem(
+      title: 'เลข',
+      dayOfWeek: DateTime.thursday,
+      startMinutes: 8 * 60,
+      endMinutes: 12 * 60,
+      type: WeeklyItemType.classSession,
+    );
+    Future<DateTime> wake() async =>
+        (await planning.computeDraftForWakeDate(thursday)).wakeTime;
+
+    expect(await wake(), DateTime(2026, 11, 26, 6, 35));
+    await settings.setTravelOverride(DateTime.thursday, 60);
+    expect(await wake(), DateTime(2026, 11, 26, 6, 5));
+    await planning.setPrepOverride(thursday, 20);
+    expect(await wake(), DateTime(2026, 11, 26, 6, 30));
+    await planning.setPrepOverride(thursday, null);
+    await settings.setTravelOverride(DateTime.thursday, null);
+    expect(await wake(), DateTime(2026, 11, 26, 6, 35));
+  });
+
   test('two screens loading at once lock a night only once', () async {
     final evening = DateTime(2026, 11, 25, 23);
     final tomorrow = DateTime(2026, 11, 26);

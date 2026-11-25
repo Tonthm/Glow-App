@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../core/day_overrides.dart';
 import '../core/night_date.dart';
 import '../core/quests.dart' show QuestMode;
 import '../core/quests.dart' as quests;
@@ -32,6 +33,13 @@ class NightPlanningRepository {
     final weekly = toCoreWeeklyEntries(await scheduleRepo.getWeeklyItems());
     final oneTime = toCoreOneTimeEntries(await scheduleRepo.getOneTimeItems());
 
+    final travel = parseTravelOverrides(settingsRow.travelOverrides);
+    final prepByDate = {
+      for (final row in await db.select(db.nightPlans).get())
+        if (row.prepOverrideMinutes != null)
+          _dateOnly(row.wakeDate): row.prepOverrideMinutes!,
+    };
+
     final drafts = List.generate(7, (i) {
       final wakeDate = monday.add(Duration(days: i));
       final entries = resolveScheduleForDate(
@@ -43,7 +51,12 @@ class NightPlanningRepository {
       );
       return calculateNightPlanDraft(
         wakeDate: wakeDate,
-        settings: settings,
+        settings: settingsFor(
+          settings,
+          wakeDate,
+          travel,
+          prepOverride: prepByDate[wakeDate],
+        ),
         entriesForWakeDate: entries,
       );
     });
@@ -108,7 +121,11 @@ class NightPlanningRepository {
       plannedBedtime: draft.bedtime,
       plannedWakeTime: draft.wakeTime,
       isPreExamNight: draft.isPreExamNight,
-      settings: settings,
+      settings: settingsFor(
+        settings,
+        eveningDate,
+        parseTravelOverrides(settingsRow.travelOverrides),
+      ),
     );
   }
 
@@ -183,6 +200,13 @@ class NightPlanningRepository {
       return true;
     });
   }
+
+  /// Shortens (or restores, with null) the prep time for one morning. Like
+  /// any other edit, it doesn't change a plan that has already locked.
+  Future<void> setPrepOverride(DateTime wakeDate, int? minutes) => _upsertPlan(
+    wakeDate,
+    NightPlansCompanion(prepOverrideMinutes: Value(minutes)),
+  );
 
   Future<void> setEveningFrom(DateTime wakeDate, DateTime from) =>
       _upsertPlan(wakeDate, NightPlansCompanion(eveningFrom: Value(from)));

@@ -31,6 +31,7 @@ import '../evening/evening_card.dart';
 import '../evening/evening_screen.dart';
 import '../routine/activity_card.dart';
 import '../routine/routine_screen.dart';
+import '../settings/setting_row.dart';
 import '../shared/settings_button.dart';
 import '../stats/heatmap.dart';
 import '../stats/night_detail_sheet.dart';
@@ -60,6 +61,9 @@ class TonightPlanData {
   final DateTime activityCardFrom;
   final bool routineEnabled;
   final bool eveningEnabled;
+
+  /// This morning's usual or shortened prep time; null once the plan locked.
+  final int? adjustablePrepMinutes;
   final Set<String> hiddenPoseIds;
   final bool routineDone;
   final ScheduleEntry? firstAppointment;
@@ -81,6 +85,7 @@ class TonightPlanData {
     required this.activityCardFrom,
     required this.routineEnabled,
     required this.eveningEnabled,
+    required this.adjustablePrepMinutes,
     required this.hiddenPoseIds,
     required this.routineDone,
     required this.firstAppointment,
@@ -181,6 +186,9 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     activityCardFrom: activityCardFrom(eveningDate, todaysEntries),
     routineEnabled: settings?.routineEnabled ?? true,
     eveningEnabled: settings?.eveningEnabled ?? true,
+    adjustablePrepMinutes: planRow?.isLocked == true || settings == null
+        ? null
+        : planRow?.prepOverrideMinutes ?? settings.prepMinutes,
     hiddenPoseIds: settings == null ? const {} : hiddenPoseSet(settings),
     routineDone: routineLog?.completed ?? false,
     firstAppointment: await repo.firstAppointment(wakeDate),
@@ -432,6 +440,9 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
           ],
           _PlanContent(
             plan: plan,
+            onShortenPrep: plan.adjustablePrepMinutes == null
+                ? null
+                : () => _shortenPrep(plan),
             onOpenEvening: plan.eveningEnabled
                 ? () => _openEvening(plan)
                 : null,
@@ -477,6 +488,23 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   int _routineMinutes(TonightPlanData plan) {
     final seconds = _routineFor(plan).fold(0, (sum, p) => sum + p.seconds);
     return (seconds / 60).round();
+  }
+
+  Future<void> _shortenPrep(TonightPlanData plan) async {
+    final usual = ref.read(settingsStreamProvider).value?.prepMinutes ?? 45;
+    final picked = await showDurationSheet(
+      context,
+      title: 'เวลาเตรียมตัวพรุ่งนี้เช้า',
+      initial: plan.adjustablePrepMinutes!,
+      step: 5,
+      min: 0,
+      max: usual,
+    );
+    if (picked == null || !mounted) return;
+    await ref
+        .read(nightPlanningRepositoryProvider)
+        .setPrepOverride(plan.wakeDate, picked == usual ? null : picked);
+    if (mounted) ref.invalidate(tonightPlanProvider);
   }
 
   Future<void> _openEvening(TonightPlanData plan) async {
@@ -673,7 +701,14 @@ class _PlanContent extends StatelessWidget {
   /// Tapping the busy-evening bar opens the evening plan.
   final VoidCallback? onOpenEvening;
 
-  const _PlanContent({required this.plan, this.onOpenEvening});
+  /// "ลดเวลาเตรียมตัววันนั้น" on a red night.
+  final VoidCallback? onShortenPrep;
+
+  const _PlanContent({
+    required this.plan,
+    this.onOpenEvening,
+    this.onShortenPrep,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -714,13 +749,19 @@ class _PlanContent extends StatelessWidget {
                   '${onOpenEvening == null ? '' : ' · แตะเพื่อจัดตารางเย็น'}',
             ),
           ),
-        if (plan.load.level == EveningLoadLevel.red)
+        if (plan.load.level == EveningLoadLevel.red) ...[
           const WarningBar(
             severity: WarningBarSeverity.red,
             message:
                 'คืนนั้นนอนครบไม่ได้ตามตาราง ลองย้ายกิจกรรม, '
                 'ลดเวลาเตรียมตัววันนั้น, หรือเข้านอนเร็วขึ้นคืนก่อนหน้า',
           ),
+          if (onShortenPrep != null)
+            TextButton(
+              onPressed: onShortenPrep,
+              child: const Text('ลดเวลาเตรียมตัวพรุ่งนี้'),
+            ),
+        ],
         const SizedBox(height: GlowSpacing.lg),
         const FireBadge(),
         const SizedBox(height: GlowSpacing.md),

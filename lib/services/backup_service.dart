@@ -103,6 +103,7 @@ class BackupService {
                 'themeMode': 0,
                 'voiceNoticeAccepted': false,
                 'routineEnabled': true,
+                'travelOverrides': '',
                 'eveningEnabled': true,
                 'restMinutes': 30,
                 'dinnerMinutes': 45,

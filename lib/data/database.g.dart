@@ -249,6 +249,18 @@ class $SettingsTable extends Settings
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _travelOverridesMeta = const VerificationMeta(
+    'travelOverrides',
+  );
+  @override
+  late final GeneratedColumn<String> travelOverrides = GeneratedColumn<String>(
+    'travel_overrides',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _eveningEnabledMeta = const VerificationMeta(
     'eveningEnabled',
   );
@@ -425,6 +437,7 @@ class $SettingsTable extends Settings
     onboardingCompleted,
     themeMode,
     onboardedAt,
+    travelOverrides,
     eveningEnabled,
     restMinutes,
     dinnerMinutes,
@@ -597,6 +610,15 @@ class $SettingsTable extends Settings
         onboardedAt.isAcceptableOrUnknown(
           data['onboarded_at']!,
           _onboardedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('travel_overrides')) {
+      context.handle(
+        _travelOverridesMeta,
+        travelOverrides.isAcceptableOrUnknown(
+          data['travel_overrides']!,
+          _travelOverridesMeta,
         ),
       );
     }
@@ -801,6 +823,10 @@ class $SettingsTable extends Settings
         DriftSqlType.dateTime,
         data['${effectivePrefix}onboarded_at'],
       ),
+      travelOverrides: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}travel_overrides'],
+      )!,
       eveningEnabled: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}evening_enabled'],
@@ -887,6 +913,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   /// When onboarding finished. Nights that started before this are never
   /// counted as missed check-ins.
   final DateTime? onboardedAt;
+
+  /// Travel time that differs by weekday, e.g. "1:60,5:0".
+  final String travelOverrides;
   final bool eveningEnabled;
   final int restMinutes;
   final int dinnerMinutes;
@@ -925,6 +954,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.onboardingCompleted,
     required this.themeMode,
     this.onboardedAt,
+    required this.travelOverrides,
     required this.eveningEnabled,
     required this.restMinutes,
     required this.dinnerMinutes,
@@ -975,6 +1005,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     if (!nullToAbsent || onboardedAt != null) {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt);
     }
+    map['travel_overrides'] = Variable<String>(travelOverrides);
     map['evening_enabled'] = Variable<bool>(eveningEnabled);
     map['rest_minutes'] = Variable<int>(restMinutes);
     map['dinner_minutes'] = Variable<int>(dinnerMinutes);
@@ -1020,6 +1051,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardedAt: onboardedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(onboardedAt),
+      travelOverrides: Value(travelOverrides),
       eveningEnabled: Value(eveningEnabled),
       restMinutes: Value(restMinutes),
       dinnerMinutes: Value(dinnerMinutes),
@@ -1073,6 +1105,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         serializer.fromJson<int>(json['themeMode']),
       ),
       onboardedAt: serializer.fromJson<DateTime?>(json['onboardedAt']),
+      travelOverrides: serializer.fromJson<String>(json['travelOverrides']),
       eveningEnabled: serializer.fromJson<bool>(json['eveningEnabled']),
       restMinutes: serializer.fromJson<int>(json['restMinutes']),
       dinnerMinutes: serializer.fromJson<int>(json['dinnerMinutes']),
@@ -1119,6 +1152,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         $SettingsTable.$converterthemeMode.toJson(themeMode),
       ),
       'onboardedAt': serializer.toJson<DateTime?>(onboardedAt),
+      'travelOverrides': serializer.toJson<String>(travelOverrides),
       'eveningEnabled': serializer.toJson<bool>(eveningEnabled),
       'restMinutes': serializer.toJson<int>(restMinutes),
       'dinnerMinutes': serializer.toJson<int>(dinnerMinutes),
@@ -1157,6 +1191,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bool? onboardingCompleted,
     AppThemeMode? themeMode,
     Value<DateTime?> onboardedAt = const Value.absent(),
+    String? travelOverrides,
     bool? eveningEnabled,
     int? restMinutes,
     int? dinnerMinutes,
@@ -1190,6 +1225,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
     themeMode: themeMode ?? this.themeMode,
     onboardedAt: onboardedAt.present ? onboardedAt.value : this.onboardedAt,
+    travelOverrides: travelOverrides ?? this.travelOverrides,
     eveningEnabled: eveningEnabled ?? this.eveningEnabled,
     restMinutes: restMinutes ?? this.restMinutes,
     dinnerMinutes: dinnerMinutes ?? this.dinnerMinutes,
@@ -1256,6 +1292,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardedAt: data.onboardedAt.present
           ? data.onboardedAt.value
           : this.onboardedAt,
+      travelOverrides: data.travelOverrides.present
+          ? data.travelOverrides.value
+          : this.travelOverrides,
       eveningEnabled: data.eveningEnabled.present
           ? data.eveningEnabled.value
           : this.eveningEnabled,
@@ -1318,6 +1357,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode, ')
           ..write('onboardedAt: $onboardedAt, ')
+          ..write('travelOverrides: $travelOverrides, ')
           ..write('eveningEnabled: $eveningEnabled, ')
           ..write('restMinutes: $restMinutes, ')
           ..write('dinnerMinutes: $dinnerMinutes, ')
@@ -1356,6 +1396,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     onboardingCompleted,
     themeMode,
     onboardedAt,
+    travelOverrides,
     eveningEnabled,
     restMinutes,
     dinnerMinutes,
@@ -1393,6 +1434,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.onboardingCompleted == this.onboardingCompleted &&
           other.themeMode == this.themeMode &&
           other.onboardedAt == this.onboardedAt &&
+          other.travelOverrides == this.travelOverrides &&
           other.eveningEnabled == this.eveningEnabled &&
           other.restMinutes == this.restMinutes &&
           other.dinnerMinutes == this.dinnerMinutes &&
@@ -1428,6 +1470,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<bool> onboardingCompleted;
   final Value<AppThemeMode> themeMode;
   final Value<DateTime?> onboardedAt;
+  final Value<String> travelOverrides;
   final Value<bool> eveningEnabled;
   final Value<int> restMinutes;
   final Value<int> dinnerMinutes;
@@ -1461,6 +1504,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.onboardedAt = const Value.absent(),
+    this.travelOverrides = const Value.absent(),
     this.eveningEnabled = const Value.absent(),
     this.restMinutes = const Value.absent(),
     this.dinnerMinutes = const Value.absent(),
@@ -1495,6 +1539,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.onboardingCompleted = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.onboardedAt = const Value.absent(),
+    this.travelOverrides = const Value.absent(),
     this.eveningEnabled = const Value.absent(),
     this.restMinutes = const Value.absent(),
     this.dinnerMinutes = const Value.absent(),
@@ -1529,6 +1574,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<bool>? onboardingCompleted,
     Expression<int>? themeMode,
     Expression<DateTime>? onboardedAt,
+    Expression<String>? travelOverrides,
     Expression<bool>? eveningEnabled,
     Expression<int>? restMinutes,
     Expression<int>? dinnerMinutes,
@@ -1569,6 +1615,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
         'onboarding_completed': onboardingCompleted,
       if (themeMode != null) 'theme_mode': themeMode,
       if (onboardedAt != null) 'onboarded_at': onboardedAt,
+      if (travelOverrides != null) 'travel_overrides': travelOverrides,
       if (eveningEnabled != null) 'evening_enabled': eveningEnabled,
       if (restMinutes != null) 'rest_minutes': restMinutes,
       if (dinnerMinutes != null) 'dinner_minutes': dinnerMinutes,
@@ -1608,6 +1655,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<bool>? onboardingCompleted,
     Value<AppThemeMode>? themeMode,
     Value<DateTime?>? onboardedAt,
+    Value<String>? travelOverrides,
     Value<bool>? eveningEnabled,
     Value<int>? restMinutes,
     Value<int>? dinnerMinutes,
@@ -1642,6 +1690,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       themeMode: themeMode ?? this.themeMode,
       onboardedAt: onboardedAt ?? this.onboardedAt,
+      travelOverrides: travelOverrides ?? this.travelOverrides,
       eveningEnabled: eveningEnabled ?? this.eveningEnabled,
       restMinutes: restMinutes ?? this.restMinutes,
       dinnerMinutes: dinnerMinutes ?? this.dinnerMinutes,
@@ -1725,6 +1774,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     if (onboardedAt.present) {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt.value);
     }
+    if (travelOverrides.present) {
+      map['travel_overrides'] = Variable<String>(travelOverrides.value);
+    }
     if (eveningEnabled.present) {
       map['evening_enabled'] = Variable<bool>(eveningEnabled.value);
     }
@@ -1789,6 +1841,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('onboardingCompleted: $onboardingCompleted, ')
           ..write('themeMode: $themeMode, ')
           ..write('onboardedAt: $onboardedAt, ')
+          ..write('travelOverrides: $travelOverrides, ')
           ..write('eveningEnabled: $eveningEnabled, ')
           ..write('restMinutes: $restMinutes, ')
           ..write('dinnerMinutes: $dinnerMinutes, ')
@@ -3055,6 +3108,16 @@ class $NightPlansTable extends NightPlans
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _prepOverrideMinutesMeta =
+      const VerificationMeta('prepOverrideMinutes');
+  @override
+  late final GeneratedColumn<int> prepOverrideMinutes = GeneratedColumn<int>(
+    'prep_override_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _eveningFromMeta = const VerificationMeta(
     'eveningFrom',
   );
@@ -3110,6 +3173,7 @@ class $NightPlansTable extends NightPlans
     legacyBedPress,
     questMode,
     lowEnergy,
+    prepOverrideMinutes,
     eveningFrom,
     eveningStartedAt,
     usedShield,
@@ -3243,6 +3307,15 @@ class $NightPlansTable extends NightPlans
         lowEnergy.isAcceptableOrUnknown(data['low_energy']!, _lowEnergyMeta),
       );
     }
+    if (data.containsKey('prep_override_minutes')) {
+      context.handle(
+        _prepOverrideMinutesMeta,
+        prepOverrideMinutes.isAcceptableOrUnknown(
+          data['prep_override_minutes']!,
+          _prepOverrideMinutesMeta,
+        ),
+      );
+    }
     if (data.containsKey('evening_from')) {
       context.handle(
         _eveningFromMeta,
@@ -3340,6 +3413,10 @@ class $NightPlansTable extends NightPlans
         DriftSqlType.bool,
         data['${effectivePrefix}low_energy'],
       )!,
+      prepOverrideMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}prep_override_minutes'],
+      ),
       eveningFrom: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}evening_from'],
@@ -3395,6 +3472,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
   /// "วันนี้หมดแรง" was chosen for this night.
   final bool lowEnergy;
 
+  /// Prep time shortened for this one morning.
+  final int? prepOverrideMinutes;
+
   /// Evening tasks are laid out no earlier than this (after "เสร็จ" or
   /// "จัดใหม่").
   final DateTime? eveningFrom;
@@ -3421,6 +3501,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     required this.legacyBedPress,
     this.questMode,
     required this.lowEnergy,
+    this.prepOverrideMinutes,
     this.eveningFrom,
     this.eveningStartedAt,
     required this.usedShield,
@@ -3453,6 +3534,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       map['quest_mode'] = Variable<int>(questMode);
     }
     map['low_energy'] = Variable<bool>(lowEnergy);
+    if (!nullToAbsent || prepOverrideMinutes != null) {
+      map['prep_override_minutes'] = Variable<int>(prepOverrideMinutes);
+    }
     if (!nullToAbsent || eveningFrom != null) {
       map['evening_from'] = Variable<DateTime>(eveningFrom);
     }
@@ -3490,6 +3574,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ? const Value.absent()
           : Value(questMode),
       lowEnergy: Value(lowEnergy),
+      prepOverrideMinutes: prepOverrideMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(prepOverrideMinutes),
       eveningFrom: eveningFrom == null && nullToAbsent
           ? const Value.absent()
           : Value(eveningFrom),
@@ -3521,6 +3608,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       legacyBedPress: serializer.fromJson<bool>(json['legacyBedPress']),
       questMode: serializer.fromJson<int?>(json['questMode']),
       lowEnergy: serializer.fromJson<bool>(json['lowEnergy']),
+      prepOverrideMinutes: serializer.fromJson<int?>(
+        json['prepOverrideMinutes'],
+      ),
       eveningFrom: serializer.fromJson<DateTime?>(json['eveningFrom']),
       eveningStartedAt: serializer.fromJson<DateTime?>(
         json['eveningStartedAt'],
@@ -3547,6 +3637,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       'legacyBedPress': serializer.toJson<bool>(legacyBedPress),
       'questMode': serializer.toJson<int?>(questMode),
       'lowEnergy': serializer.toJson<bool>(lowEnergy),
+      'prepOverrideMinutes': serializer.toJson<int?>(prepOverrideMinutes),
       'eveningFrom': serializer.toJson<DateTime?>(eveningFrom),
       'eveningStartedAt': serializer.toJson<DateTime?>(eveningStartedAt),
       'usedShield': serializer.toJson<bool>(usedShield),
@@ -3569,6 +3660,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     bool? legacyBedPress,
     Value<int?> questMode = const Value.absent(),
     bool? lowEnergy,
+    Value<int?> prepOverrideMinutes = const Value.absent(),
     Value<DateTime?> eveningFrom = const Value.absent(),
     Value<DateTime?> eveningStartedAt = const Value.absent(),
     bool? usedShield,
@@ -3592,6 +3684,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     legacyBedPress: legacyBedPress ?? this.legacyBedPress,
     questMode: questMode.present ? questMode.value : this.questMode,
     lowEnergy: lowEnergy ?? this.lowEnergy,
+    prepOverrideMinutes: prepOverrideMinutes.present
+        ? prepOverrideMinutes.value
+        : this.prepOverrideMinutes,
     eveningFrom: eveningFrom.present ? eveningFrom.value : this.eveningFrom,
     eveningStartedAt: eveningStartedAt.present
         ? eveningStartedAt.value
@@ -3631,6 +3726,9 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           : this.legacyBedPress,
       questMode: data.questMode.present ? data.questMode.value : this.questMode,
       lowEnergy: data.lowEnergy.present ? data.lowEnergy.value : this.lowEnergy,
+      prepOverrideMinutes: data.prepOverrideMinutes.present
+          ? data.prepOverrideMinutes.value
+          : this.prepOverrideMinutes,
       eveningFrom: data.eveningFrom.present
           ? data.eveningFrom.value
           : this.eveningFrom,
@@ -3661,6 +3759,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ..write('legacyBedPress: $legacyBedPress, ')
           ..write('questMode: $questMode, ')
           ..write('lowEnergy: $lowEnergy, ')
+          ..write('prepOverrideMinutes: $prepOverrideMinutes, ')
           ..write('eveningFrom: $eveningFrom, ')
           ..write('eveningStartedAt: $eveningStartedAt, ')
           ..write('usedShield: $usedShield')
@@ -3685,6 +3784,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     legacyBedPress,
     questMode,
     lowEnergy,
+    prepOverrideMinutes,
     eveningFrom,
     eveningStartedAt,
     usedShield,
@@ -3708,6 +3808,7 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           other.legacyBedPress == this.legacyBedPress &&
           other.questMode == this.questMode &&
           other.lowEnergy == this.lowEnergy &&
+          other.prepOverrideMinutes == this.prepOverrideMinutes &&
           other.eveningFrom == this.eveningFrom &&
           other.eveningStartedAt == this.eveningStartedAt &&
           other.usedShield == this.usedShield);
@@ -3729,6 +3830,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
   final Value<bool> legacyBedPress;
   final Value<int?> questMode;
   final Value<bool> lowEnergy;
+  final Value<int?> prepOverrideMinutes;
   final Value<DateTime?> eveningFrom;
   final Value<DateTime?> eveningStartedAt;
   final Value<bool> usedShield;
@@ -3748,6 +3850,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.legacyBedPress = const Value.absent(),
     this.questMode = const Value.absent(),
     this.lowEnergy = const Value.absent(),
+    this.prepOverrideMinutes = const Value.absent(),
     this.eveningFrom = const Value.absent(),
     this.eveningStartedAt = const Value.absent(),
     this.usedShield = const Value.absent(),
@@ -3768,6 +3871,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.legacyBedPress = const Value.absent(),
     this.questMode = const Value.absent(),
     this.lowEnergy = const Value.absent(),
+    this.prepOverrideMinutes = const Value.absent(),
     this.eveningFrom = const Value.absent(),
     this.eveningStartedAt = const Value.absent(),
     this.usedShield = const Value.absent(),
@@ -3790,6 +3894,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Expression<bool>? legacyBedPress,
     Expression<int>? questMode,
     Expression<bool>? lowEnergy,
+    Expression<int>? prepOverrideMinutes,
     Expression<DateTime>? eveningFrom,
     Expression<DateTime>? eveningStartedAt,
     Expression<bool>? usedShield,
@@ -3810,6 +3915,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       if (legacyBedPress != null) 'legacy_bed_press': legacyBedPress,
       if (questMode != null) 'quest_mode': questMode,
       if (lowEnergy != null) 'low_energy': lowEnergy,
+      if (prepOverrideMinutes != null)
+        'prep_override_minutes': prepOverrideMinutes,
       if (eveningFrom != null) 'evening_from': eveningFrom,
       if (eveningStartedAt != null) 'evening_started_at': eveningStartedAt,
       if (usedShield != null) 'used_shield': usedShield,
@@ -3832,6 +3939,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Value<bool>? legacyBedPress,
     Value<int?>? questMode,
     Value<bool>? lowEnergy,
+    Value<int?>? prepOverrideMinutes,
     Value<DateTime?>? eveningFrom,
     Value<DateTime?>? eveningStartedAt,
     Value<bool>? usedShield,
@@ -3852,6 +3960,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       legacyBedPress: legacyBedPress ?? this.legacyBedPress,
       questMode: questMode ?? this.questMode,
       lowEnergy: lowEnergy ?? this.lowEnergy,
+      prepOverrideMinutes: prepOverrideMinutes ?? this.prepOverrideMinutes,
       eveningFrom: eveningFrom ?? this.eveningFrom,
       eveningStartedAt: eveningStartedAt ?? this.eveningStartedAt,
       usedShield: usedShield ?? this.usedShield,
@@ -3906,6 +4015,9 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     if (lowEnergy.present) {
       map['low_energy'] = Variable<bool>(lowEnergy.value);
     }
+    if (prepOverrideMinutes.present) {
+      map['prep_override_minutes'] = Variable<int>(prepOverrideMinutes.value);
+    }
     if (eveningFrom.present) {
       map['evening_from'] = Variable<DateTime>(eveningFrom.value);
     }
@@ -3936,6 +4048,7 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
           ..write('legacyBedPress: $legacyBedPress, ')
           ..write('questMode: $questMode, ')
           ..write('lowEnergy: $lowEnergy, ')
+          ..write('prepOverrideMinutes: $prepOverrideMinutes, ')
           ..write('eveningFrom: $eveningFrom, ')
           ..write('eveningStartedAt: $eveningStartedAt, ')
           ..write('usedShield: $usedShield')
@@ -7529,6 +7642,7 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
   Value<DateTime?> onboardedAt,
+  Value<String> travelOverrides,
   Value<bool> eveningEnabled,
   Value<int> restMinutes,
   Value<int> dinnerMinutes,
@@ -7563,6 +7677,7 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<bool> onboardingCompleted,
   Value<AppThemeMode> themeMode,
   Value<DateTime?> onboardedAt,
+  Value<String> travelOverrides,
   Value<bool> eveningEnabled,
   Value<int> restMinutes,
   Value<int> dinnerMinutes,
@@ -7685,6 +7800,11 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<DateTime> get onboardedAt => $composableBuilder(
     column: $table.onboardedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get travelOverrides => $composableBuilder(
+    column: $table.travelOverrides,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7858,6 +7978,11 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get travelOverrides => $composableBuilder(
+    column: $table.travelOverrides,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get eveningEnabled => $composableBuilder(
     column: $table.eveningEnabled,
     builder: (column) => ColumnOrderings(column),
@@ -8018,6 +8143,11 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get travelOverrides => $composableBuilder(
+    column: $table.travelOverrides,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get eveningEnabled => $composableBuilder(
     column: $table.eveningEnabled,
     builder: (column) => column,
@@ -8130,6 +8260,7 @@ class $$SettingsTableTableManager
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<String> travelOverrides = const Value.absent(),
                 Value<bool> eveningEnabled = const Value.absent(),
                 Value<int> restMinutes = const Value.absent(),
                 Value<int> dinnerMinutes = const Value.absent(),
@@ -8163,6 +8294,7 @@ class $$SettingsTableTableManager
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
                 onboardedAt: onboardedAt,
+                travelOverrides: travelOverrides,
                 eveningEnabled: eveningEnabled,
                 restMinutes: restMinutes,
                 dinnerMinutes: dinnerMinutes,
@@ -8198,6 +8330,7 @@ class $$SettingsTableTableManager
                 Value<bool> onboardingCompleted = const Value.absent(),
                 Value<AppThemeMode> themeMode = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<String> travelOverrides = const Value.absent(),
                 Value<bool> eveningEnabled = const Value.absent(),
                 Value<int> restMinutes = const Value.absent(),
                 Value<int> dinnerMinutes = const Value.absent(),
@@ -8231,6 +8364,7 @@ class $$SettingsTableTableManager
                 onboardingCompleted: onboardingCompleted,
                 themeMode: themeMode,
                 onboardedAt: onboardedAt,
+                travelOverrides: travelOverrides,
                 eveningEnabled: eveningEnabled,
                 restMinutes: restMinutes,
                 dinnerMinutes: dinnerMinutes,
@@ -8827,6 +8961,7 @@ typedef $$NightPlansTableCreateCompanionBuilder = NightPlansCompanion Function({
   Value<bool> legacyBedPress,
   Value<int?> questMode,
   Value<bool> lowEnergy,
+  Value<int?> prepOverrideMinutes,
   Value<DateTime?> eveningFrom,
   Value<DateTime?> eveningStartedAt,
   Value<bool> usedShield,
@@ -8847,6 +8982,7 @@ typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
   Value<bool> legacyBedPress,
   Value<int?> questMode,
   Value<bool> lowEnergy,
+  Value<int?> prepOverrideMinutes,
   Value<DateTime?> eveningFrom,
   Value<DateTime?> eveningStartedAt,
   Value<bool> usedShield,
@@ -8933,6 +9069,11 @@ class $$NightPlansTableFilterComposer
 
   ColumnFilters<bool> get lowEnergy => $composableBuilder(
     column: $table.lowEnergy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get prepOverrideMinutes => $composableBuilder(
+    column: $table.prepOverrideMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9036,6 +9177,11 @@ class $$NightPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get prepOverrideMinutes => $composableBuilder(
+    column: $table.prepOverrideMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get eveningFrom => $composableBuilder(
     column: $table.eveningFrom,
     builder: (column) => ColumnOrderings(column),
@@ -9122,6 +9268,11 @@ class $$NightPlansTableAnnotationComposer
   GeneratedColumn<bool> get lowEnergy =>
       $composableBuilder(column: $table.lowEnergy, builder: (column) => column);
 
+  GeneratedColumn<int> get prepOverrideMinutes => $composableBuilder(
+    column: $table.prepOverrideMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get eveningFrom => $composableBuilder(
     column: $table.eveningFrom,
     builder: (column) => column,
@@ -9184,6 +9335,7 @@ class $$NightPlansTableTableManager
                 Value<bool> legacyBedPress = const Value.absent(),
                 Value<int?> questMode = const Value.absent(),
                 Value<bool> lowEnergy = const Value.absent(),
+                Value<int?> prepOverrideMinutes = const Value.absent(),
                 Value<DateTime?> eveningFrom = const Value.absent(),
                 Value<DateTime?> eveningStartedAt = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
@@ -9203,6 +9355,7 @@ class $$NightPlansTableTableManager
                 legacyBedPress: legacyBedPress,
                 questMode: questMode,
                 lowEnergy: lowEnergy,
+                prepOverrideMinutes: prepOverrideMinutes,
                 eveningFrom: eveningFrom,
                 eveningStartedAt: eveningStartedAt,
                 usedShield: usedShield,
@@ -9224,6 +9377,7 @@ class $$NightPlansTableTableManager
                 Value<bool> legacyBedPress = const Value.absent(),
                 Value<int?> questMode = const Value.absent(),
                 Value<bool> lowEnergy = const Value.absent(),
+                Value<int?> prepOverrideMinutes = const Value.absent(),
                 Value<DateTime?> eveningFrom = const Value.absent(),
                 Value<DateTime?> eveningStartedAt = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
@@ -9243,6 +9397,7 @@ class $$NightPlansTableTableManager
                 legacyBedPress: legacyBedPress,
                 questMode: questMode,
                 lowEnergy: lowEnergy,
+                prepOverrideMinutes: prepOverrideMinutes,
                 eveningFrom: eveningFrom,
                 eveningStartedAt: eveningStartedAt,
                 usedShield: usedShield,
