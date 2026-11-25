@@ -85,7 +85,12 @@ class NotificationService {
     _initialized = true;
   }
 
-  Future<void> cancelAll() => _plugin.cancelAll();
+  /// Waits its turn behind any reschedule in progress, which would otherwise
+  /// put reminders back after they were cancelled.
+  Future<void> cancelAll() => _enqueue(() async {
+    await init();
+    await _plugin.cancelAll();
+  });
 
   /// Cancels just the bedtime reminder for one night, called when the user
   /// taps "เข้านอนแล้ว" before it would have fired.
@@ -103,7 +108,14 @@ class NotificationService {
     );
   }
 
-  Future<void> _lastReschedule = Future.value();
+  Future<void> _queue = Future.value();
+
+  /// Runs notification changes one at a time, so they can't interleave.
+  Future<void> _enqueue(Future<void> Function() action) {
+    final next = _queue.catchError((_) {}).then((_) => action());
+    _queue = next;
+    return next;
+  }
 
   /// Clears and re-schedules the next 7 nights' put-phone-down and bedtime
   /// reminders, per section 5's "ลบแล้วตั้งใหม่ทั้งชุด" rule. Call this on
@@ -112,21 +124,14 @@ class NotificationService {
   Future<void> rescheduleAll({
     required NightPlanningRepository repo,
     required CheckInRepository checkInRepo,
-    required SettingsRow settings,
     required DateTime now,
   }) {
-    // Queued, so two refreshes can't interleave their cancels and schedules.
-    final next = _lastReschedule
-        .catchError((_) {})
-        .then((_) => _reschedule(repo, checkInRepo, settings, now));
-    _lastReschedule = next;
-    return next;
+    return _enqueue(() => _reschedule(repo, checkInRepo, now));
   }
 
   Future<void> _reschedule(
     NightPlanningRepository repo,
     CheckInRepository checkInRepo,
-    SettingsRow settings,
     DateTime now,
   ) async {
     await init();
@@ -138,6 +143,13 @@ class NotificationService {
         await _plugin.cancel(id: pending.id);
       }
     }
+
+    // Read again: the caller's copy may predate a delete or an edit made
+    // while this was waiting its turn.
+    final settings = await checkInRepo.settingsRepo.get();
+    // Nothing to remind about until onboarding is done (including right
+    // after all data was deleted).
+    if (!settings.onboardingCompleted) return;
 
     final exactAlarmsGranted = await permissions.hasExactAlarmPermission();
     final scheduleMode = exactAlarmsGranted

@@ -235,7 +235,6 @@ class SettingsScreen extends ConsumerWidget {
                   // Back to the first screen, which becomes onboarding again.
                   Navigator.of(context).popUntil((route) => route.isFirst);
                   await backup.deleteAllData();
-                  await notifications.init();
                   await notifications.cancelAll();
                 },
               ),

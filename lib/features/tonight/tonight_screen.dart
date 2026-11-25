@@ -75,12 +75,11 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     await questRepo.claimExamPeriodRewardsIfComplete(now);
   });
 
-  if (settings != null) {
+  if (settings != null && settings.onboardingCompleted) {
     final notificationService = ref.watch(notificationServiceProvider);
     await notificationService.rescheduleAll(
       repo: repo,
       checkInRepo: ref.watch(checkInRepositoryProvider),
-      settings: settings,
       now: now,
     );
     await notificationService.maybeSendRedNightAheadAlert(

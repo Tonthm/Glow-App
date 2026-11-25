@@ -134,33 +134,53 @@ class _DayColumn extends StatelessWidget {
     required this.onItemTap,
   });
 
-  /// Splits overlapping items into side-by-side lanes so none is hidden.
-  List<List<WeeklyItem>> _lanes() {
+  /// Places overlapping items side by side so none is hidden. Only items in
+  /// the same overlapping group share the width.
+  List<({WeeklyItem item, int lane, int laneCount})> _place() {
     final sorted = items.toList()
       ..sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
-    final lanes = <List<WeeklyItem>>[];
-    for (final item in sorted) {
-      final free = lanes.where(
-        (lane) => lane.last.endMinutes <= item.startMinutes,
-      );
-      if (free.isEmpty) {
-        lanes.add([item]);
-      } else {
-        free.first.add(item);
+    final placed = <({WeeklyItem item, int lane, int laneCount})>[];
+    var group = <({WeeklyItem item, int lane})>[];
+    final laneEnds = <int>[];
+    var groupEnd = 0;
+
+    void closeGroup() {
+      for (final entry in group) {
+        placed.add((
+          item: entry.item,
+          lane: entry.lane,
+          laneCount: laneEnds.length,
+        ));
       }
+      group = [];
+      laneEnds.clear();
     }
-    return lanes;
+
+    for (final item in sorted) {
+      if (item.startMinutes >= groupEnd) closeGroup();
+      var lane = laneEnds.indexWhere((end) => end <= item.startMinutes);
+      if (lane < 0) {
+        lane = laneEnds.length;
+        laneEnds.add(item.endMinutes);
+      } else {
+        laneEnds[lane] = item.endMinutes;
+      }
+      group.add((item: item, lane: lane));
+      if (item.endMinutes > groupEnd) groupEnd = item.endMinutes;
+    }
+    closeGroup();
+    return placed;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final lanes = _lanes();
+    final placed = _place();
+    // A dark background needs a stronger tint to be visible.
+    final tint = theme.brightness == Brightness.dark ? 0.36 : 0.16;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final laneWidth =
-            constraints.maxWidth / (lanes.isEmpty ? 1 : lanes.length);
         return Stack(
           children: [
             Column(
@@ -180,52 +200,48 @@ class _DayColumn extends StatelessWidget {
                   ),
               ],
             ),
-            for (var lane = 0; lane < lanes.length; lane++)
-              for (final item in lanes[lane])
-                Positioned(
-                  left: lane * laneWidth + 1,
-                  width: laneWidth - 2,
-                  top: (item.startMinutes - firstHour * 60) / 60 * _hourHeight,
-                  height:
-                      (item.endMinutes - item.startMinutes).clamp(20, 1440) /
-                      60 *
-                      _hourHeight,
-                  child: Semantics(
-                    label:
-                        'วัน${_dayNames[day - 1]} ${item.title} '
-                        '${formatMinutes(item.startMinutes)} ถึง '
-                        '${formatMinutes(item.endMinutes)}',
-                    button: true,
-                    child: Material(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(
-                        GlowRadius.button / 2,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: () => onItemTap(item),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 1,
-                            vertical: 2,
+            for (final (:item, :lane, :laneCount) in placed)
+              Positioned(
+                left: lane * constraints.maxWidth / laneCount + 1,
+                width: constraints.maxWidth / laneCount - 2,
+                top: (item.startMinutes - firstHour * 60) / 60 * _hourHeight,
+                height:
+                    (item.endMinutes - item.startMinutes).clamp(20, 1440) /
+                    60 *
+                    _hourHeight,
+                child: Semantics(
+                  label:
+                      'วัน${_dayNames[day - 1]} ${item.title} '
+                      '${formatMinutes(item.startMinutes)} ถึง '
+                      '${formatMinutes(item.endMinutes)}',
+                  button: true,
+                  child: Material(
+                    color: theme.colorScheme.primary.withValues(alpha: tint),
+                    borderRadius: BorderRadius.circular(GlowRadius.button / 2),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => onItemTap(item),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 1,
+                          vertical: 2,
+                        ),
+                        // Columns are narrow, so only the name: the
+                        // block's position already shows the time.
+                        child: Text(
+                          item.title,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            fontSize: theme.textTheme.labelSmall!.fontSize! - 2,
+                            height: 1.4,
                           ),
-                          // Columns are narrow, so only the name: the
-                          // block's position already shows the time.
-                          child: Text(
-                            item.title,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontSize:
-                                  theme.textTheme.labelSmall!.fontSize! - 2,
-                              height: 1.4,
-                            ),
-                            overflow: TextOverflow.fade,
-                          ),
+                          overflow: TextOverflow.fade,
                         ),
                       ),
                     ),
                   ),
                 ),
+              ),
           ],
         );
       },
