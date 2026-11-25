@@ -1,7 +1,10 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/database.dart';
 import '../../providers.dart';
+import '../../theme/theme_gallery_screen.dart';
 import '../shared/minutes_stepper.dart';
 import 'battery_optimization_sheet.dart';
 
@@ -81,6 +84,20 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: const Icon(Icons.battery_charging_full_outlined),
                 onTap: () => showBatteryOptimizationSheet(context),
               ),
+              const _SectionHeader('ลักษณะที่ปรากฏ'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SegmentedButton<AppThemeMode>(
+                  segments: const [
+                    ButtonSegment(value: AppThemeMode.system, label: Text('ตามระบบ')),
+                    ButtonSegment(value: AppThemeMode.light, label: Text('สว่าง')),
+                    ButtonSegment(value: AppThemeMode.dark, label: Text('มืด')),
+                  ],
+                  selected: {settings.themeMode},
+                  onSelectionChanged: (selection) =>
+                      repo.updateThemeMode(selection.first),
+                ),
+              ),
               const _SectionHeader('ข้อมูล'),
               ListTile(
                 title: const Text('สำรองข้อมูลเป็นไฟล์'),
@@ -113,11 +130,14 @@ class SettingsScreen extends ConsumerWidget {
                 },
               ),
               ListTile(
-                title: const Text(
+                title: Text(
                   'ลบข้อมูลทั้งหมด',
-                  style: TextStyle(color: Colors.red),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-                trailing: const Icon(Icons.delete_forever_outlined, color: Colors.red),
+                trailing: Icon(
+                  Icons.delete_forever_outlined,
+                  color: Theme.of(context).colorScheme.error,
+                ),
                 onTap: () async {
                   final confirmed = await _confirm(
                     context,
@@ -130,14 +150,24 @@ class SettingsScreen extends ConsumerWidget {
                 },
               ),
               const SizedBox(height: 16),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'แอปนี้ไม่ใช่คำแนะนำทางการแพทย์ ถ้านอนไม่หลับหรือง่วงมากต่อเนื่อง'
                   'หลายสัปดาห์ ควรปรึกษาแพทย์',
-                  style: TextStyle(color: Colors.grey),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
+              if (kDebugMode) ...[
+                const _SectionHeader('Debug'),
+                ListTile(
+                  title: const Text('Theme gallery'),
+                  trailing: const Icon(Icons.palette_outlined),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ThemeGalleryScreen()),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
             ],
           );

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../theme/widgets/empty_state.dart';
 import '../shared/settings_button.dart';
 
 /// Placeholder — bed character, shop, and inventory are built in phase 3.
@@ -13,8 +14,9 @@ class RoomScreen extends StatelessWidget {
         title: const Text('ห้อง'),
         actions: const [SettingsButton()],
       ),
-      body: const Center(
-        child: Text('หน้าห้องจะมาในเฟส 3', style: TextStyle(color: Colors.grey)),
+      body: const EmptyState(
+        icon: Icons.bed_outlined,
+        message: 'หน้าห้องจะมาในเฟส 3',
       ),
     );
   }

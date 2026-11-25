@@ -136,9 +136,12 @@ class _WeeklyTab extends ConsumerWidget {
               ),
               children: [
                 if (dayItems.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 16, bottom: 8),
-                    child: Text('ไม่มีรายการ', style: TextStyle(color: Colors.grey)),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 8),
+                    child: Text(
+                      'ไม่มีรายการ',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
                 for (final item in dayItems)
                   ListTile(
@@ -171,8 +174,11 @@ class _OneTimeTab extends ConsumerWidget {
         data: (items) {
           final sorted = items.toList()..sort((a, b) => a.date.compareTo(b.date));
           if (sorted.isEmpty) {
-            return const Center(
-              child: Text('ยังไม่มีรายการครั้งเดียว', style: TextStyle(color: Colors.grey)),
+            return Center(
+              child: Text(
+                'ยังไม่มีรายการครั้งเดียว',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             );
           }
           return ListView.builder(

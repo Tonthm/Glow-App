@@ -81,7 +81,8 @@ class _CalendarImportScreenState extends ConsumerState<CalendarImportScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         const Text('เลือกปฏิทิน', style: TextStyle(fontWeight: FontWeight.bold)),
-        if (_calendars.isEmpty) const Text('ไม่พบปฏิทินในเครื่อง', style: TextStyle(color: Colors.grey)),
+        if (_calendars.isEmpty)
+          Text('ไม่พบปฏิทินในเครื่อง', style: Theme.of(context).textTheme.bodyMedium),
         RadioGroup<String>(
           groupValue: _selectedCalendar?.id,
           onChanged: (id) => setState(

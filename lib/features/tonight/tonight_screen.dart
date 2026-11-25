@@ -6,6 +6,9 @@ import '../../core/schedule_load.dart';
 import '../../core/sleep_calculator.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
+import '../../theme/tokens.dart';
+import '../../theme/widgets/glow_primary_button.dart';
+import '../../theme/widgets/warning_bar.dart';
 import '../shared/settings_button.dart';
 
 class TonightPlanData {
@@ -189,65 +192,39 @@ class _PlanContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final duration = plan.draft.wakeTime.difference(plan.draft.bedtime);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (plan.examCountdown != null) _ExamCountdownBanner(plan.examCountdown!),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _TimeRow(label: 'เข้านอน', time: plan.draft.bedtime),
-                const SizedBox(height: 8),
-                _TimeRow(label: 'ตื่น', time: plan.draft.wakeTime),
-                const SizedBox(height: 12),
-                Text(
-                  'รวม ${duration.inHours} ชม. ${duration.inMinutes % 60} นาที',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
+        const SizedBox(height: GlowSpacing.md),
+        Text('เข้านอนคืนนี้', style: textTheme.bodyMedium),
+        const SizedBox(height: GlowSpacing.xs),
+        Text(_formatTime(plan.draft.bedtime), style: textTheme.displayLarge),
+        const SizedBox(height: GlowSpacing.xs),
+        Text(
+          'ตื่น ${_formatTime(plan.draft.wakeTime)} '
+          '· รวม ${duration.inHours} ชม. ${duration.inMinutes % 60} นาที',
+          style: textTheme.bodyMedium,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: GlowSpacing.xl),
         if (plan.load.level == EveningLoadLevel.yellow)
-          _WarningCard(
-            color: Colors.amber,
-            text:
+          WarningBar(
+            severity: WarningBarSeverity.yellow,
+            message:
                 'เย็นนี้แน่น ทำงานให้เสร็จก่อน ${_formatTime(plan.load.notifyTime)}',
           ),
         if (plan.load.level == EveningLoadLevel.red)
-          const _WarningCard(
-            color: Colors.redAccent,
-            text: 'คืนนั้นนอนครบไม่ได้ตามตาราง ลองย้ายกิจกรรม, '
+          const WarningBar(
+            severity: WarningBarSeverity.red,
+            message: 'คืนนั้นนอนครบไม่ได้ตามตาราง ลองย้ายกิจกรรม, '
                 'ลดเวลาเตรียมตัววันนั้น, หรือเข้านอนเร็วขึ้นคืนก่อนหน้า',
           ),
-        const SizedBox(height: 16),
-        FilledButton(
+        const SizedBox(height: GlowSpacing.xl),
+        GlowPrimaryButton(
+          label: checkedIn ? 'เข้านอนแล้ว ✓' : 'เข้านอนแล้ว',
           onPressed: checkedIn ? null : onCheckIn,
-          child: Text(checkedIn ? 'เข้านอนแล้ว ✓' : 'เข้านอนแล้ว'),
-        ),
-      ],
-    );
-  }
-}
-
-class _TimeRow extends StatelessWidget {
-  final String label;
-  final DateTime time;
-  const _TimeRow({required this.label, required this.time});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 18)),
-        Text(
-          _formatTime(time),
-          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -277,23 +254,6 @@ class _ExamCountdownBanner extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _WarningCard extends StatelessWidget {
-  final Color color;
-  final String text;
-  const _WarningCard({required this.color, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: color.withValues(alpha: 0.15),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Text(text),
       ),
     );
   }

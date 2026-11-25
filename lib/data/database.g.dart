@@ -214,6 +214,16 @@ class $SettingsTable extends Settings
     defaultValue: const Constant(false),
   );
   @override
+  late final GeneratedColumnWithTypeConverter<AppThemeMode, int> themeMode =
+      GeneratedColumn<int>(
+        'theme_mode',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<AppThemeMode>($SettingsTable.$converterthemeMode);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     ageGroup,
@@ -232,6 +242,7 @@ class $SettingsTable extends Settings
     notifyBedtime,
     notifyBusyNight,
     onboardingCompleted,
+    themeMode,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -456,6 +467,12 @@ class $SettingsTable extends Settings
         DriftSqlType.bool,
         data['${effectivePrefix}onboarding_completed'],
       )!,
+      themeMode: $SettingsTable.$converterthemeMode.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}theme_mode'],
+        )!,
+      ),
     );
   }
 
@@ -466,6 +483,8 @@ class $SettingsTable extends Settings
 
   static JsonTypeConverter2<AgeGroup, int, int> $converterageGroup =
       const EnumIndexConverter<AgeGroup>(AgeGroup.values);
+  static JsonTypeConverter2<AppThemeMode, int, int> $converterthemeMode =
+      const EnumIndexConverter<AppThemeMode>(AppThemeMode.values);
 }
 
 class SettingsRow extends DataClass implements Insertable<SettingsRow> {
@@ -486,6 +505,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   final bool notifyBedtime;
   final bool notifyBusyNight;
   final bool onboardingCompleted;
+  final AppThemeMode themeMode;
   const SettingsRow({
     required this.id,
     required this.ageGroup,
@@ -504,6 +524,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.notifyBedtime,
     required this.notifyBusyNight,
     required this.onboardingCompleted,
+    required this.themeMode,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -533,6 +554,11 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     map['notify_bedtime'] = Variable<bool>(notifyBedtime);
     map['notify_busy_night'] = Variable<bool>(notifyBusyNight);
     map['onboarding_completed'] = Variable<bool>(onboardingCompleted);
+    {
+      map['theme_mode'] = Variable<int>(
+        $SettingsTable.$converterthemeMode.toSql(themeMode),
+      );
+    }
     return map;
   }
 
@@ -559,6 +585,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       notifyBedtime: Value(notifyBedtime),
       notifyBusyNight: Value(notifyBusyNight),
       onboardingCompleted: Value(onboardingCompleted),
+      themeMode: Value(themeMode),
     );
   }
 
@@ -595,6 +622,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardingCompleted: serializer.fromJson<bool>(
         json['onboardingCompleted'],
       ),
+      themeMode: $SettingsTable.$converterthemeMode.fromJson(
+        serializer.fromJson<int>(json['themeMode']),
+      ),
     );
   }
   @override
@@ -620,6 +650,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       'notifyBedtime': serializer.toJson<bool>(notifyBedtime),
       'notifyBusyNight': serializer.toJson<bool>(notifyBusyNight),
       'onboardingCompleted': serializer.toJson<bool>(onboardingCompleted),
+      'themeMode': serializer.toJson<int>(
+        $SettingsTable.$converterthemeMode.toJson(themeMode),
+      ),
     };
   }
 
@@ -641,6 +674,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bool? notifyBedtime,
     bool? notifyBusyNight,
     bool? onboardingCompleted,
+    AppThemeMode? themeMode,
   }) => SettingsRow(
     id: id ?? this.id,
     ageGroup: ageGroup ?? this.ageGroup,
@@ -659,6 +693,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     notifyBedtime: notifyBedtime ?? this.notifyBedtime,
     notifyBusyNight: notifyBusyNight ?? this.notifyBusyNight,
     onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+    themeMode: themeMode ?? this.themeMode,
   );
   SettingsRow copyWithCompanion(SettingsCompanion data) {
     return SettingsRow(
@@ -705,6 +740,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       onboardingCompleted: data.onboardingCompleted.present
           ? data.onboardingCompleted.value
           : this.onboardingCompleted,
+      themeMode: data.themeMode.present ? data.themeMode.value : this.themeMode,
     );
   }
 
@@ -727,7 +763,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('notifyPutPhoneDown: $notifyPutPhoneDown, ')
           ..write('notifyBedtime: $notifyBedtime, ')
           ..write('notifyBusyNight: $notifyBusyNight, ')
-          ..write('onboardingCompleted: $onboardingCompleted')
+          ..write('onboardingCompleted: $onboardingCompleted, ')
+          ..write('themeMode: $themeMode')
           ..write(')'))
         .toString();
   }
@@ -751,6 +788,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     notifyBedtime,
     notifyBusyNight,
     onboardingCompleted,
+    themeMode,
   );
   @override
   bool operator ==(Object other) =>
@@ -772,7 +810,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.notifyPutPhoneDown == this.notifyPutPhoneDown &&
           other.notifyBedtime == this.notifyBedtime &&
           other.notifyBusyNight == this.notifyBusyNight &&
-          other.onboardingCompleted == this.onboardingCompleted);
+          other.onboardingCompleted == this.onboardingCompleted &&
+          other.themeMode == this.themeMode);
 }
 
 class SettingsCompanion extends UpdateCompanion<SettingsRow> {
@@ -793,6 +832,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<bool> notifyBedtime;
   final Value<bool> notifyBusyNight;
   final Value<bool> onboardingCompleted;
+  final Value<AppThemeMode> themeMode;
   const SettingsCompanion({
     this.id = const Value.absent(),
     this.ageGroup = const Value.absent(),
@@ -811,6 +851,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.notifyBedtime = const Value.absent(),
     this.notifyBusyNight = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
+    this.themeMode = const Value.absent(),
   });
   SettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -830,6 +871,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.notifyBedtime = const Value.absent(),
     this.notifyBusyNight = const Value.absent(),
     this.onboardingCompleted = const Value.absent(),
+    this.themeMode = const Value.absent(),
   });
   static Insertable<SettingsRow> custom({
     Expression<int>? id,
@@ -849,6 +891,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<bool>? notifyBedtime,
     Expression<bool>? notifyBusyNight,
     Expression<bool>? onboardingCompleted,
+    Expression<int>? themeMode,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -874,6 +917,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       if (notifyBusyNight != null) 'notify_busy_night': notifyBusyNight,
       if (onboardingCompleted != null)
         'onboarding_completed': onboardingCompleted,
+      if (themeMode != null) 'theme_mode': themeMode,
     });
   }
 
@@ -895,6 +939,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<bool>? notifyBedtime,
     Value<bool>? notifyBusyNight,
     Value<bool>? onboardingCompleted,
+    Value<AppThemeMode>? themeMode,
   }) {
     return SettingsCompanion(
       id: id ?? this.id,
@@ -914,6 +959,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       notifyBedtime: notifyBedtime ?? this.notifyBedtime,
       notifyBusyNight: notifyBusyNight ?? this.notifyBusyNight,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      themeMode: themeMode ?? this.themeMode,
     );
   }
 
@@ -973,6 +1019,11 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     if (onboardingCompleted.present) {
       map['onboarding_completed'] = Variable<bool>(onboardingCompleted.value);
     }
+    if (themeMode.present) {
+      map['theme_mode'] = Variable<int>(
+        $SettingsTable.$converterthemeMode.toSql(themeMode.value),
+      );
+    }
     return map;
   }
 
@@ -995,7 +1046,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('notifyPutPhoneDown: $notifyPutPhoneDown, ')
           ..write('notifyBedtime: $notifyBedtime, ')
           ..write('notifyBusyNight: $notifyBusyNight, ')
-          ..write('onboardingCompleted: $onboardingCompleted')
+          ..write('onboardingCompleted: $onboardingCompleted, ')
+          ..write('themeMode: $themeMode')
           ..write(')'))
         .toString();
   }
@@ -2732,6 +2784,7 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<bool> notifyBedtime,
   Value<bool> notifyBusyNight,
   Value<bool> onboardingCompleted,
+  Value<AppThemeMode> themeMode,
 });
 typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<int> id,
@@ -2751,6 +2804,7 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<bool> notifyBedtime,
   Value<bool> notifyBusyNight,
   Value<bool> onboardingCompleted,
+  Value<AppThemeMode> themeMode,
 });
 
 class $$SettingsTableFilterComposer
@@ -2847,6 +2901,12 @@ class $$SettingsTableFilterComposer
     column: $table.onboardingCompleted,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<AppThemeMode, AppThemeMode, int>
+  get themeMode => $composableBuilder(
+    column: $table.themeMode,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
 }
 
 class $$SettingsTableOrderingComposer
@@ -2942,6 +3002,11 @@ class $$SettingsTableOrderingComposer
     column: $table.onboardingCompleted,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get themeMode => $composableBuilder(
+    column: $table.themeMode,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SettingsTableAnnotationComposer
@@ -3029,6 +3094,9 @@ class $$SettingsTableAnnotationComposer
     column: $table.onboardingCompleted,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<AppThemeMode, int> get themeMode =>
+      $composableBuilder(column: $table.themeMode, builder: (column) => column);
 }
 
 class $$SettingsTableTableManager
@@ -3079,6 +3147,7 @@ class $$SettingsTableTableManager
                 Value<bool> notifyBedtime = const Value.absent(),
                 Value<bool> notifyBusyNight = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
+                Value<AppThemeMode> themeMode = const Value.absent(),
               }) => SettingsCompanion(
                 id: id,
                 ageGroup: ageGroup,
@@ -3097,6 +3166,7 @@ class $$SettingsTableTableManager
                 notifyBedtime: notifyBedtime,
                 notifyBusyNight: notifyBusyNight,
                 onboardingCompleted: onboardingCompleted,
+                themeMode: themeMode,
               ),
           createCompanionCallback:
               ({
@@ -3117,6 +3187,7 @@ class $$SettingsTableTableManager
                 Value<bool> notifyBedtime = const Value.absent(),
                 Value<bool> notifyBusyNight = const Value.absent(),
                 Value<bool> onboardingCompleted = const Value.absent(),
+                Value<AppThemeMode> themeMode = const Value.absent(),
               }) => SettingsCompanion.insert(
                 id: id,
                 ageGroup: ageGroup,
@@ -3135,6 +3206,7 @@ class $$SettingsTableTableManager
                 notifyBedtime: notifyBedtime,
                 notifyBusyNight: notifyBusyNight,
                 onboardingCompleted: onboardingCompleted,
+                themeMode: themeMode,
               ),
           withReferenceMapper: (p0) => p0
               .map(

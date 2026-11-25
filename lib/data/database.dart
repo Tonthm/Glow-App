@@ -11,6 +11,8 @@ enum OneTimeItemType { exam, activity, holiday }
 
 enum ItemSource { typed, voice, calendar }
 
+enum AppThemeMode { system, light, dark }
+
 /// Single-row table (id is always 0) holding all user-tunable values from
 /// CLAUDE.md section 3. Only target hours, prep/travel time, and free-day
 /// wake time have dedicated UI in phase 1 — the rest keep their spec
@@ -47,6 +49,8 @@ class Settings extends Table {
       boolean().withDefault(const Constant(true))();
   BoolColumn get onboardingCompleted =>
       boolean().withDefault(const Constant(false))();
+  IntColumn get themeMode =>
+      intEnum<AppThemeMode>().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -110,7 +114,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -118,6 +122,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.addColumn(nightPlans, nightPlans.redAlertSentAt);
+      }
+      if (from < 3) {
+        await m.addColumn(settings, settings.themeMode);
       }
     },
   );

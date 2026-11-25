@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../theme/widgets/empty_state.dart';
 import '../shared/settings_button.dart';
 
 /// Placeholder — heatmap and stats are built in phase 2.
@@ -13,8 +14,9 @@ class StatsScreen extends StatelessWidget {
         title: const Text('สถิติ'),
         actions: const [SettingsButton()],
       ),
-      body: const Center(
-        child: Text('หน้าสถิติจะมาในเฟส 2', style: TextStyle(color: Colors.grey)),
+      body: const EmptyState(
+        icon: Icons.bar_chart_outlined,
+        message: 'หน้าสถิติจะมาในเฟส 2',
       ),
     );
   }

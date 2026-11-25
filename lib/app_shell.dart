@@ -14,27 +14,74 @@ const _tabs = [
   RoomScreen(),
 ];
 
-/// Bottom nav with the 4 tabs from CLAUDE.md section 1, plus the settings
-/// shortcut in the top-right corner.
+class _TabSpec {
+  final IconData outlined;
+  final IconData filled;
+  final String label;
+
+  const _TabSpec({
+    required this.outlined,
+    required this.filled,
+    required this.label,
+  });
+}
+
+const _tabSpecs = [
+  _TabSpec(
+    outlined: Icons.nightlight_outlined,
+    filled: Icons.nightlight,
+    label: 'คืนนี้',
+  ),
+  _TabSpec(
+    outlined: Icons.calendar_today_outlined,
+    filled: Icons.calendar_today,
+    label: 'ตาราง',
+  ),
+  _TabSpec(
+    outlined: Icons.bar_chart_outlined,
+    filled: Icons.bar_chart,
+    label: 'สถิติ',
+  ),
+  _TabSpec(outlined: Icons.bed_outlined, filled: Icons.bed, label: 'ห้อง'),
+];
+
+/// Bottom nav with the 4 tabs from CLAUDE.md section 1 (icons only, per
+/// THEME.md "ไม่มีตัวหนังสือ"), plus the settings shortcut in each tab's
+/// top-right corner.
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(selectedTabIndexProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       body: IndexedStack(index: index, children: _tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (i) =>
-            ref.read(selectedTabIndexProvider.notifier).state = i,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.nightlight_outlined), label: 'คืนนี้'),
-          NavigationDestination(icon: Icon(Icons.calendar_today_outlined), label: 'ตาราง'),
-          NavigationDestination(icon: Icon(Icons.bar_chart_outlined), label: 'สถิติ'),
-          NavigationDestination(icon: Icon(Icons.bed_outlined), label: 'ห้อง'),
-        ],
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: theme.dividerColor, width: 0.5)),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: index,
+          onTap: (i) => ref.read(selectedTabIndexProvider.notifier).state = i,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          items: [
+            for (final spec in _tabSpecs)
+              BottomNavigationBarItem(
+                icon: Semantics(
+                  label: spec.label,
+                  child: Icon(spec.outlined),
+                ),
+                activeIcon: Semantics(
+                  label: spec.label,
+                  child: Icon(spec.filled),
+                ),
+                label: spec.label,
+              ),
+          ],
+        ),
       ),
     );
   }

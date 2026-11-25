@@ -2,8 +2,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_shell.dart';
+import 'data/database.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'providers.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const ProviderScope(child: GlowApp()));
@@ -19,10 +21,9 @@ class GlowApp extends StatelessWidget {
       locale: const Locale('th'),
       supportedLocales: const [Locale('th')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: GlowAppTheme.light(),
+      darkTheme: GlowAppTheme.dark(),
+      themeMode: ThemeMode.system,
       home: const _RootGate(),
     );
   }
@@ -37,8 +38,38 @@ class _RootGate extends ConsumerWidget {
     return settingsAsync.when(
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('เกิดข้อผิดพลาด: $e'))),
-      data: (settings) =>
-          settings.onboardingCompleted ? const AppShell() : const OnboardingScreen(),
+      data: (settings) => _ThemedApp(
+        themeMode: settings.themeMode,
+        child: settings.onboardingCompleted
+            ? const AppShell()
+            : const OnboardingScreen(),
+      ),
+    );
+  }
+}
+
+/// MaterialApp's themeMode is fixed at the top (GlowApp) since it can't read
+/// riverpod state before ProviderScope exists above it — this re-applies the
+/// user's stored "ตามระบบ/สว่าง/มืด" choice (section 3) over that default via
+/// an inherited Theme override.
+class _ThemedApp extends StatelessWidget {
+  final AppThemeMode themeMode;
+  final Widget child;
+
+  const _ThemedApp({required this.themeMode, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (themeMode == AppThemeMode.system) return child;
+    final isDark = themeMode == AppThemeMode.dark;
+    return Theme(
+      data: isDark ? GlowAppTheme.dark() : GlowAppTheme.light(),
+      child: MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          platformBrightness: isDark ? Brightness.dark : Brightness.light,
+        ),
+        child: child,
+      ),
     );
   }
 }

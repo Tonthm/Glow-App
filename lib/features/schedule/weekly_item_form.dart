@@ -162,7 +162,10 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
                           .deleteWeeklyItem(widget.existing!.id);
                       if (context.mounted) Navigator.of(context).pop();
                     },
-                    child: const Text('ลบ', style: TextStyle(color: Colors.red)),
+                    child: Text(
+                      'ลบ',
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
                   ),
                 const Spacer(),
                 FilledButton(
