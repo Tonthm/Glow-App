@@ -43,6 +43,10 @@ class Settings extends Table {
   /// The earliest class time given at the start, used only while the
   /// timetable has no classes (core/first_class). Added in schema 17.
   IntColumn get earliestClassMinutes => integer().nullable()();
+  /// The first column of the calendar, 7 = Sunday, 1 = Monday. Only how it
+  /// is drawn: quests and stats keep Monday. Added in schema 18.
+  IntColumn get calendarFirstWeekday =>
+      integer().withDefault(const Constant(DateTime.sunday))();
   IntColumn get latestWakeMinutes =>
       integer().withDefault(const Constant(480))();
   IntColumn get latestBedtimeMinutes =>
@@ -457,7 +461,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -577,6 +581,9 @@ class AppDatabase extends _$AppDatabase {
         await _addColumnIfMissing(m, cardProfiles, cardProfiles.birthDate);
         await _addColumnIfMissing(m, settings, settings.earliestClassMinutes);
         await m.createTable(cardPhotos);
+      }
+      if (from < 18) {
+        await _addColumnIfMissing(m, settings, settings.calendarFirstWeekday);
       }
     },
     // A removed photo or birth date is wiped from the file, not only

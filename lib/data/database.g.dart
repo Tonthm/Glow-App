@@ -120,6 +120,17 @@ class $SettingsTable extends Settings
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _calendarFirstWeekdayMeta =
+      const VerificationMeta('calendarFirstWeekday');
+  @override
+  late final GeneratedColumn<int> calendarFirstWeekday = GeneratedColumn<int>(
+    'calendar_first_weekday',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(DateTime.sunday),
+  );
   static const VerificationMeta _latestWakeMinutesMeta = const VerificationMeta(
     'latestWakeMinutes',
   );
@@ -437,6 +448,7 @@ class $SettingsTable extends Settings
     fallAsleepMinutes,
     freeDayWakeMinutes,
     earliestClassMinutes,
+    calendarFirstWeekday,
     latestWakeMinutes,
     latestBedtimeMinutes,
     termStart,
@@ -546,6 +558,15 @@ class $SettingsTable extends Settings
         earliestClassMinutes.isAcceptableOrUnknown(
           data['earliest_class_minutes']!,
           _earliestClassMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('calendar_first_weekday')) {
+      context.handle(
+        _calendarFirstWeekdayMeta,
+        calendarFirstWeekday.isAcceptableOrUnknown(
+          data['calendar_first_weekday']!,
+          _calendarFirstWeekdayMeta,
         ),
       );
     }
@@ -801,6 +822,10 @@ class $SettingsTable extends Settings
         DriftSqlType.int,
         data['${effectivePrefix}earliest_class_minutes'],
       ),
+      calendarFirstWeekday: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}calendar_first_weekday'],
+      )!,
       latestWakeMinutes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}latest_wake_minutes'],
@@ -927,6 +952,10 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   /// The earliest class time given at the start, used only while the
   /// timetable has no classes (core/first_class). Added in schema 17.
   final int? earliestClassMinutes;
+
+  /// The first column of the calendar, 7 = Sunday, 1 = Monday. Only how it
+  /// is drawn: quests and stats keep Monday. Added in schema 18.
+  final int calendarFirstWeekday;
   final int latestWakeMinutes;
   final int latestBedtimeMinutes;
   final DateTime? termStart;
@@ -972,6 +1001,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.fallAsleepMinutes,
     required this.freeDayWakeMinutes,
     this.earliestClassMinutes,
+    required this.calendarFirstWeekday,
     required this.latestWakeMinutes,
     required this.latestBedtimeMinutes,
     this.termStart,
@@ -1016,6 +1046,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     if (!nullToAbsent || earliestClassMinutes != null) {
       map['earliest_class_minutes'] = Variable<int>(earliestClassMinutes);
     }
+    map['calendar_first_weekday'] = Variable<int>(calendarFirstWeekday);
     map['latest_wake_minutes'] = Variable<int>(latestWakeMinutes);
     map['latest_bedtime_minutes'] = Variable<int>(latestBedtimeMinutes);
     if (!nullToAbsent || termStart != null) {
@@ -1069,6 +1100,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       earliestClassMinutes: earliestClassMinutes == null && nullToAbsent
           ? const Value.absent()
           : Value(earliestClassMinutes),
+      calendarFirstWeekday: Value(calendarFirstWeekday),
       latestWakeMinutes: Value(latestWakeMinutes),
       latestBedtimeMinutes: Value(latestBedtimeMinutes),
       termStart: termStart == null && nullToAbsent
@@ -1126,6 +1158,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       earliestClassMinutes: serializer.fromJson<int?>(
         json['earliestClassMinutes'],
       ),
+      calendarFirstWeekday: serializer.fromJson<int>(
+        json['calendarFirstWeekday'],
+      ),
       latestWakeMinutes: serializer.fromJson<int>(json['latestWakeMinutes']),
       latestBedtimeMinutes: serializer.fromJson<int>(
         json['latestBedtimeMinutes'],
@@ -1178,6 +1213,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       'fallAsleepMinutes': serializer.toJson<int>(fallAsleepMinutes),
       'freeDayWakeMinutes': serializer.toJson<int>(freeDayWakeMinutes),
       'earliestClassMinutes': serializer.toJson<int?>(earliestClassMinutes),
+      'calendarFirstWeekday': serializer.toJson<int>(calendarFirstWeekday),
       'latestWakeMinutes': serializer.toJson<int>(latestWakeMinutes),
       'latestBedtimeMinutes': serializer.toJson<int>(latestBedtimeMinutes),
       'termStart': serializer.toJson<DateTime?>(termStart),
@@ -1220,6 +1256,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     int? fallAsleepMinutes,
     int? freeDayWakeMinutes,
     Value<int?> earliestClassMinutes = const Value.absent(),
+    int? calendarFirstWeekday,
     int? latestWakeMinutes,
     int? latestBedtimeMinutes,
     Value<DateTime?> termStart = const Value.absent(),
@@ -1257,6 +1294,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     earliestClassMinutes: earliestClassMinutes.present
         ? earliestClassMinutes.value
         : this.earliestClassMinutes,
+    calendarFirstWeekday: calendarFirstWeekday ?? this.calendarFirstWeekday,
     latestWakeMinutes: latestWakeMinutes ?? this.latestWakeMinutes,
     latestBedtimeMinutes: latestBedtimeMinutes ?? this.latestBedtimeMinutes,
     termStart: termStart.present ? termStart.value : this.termStart,
@@ -1311,6 +1349,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       earliestClassMinutes: data.earliestClassMinutes.present
           ? data.earliestClassMinutes.value
           : this.earliestClassMinutes,
+      calendarFirstWeekday: data.calendarFirstWeekday.present
+          ? data.calendarFirstWeekday.value
+          : this.calendarFirstWeekday,
       latestWakeMinutes: data.latestWakeMinutes.present
           ? data.latestWakeMinutes.value
           : this.latestWakeMinutes,
@@ -1393,6 +1434,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('fallAsleepMinutes: $fallAsleepMinutes, ')
           ..write('freeDayWakeMinutes: $freeDayWakeMinutes, ')
           ..write('earliestClassMinutes: $earliestClassMinutes, ')
+          ..write('calendarFirstWeekday: $calendarFirstWeekday, ')
           ..write('latestWakeMinutes: $latestWakeMinutes, ')
           ..write('latestBedtimeMinutes: $latestBedtimeMinutes, ')
           ..write('termStart: $termStart, ')
@@ -1433,6 +1475,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     fallAsleepMinutes,
     freeDayWakeMinutes,
     earliestClassMinutes,
+    calendarFirstWeekday,
     latestWakeMinutes,
     latestBedtimeMinutes,
     termStart,
@@ -1472,6 +1515,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.fallAsleepMinutes == this.fallAsleepMinutes &&
           other.freeDayWakeMinutes == this.freeDayWakeMinutes &&
           other.earliestClassMinutes == this.earliestClassMinutes &&
+          other.calendarFirstWeekday == this.calendarFirstWeekday &&
           other.latestWakeMinutes == this.latestWakeMinutes &&
           other.latestBedtimeMinutes == this.latestBedtimeMinutes &&
           other.termStart == this.termStart &&
@@ -1509,6 +1553,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<int> fallAsleepMinutes;
   final Value<int> freeDayWakeMinutes;
   final Value<int?> earliestClassMinutes;
+  final Value<int> calendarFirstWeekday;
   final Value<int> latestWakeMinutes;
   final Value<int> latestBedtimeMinutes;
   final Value<DateTime?> termStart;
@@ -1544,6 +1589,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.fallAsleepMinutes = const Value.absent(),
     this.freeDayWakeMinutes = const Value.absent(),
     this.earliestClassMinutes = const Value.absent(),
+    this.calendarFirstWeekday = const Value.absent(),
     this.latestWakeMinutes = const Value.absent(),
     this.latestBedtimeMinutes = const Value.absent(),
     this.termStart = const Value.absent(),
@@ -1580,6 +1626,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.fallAsleepMinutes = const Value.absent(),
     this.freeDayWakeMinutes = const Value.absent(),
     this.earliestClassMinutes = const Value.absent(),
+    this.calendarFirstWeekday = const Value.absent(),
     this.latestWakeMinutes = const Value.absent(),
     this.latestBedtimeMinutes = const Value.absent(),
     this.termStart = const Value.absent(),
@@ -1616,6 +1663,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<int>? fallAsleepMinutes,
     Expression<int>? freeDayWakeMinutes,
     Expression<int>? earliestClassMinutes,
+    Expression<int>? calendarFirstWeekday,
     Expression<int>? latestWakeMinutes,
     Expression<int>? latestBedtimeMinutes,
     Expression<DateTime>? termStart,
@@ -1656,6 +1704,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
         'free_day_wake_minutes': freeDayWakeMinutes,
       if (earliestClassMinutes != null)
         'earliest_class_minutes': earliestClassMinutes,
+      if (calendarFirstWeekday != null)
+        'calendar_first_weekday': calendarFirstWeekday,
       if (latestWakeMinutes != null) 'latest_wake_minutes': latestWakeMinutes,
       if (latestBedtimeMinutes != null)
         'latest_bedtime_minutes': latestBedtimeMinutes,
@@ -1700,6 +1750,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<int>? fallAsleepMinutes,
     Value<int>? freeDayWakeMinutes,
     Value<int?>? earliestClassMinutes,
+    Value<int>? calendarFirstWeekday,
     Value<int>? latestWakeMinutes,
     Value<int>? latestBedtimeMinutes,
     Value<DateTime?>? termStart,
@@ -1736,6 +1787,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       fallAsleepMinutes: fallAsleepMinutes ?? this.fallAsleepMinutes,
       freeDayWakeMinutes: freeDayWakeMinutes ?? this.freeDayWakeMinutes,
       earliestClassMinutes: earliestClassMinutes ?? this.earliestClassMinutes,
+      calendarFirstWeekday: calendarFirstWeekday ?? this.calendarFirstWeekday,
       latestWakeMinutes: latestWakeMinutes ?? this.latestWakeMinutes,
       latestBedtimeMinutes: latestBedtimeMinutes ?? this.latestBedtimeMinutes,
       termStart: termStart ?? this.termStart,
@@ -1798,6 +1850,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     }
     if (earliestClassMinutes.present) {
       map['earliest_class_minutes'] = Variable<int>(earliestClassMinutes.value);
+    }
+    if (calendarFirstWeekday.present) {
+      map['calendar_first_weekday'] = Variable<int>(calendarFirstWeekday.value);
     }
     if (latestWakeMinutes.present) {
       map['latest_wake_minutes'] = Variable<int>(latestWakeMinutes.value);
@@ -1891,6 +1946,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('fallAsleepMinutes: $fallAsleepMinutes, ')
           ..write('freeDayWakeMinutes: $freeDayWakeMinutes, ')
           ..write('earliestClassMinutes: $earliestClassMinutes, ')
+          ..write('calendarFirstWeekday: $calendarFirstWeekday, ')
           ..write('latestWakeMinutes: $latestWakeMinutes, ')
           ..write('latestBedtimeMinutes: $latestBedtimeMinutes, ')
           ..write('termStart: $termStart, ')
@@ -9462,6 +9518,7 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<int> fallAsleepMinutes,
   Value<int> freeDayWakeMinutes,
   Value<int?> earliestClassMinutes,
+  Value<int> calendarFirstWeekday,
   Value<int> latestWakeMinutes,
   Value<int> latestBedtimeMinutes,
   Value<DateTime?> termStart,
@@ -9498,6 +9555,7 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<int> fallAsleepMinutes,
   Value<int> freeDayWakeMinutes,
   Value<int?> earliestClassMinutes,
+  Value<int> calendarFirstWeekday,
   Value<int> latestWakeMinutes,
   Value<int> latestBedtimeMinutes,
   Value<DateTime?> termStart,
@@ -9581,6 +9639,11 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<int> get earliestClassMinutes => $composableBuilder(
     column: $table.earliestClassMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get calendarFirstWeekday => $composableBuilder(
+    column: $table.calendarFirstWeekday,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9765,6 +9828,11 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get calendarFirstWeekday => $composableBuilder(
+    column: $table.calendarFirstWeekday,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get latestWakeMinutes => $composableBuilder(
     column: $table.latestWakeMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -9941,6 +10009,11 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get calendarFirstWeekday => $composableBuilder(
+    column: $table.calendarFirstWeekday,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get latestWakeMinutes => $composableBuilder(
     column: $table.latestWakeMinutes,
     builder: (column) => column,
@@ -10097,6 +10170,7 @@ class $$SettingsTableTableManager
                 Value<int> fallAsleepMinutes = const Value.absent(),
                 Value<int> freeDayWakeMinutes = const Value.absent(),
                 Value<int?> earliestClassMinutes = const Value.absent(),
+                Value<int> calendarFirstWeekday = const Value.absent(),
                 Value<int> latestWakeMinutes = const Value.absent(),
                 Value<int> latestBedtimeMinutes = const Value.absent(),
                 Value<DateTime?> termStart = const Value.absent(),
@@ -10132,6 +10206,7 @@ class $$SettingsTableTableManager
                 fallAsleepMinutes: fallAsleepMinutes,
                 freeDayWakeMinutes: freeDayWakeMinutes,
                 earliestClassMinutes: earliestClassMinutes,
+                calendarFirstWeekday: calendarFirstWeekday,
                 latestWakeMinutes: latestWakeMinutes,
                 latestBedtimeMinutes: latestBedtimeMinutes,
                 termStart: termStart,
@@ -10169,6 +10244,7 @@ class $$SettingsTableTableManager
                 Value<int> fallAsleepMinutes = const Value.absent(),
                 Value<int> freeDayWakeMinutes = const Value.absent(),
                 Value<int?> earliestClassMinutes = const Value.absent(),
+                Value<int> calendarFirstWeekday = const Value.absent(),
                 Value<int> latestWakeMinutes = const Value.absent(),
                 Value<int> latestBedtimeMinutes = const Value.absent(),
                 Value<DateTime?> termStart = const Value.absent(),
@@ -10204,6 +10280,7 @@ class $$SettingsTableTableManager
                 fallAsleepMinutes: fallAsleepMinutes,
                 freeDayWakeMinutes: freeDayWakeMinutes,
                 earliestClassMinutes: earliestClassMinutes,
+                calendarFirstWeekday: calendarFirstWeekday,
                 latestWakeMinutes: latestWakeMinutes,
                 latestBedtimeMinutes: latestBedtimeMinutes,
                 termStart: termStart,

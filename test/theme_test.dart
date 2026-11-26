@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/theme/app_theme.dart';
 import 'package:glow/theme/glow_colors.dart';
+import 'package:glow/theme/tokens.dart';
 import 'package:material_ui/material_ui.dart';
 
 double _contrast(Color a, Color b) {
@@ -44,6 +45,22 @@ void main() {
         button.foregroundColor!.resolve({})!,
         button.backgroundColor!.resolve({})!,
       );
+      // 3:1 is the WCAG level for shapes that carry meaning.
+      final dark = brightness == Brightness.dark;
+      for (final (name, mark) in [
+        ('class', dark ? GlowMarkColors.classDark : GlowMarkColors.classLight),
+        ('exam', dark ? GlowMarkColors.examDark : GlowMarkColors.examLight),
+        (
+          'activity',
+          dark ? GlowMarkColors.activityDark : GlowMarkColors.activityLight,
+        ),
+        ('task', dark ? GlowMarkColors.taskDark : GlowMarkColors.taskLight),
+      ]) {
+        test('the $name calendar mark can be seen', () {
+          expect(_contrast(mark, page), greaterThanOrEqualTo(3));
+          expect(_contrast(mark, scheme.surface), greaterThanOrEqualTo(3));
+        });
+      }
       for (final pastel in GlowPastel.values) {
         readable(
           'text on ${pastel.name}',

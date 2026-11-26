@@ -4,8 +4,14 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
-/// What schema 17 added.
+/// What schema 18 added.
+const _rewindFrom18 = [
+  'ALTER TABLE settings DROP COLUMN calendar_first_weekday',
+];
+
+/// What schema 17 added, and the newer columns on top of it.
 const _rewindFrom17 = [
+  ..._rewindFrom18,
   'DROP TABLE card_photos',
   'ALTER TABLE settings DROP COLUMN earliest_class_minutes',
 ];
@@ -215,6 +221,30 @@ void main() {
     expect((card.displayName, card.stickerIds), ('มายด์', 'sticker_zzz'));
     expect(card.birthDate, isNull);
     expect(await db.select(db.cardPhotos).get(), isEmpty);
+    await db.close();
+  });
+
+  test('a version 17 database keeps the profile and photo', () async {
+    await prepare([
+      'INSERT INTO settings (id, onboarding_completed, earliest_class_minutes)'
+          ' VALUES (0, 1, 480)',
+      'INSERT INTO weekly_items (title, day_of_week, start_minutes,'
+          " end_minutes, type) VALUES ('ฟิสิกส์', 1, 480, 540, 0)",
+      'INSERT INTO card_profiles (id, display_name, birth_date)'
+          " VALUES (0, 'มายด์', 1200000000)",
+      "INSERT INTO card_photos (id, jpeg) VALUES (0, X'FFD8FF00')",
+      ..._rewindFrom18,
+      'PRAGMA user_version = 17',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    final settings = await db.select(db.settings).getSingle();
+    expect(settings.earliestClassMinutes, 480);
+    expect(settings.calendarFirstWeekday, DateTime.sunday);
+    expect((await db.select(db.weeklyItems).getSingle()).title, 'ฟิสิกส์');
+    final card = await db.select(db.cardProfiles).getSingle();
+    expect(card.birthDate, isNotNull);
+    expect((await db.select(db.cardPhotos).getSingle()).jpeg, [255, 216, 255, 0]);
     await db.close();
   });
 

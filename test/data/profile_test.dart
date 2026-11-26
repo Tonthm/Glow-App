@@ -211,7 +211,9 @@ void main() {
     test('from before version 8 still loads', () async {
       final file = await backups.buildSnapshot();
       await cards.savePhoto(_jpeg(100));
-      (file['settings'] as Map<String, dynamic>).remove('earliestClassMinutes');
+      (file['settings'] as Map<String, dynamic>)
+        ..remove('earliestClassMinutes')
+        ..remove('calendarFirstWeekday');
       await backups.restoreSnapshot({...file, 'version': 7});
       expect((await settings.get()).earliestClassMinutes, isNull);
       expect(await cards.photo(), isNotNull);

@@ -13,6 +13,21 @@ class GlowSpacing {
   static const double pageMargin = 16;
 }
 
+/// The calendar's small marks: strong enough to see on the page, unlike the
+/// pastels.
+class GlowMarkColors {
+  static const classLight = Color(0xFF4B3FC4);
+  static const classDark = Color(0xFFBDB4FF);
+  static const examLight = Color(0xFFC0264F);
+  static const examDark = Color(0xFFFF9DB5);
+  static const activityLight = Color(0xFF0B6BB5);
+  static const activityDark = Color(0xFF8FCBFF);
+  static const taskLight = Color(0xFF8A5A00);
+  static const taskDark = Color(0xFFFFD27A);
+  static const holidayLight = Color(0xFFB4530A);
+  static const holidayDark = Color(0xFFFFB680);
+}
+
 class GlowRadius {
   static const double button = 14;
   static const double card = 20;

@@ -270,6 +270,19 @@ class SettingsScreen extends ConsumerWidget {
                   if (mode != null) await repo.updateThemeMode(mode);
                 },
               ),
+              SettingRow(
+                title: 'ปฏิทินเริ่มสัปดาห์วัน',
+                value: _weekStartLabels[settings.calendarFirstWeekday] ?? '',
+                onTap: () async {
+                  final day = await showChoiceSheet<int>(
+                    context,
+                    title: 'ปฏิทินเริ่มสัปดาห์วัน (เควสยังเริ่มวันจันทร์)',
+                    selected: settings.calendarFirstWeekday,
+                    choices: _weekStartLabels,
+                  );
+                  if (day != null) await repo.updateCalendarFirstWeekday(day);
+                },
+              ),
               const _SectionHeader('ข้อมูล'),
               ListTile(
                 title: const Text('สำรองข้อมูลเป็นไฟล์'),
@@ -453,6 +466,8 @@ Future<bool?> _askAboutPhoto(BuildContext context) => showDialog<bool>(
     ],
   ),
 );
+
+const _weekStartLabels = {DateTime.sunday: 'อาทิตย์', DateTime.monday: 'จันทร์'};
 
 const _themeLabels = {
   AppThemeMode.system: 'ตามระบบ',

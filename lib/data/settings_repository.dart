@@ -86,6 +86,13 @@ class SettingsRepository {
     );
   }
 
+  Future<void> updateCalendarFirstWeekday(int weekday) async {
+    await ensureRowExists();
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      SettingsCompanion(calendarFirstWeekday: Value(weekday)),
+    );
+  }
+
   Future<void> updateFreeDayWakeMinutes(int minutes) async {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(freeDayWakeMinutes: Value(minutes)),

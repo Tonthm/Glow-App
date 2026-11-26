@@ -12,13 +12,17 @@ Future<void> showOneTimeItemForm(
   BuildContext context, {
   OneTimeItem? existing,
   DateTime? initialDate,
+  TimeOfDay? initialStart,
 }) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (_) =>
-        _OneTimeItemForm(existing: existing, initialDate: initialDate),
+    builder: (_) => _OneTimeItemForm(
+      existing: existing,
+      initialDate: initialDate,
+      initialStart: initialStart,
+    ),
   );
 }
 
@@ -26,7 +30,9 @@ class _OneTimeItemForm extends ConsumerStatefulWidget {
   final OneTimeItem? existing;
   final DateTime? initialDate;
 
-  const _OneTimeItemForm({this.existing, this.initialDate});
+  final TimeOfDay? initialStart;
+
+  const _OneTimeItemForm({this.existing, this.initialDate, this.initialStart});
 
   @override
   ConsumerState<_OneTimeItemForm> createState() => _OneTimeItemFormState();
@@ -48,8 +54,12 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
     _date = existing?.date ?? widget.initialDate ?? ref.read(clockProvider)();
     _type = existing?.type ?? OneTimeItemType.exam;
     _hasTime = existing == null ? true : existing.startMinutes != null;
-    _start = _minutesToTimeOfDay(existing?.startMinutes ?? 9 * 60);
-    _end = _minutesToTimeOfDay(existing?.endMinutes ?? 10 * 60);
+    final tapped = widget.initialStart;
+    final startMinutes =
+        existing?.startMinutes ??
+        (tapped == null ? 9 * 60 : tapped.hour * 60 + tapped.minute);
+    _start = _minutesToTimeOfDay(startMinutes);
+    _end = _minutesToTimeOfDay(existing?.endMinutes ?? startMinutes + 60);
   }
 
   bool get _isEdit => widget.existing != null;

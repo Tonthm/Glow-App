@@ -126,6 +126,11 @@ final cardProfileStreamProvider = StreamProvider<CardProfileRow>((ref) {
   return ref.watch(cardRepositoryProvider).watch();
 });
 
+final eveningTasksStreamProvider = StreamProvider<List<EveningTask>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.select(db.eveningTasks).watch();
+});
+
 /// The photo on the card, or null.
 final cardPhotoProvider = StreamProvider<Uint8List?>((ref) {
   return ref.watch(cardRepositoryProvider).watchPhoto();
