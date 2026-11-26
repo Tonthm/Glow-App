@@ -11,7 +11,10 @@ import 'package:glow/core/story_share.dart';
 import 'package:glow/data/database.dart';
 import 'package:glow/data/settings_repository.dart';
 import 'package:glow/features/share/share_screen.dart';
+import 'package:glow/features/share/story_gallery_screen.dart';
 import 'package:glow/features/share/story_painter.dart';
+import 'package:glow/features/share/story_preview.dart';
+import 'package:glow/features/share/story_samples.dart';
 import 'package:glow/providers.dart';
 import 'package:glow/services/app_clock.dart';
 import 'package:glow/services/image_share.dart';
@@ -183,6 +186,36 @@ void main() {
     }
     expect(drawn, isEmpty);
     await closeDatabase(tester, db);
+  });
+
+  testWidgets('the debug page draws every sample in every view', (
+    tester,
+  ) async {
+    useSmallPhone(tester);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          clockProvider.overrideWithValue(() => now),
+          storyLogoProvider.overrideWithValue(() async => null),
+        ],
+        child: MaterialApp(
+          theme: GlowAppTheme.light(),
+          home: const StoryGalleryScreen(),
+        ),
+      ),
+    );
+    await settle(tester);
+    for (final sample in StorySample.values) {
+      await tester.scrollUntilVisible(
+        find.text(sample.label),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await settle(tester);
+    expect(find.byType(StoryPreview), findsWidgets);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('no student card, and no switch for a name or its photo', (
