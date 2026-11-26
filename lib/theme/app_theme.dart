@@ -96,7 +96,8 @@ class GlowAppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: background,
       fontFamily: 'NotoSansThai',
-      textTheme: baseTextTheme,
+      // Nunito has "≈" and "±", which Noto Sans Thai lacks.
+      textTheme: baseTextTheme.apply(fontFamilyFallback: const ['Nunito']),
       dividerColor: divider,
       dividerTheme: DividerThemeData(
         color: divider,

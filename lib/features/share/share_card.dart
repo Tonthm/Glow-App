@@ -6,6 +6,7 @@ import '../../data/database.dart';
 import '../../data/stats_repository.dart';
 import '../../theme/glow_colors.dart';
 import '../../theme/tokens.dart';
+import '../../theme/widgets/arrow_span.dart';
 import '../../theme/widgets/bed_character.dart';
 import '../stats/heatmap.dart';
 
@@ -14,8 +15,8 @@ const Size shareCardSize = Size(360, 640);
 
 const _dayLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
 
+/// "ครบ" is a check icon instead: the bundled fonts have no check character.
 const _resultMarks = {
-  CheckInResultDb.enough: '✓',
   CheckInResultDb.almostEnough: '≈',
   CheckInResultDb.notEnough: '−',
   CheckInResultDb.over: '+',
@@ -128,12 +129,14 @@ class ShareCard extends StatelessWidget {
                             ),
                           ),
                           // A mark as well as a color.
-                          child: Text(
-                            _resultMarks[cell.checkIn?.result] ?? '',
-                            style: textTheme.titleLarge?.copyWith(
-                              color: Colors.black,
-                            ),
-                          ),
+                          child: cell.checkIn?.result == CheckInResultDb.enough
+                              ? const Icon(Icons.check, color: Colors.black)
+                              : Text(
+                                  _resultMarks[cell.checkIn?.result] ?? '',
+                                  style: textTheme.titleLarge?.copyWith(
+                                    color: Colors.black,
+                                  ),
+                                ),
                         ),
                         Text(
                           _dayLabels[cell.date.weekday - 1],
@@ -143,19 +146,44 @@ class ShareCard extends StatelessWidget {
                     ),
                 ],
               ),
-              Text(
-                '✓ ครบ · ≈ เกือบครบ · − ไม่ครบ · + เกิน',
+              Text.rich(
+                TextSpan(
+                  children: [
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Icon(
+                        Icons.check,
+                        size: textTheme.labelSmall?.fontSize,
+                        color: textTheme.labelSmall?.color,
+                      ),
+                    ),
+                    const TextSpan(
+                      text: ' ครบ · ≈ เกือบครบ · − ไม่ครบ · + เกิน',
+                    ),
+                  ],
+                ),
                 style: textTheme.labelSmall,
               ),
               if (showTimes)
                 Column(
                   children: [
                     for (final cell in checkedIn)
-                      Text(
-                        '${_dayLabels[cell.date.weekday - 1]}  '
-                        '${_clock(cell.checkIn!.lightsOffAt)} → '
-                        '${_clock(cell.checkIn!.actualWakeAt)}  '
-                        '(${_hours(cell)})',
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text:
+                                  '${_dayLabels[cell.date.weekday - 1]}  '
+                                  '${_clock(cell.checkIn!.lightsOffAt)} ',
+                            ),
+                            arrowSpan(textTheme.labelSmall),
+                            TextSpan(
+                              text:
+                                  ' ${_clock(cell.checkIn!.actualWakeAt)}  '
+                                  '(${_hours(cell)})',
+                            ),
+                          ],
+                        ),
                         style: textTheme.labelSmall,
                       ),
                   ],

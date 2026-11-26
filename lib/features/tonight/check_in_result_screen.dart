@@ -168,7 +168,7 @@ class _FireChangeRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final String message;
     if (after.level > before.level) {
-      message = 'ไฟขึ้นเป็น ${fireLevelNames[after.level]} 🎉';
+      message = 'ไฟขึ้นเป็น ${fireLevelNames[after.level]}';
     } else if (after.level < before.level) {
       message = 'ไฟลดเป็น ${fireLevelNames[after.level]}';
     } else if (after.shields < before.shields) {

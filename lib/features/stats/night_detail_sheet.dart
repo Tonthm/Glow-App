@@ -5,6 +5,7 @@ import '../../core/quests.dart';
 import '../../data/database.dart';
 import '../../data/stats_repository.dart';
 import '../../theme/tokens.dart';
+import '../../theme/widgets/arrow_span.dart';
 
 const questModeLabels = {
   QuestMode.normal: 'ปกติ',
@@ -56,8 +57,14 @@ class NightDetailSheet extends StatelessWidget {
         if (checkIn == null)
           Text('ไม่มีข้อมูลคืนนี้', style: textTheme.bodyMedium)
         else ...[
-          Text(
-            '${_formatTime(checkIn.lightsOffAt)} → ${_formatTime(checkIn.actualWakeAt)}',
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: '${_formatTime(checkIn.lightsOffAt)} '),
+                arrowSpan(textTheme.bodyLarge),
+                TextSpan(text: ' ${_formatTime(checkIn.actualWakeAt)}'),
+              ],
+            ),
             style: textTheme.bodyLarge,
           ),
           const SizedBox(height: GlowSpacing.xs),

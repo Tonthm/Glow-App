@@ -7,6 +7,7 @@ import '../../core/check_in.dart';
 import '../../data/check_in_repository.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
+import '../../theme/widgets/arrow_span.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
@@ -103,8 +104,14 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
       children: [
         Text('เมื่อคืน', style: textTheme.bodyMedium),
         const SizedBox(height: GlowSpacing.xs),
-        Text(
-          '${_formatTime(_lightsOffAt)} → ${_formatTime(_wakeAt)}',
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: '${_formatTime(_lightsOffAt)} '),
+              arrowSpan(textTheme.displayLarge),
+              TextSpan(text: ' ${_formatTime(_wakeAt)}'),
+            ],
+          ),
           style: textTheme.displayLarge,
         ),
         const SizedBox(height: GlowSpacing.xs),

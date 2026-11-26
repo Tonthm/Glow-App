@@ -397,7 +397,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
           GlowPrimaryButton(
             label: pressedAt == null
                 ? 'เข้านอนแล้ว'
-                : 'เข้านอนแล้ว ✓ ${_formatTime(pressedAt)}',
+                : 'เข้านอนแล้ว · ${_formatTime(pressedAt)}',
             onPressed: pressedAt == null && canPress
                 ? () => _goToBed(plan)
                 : null,
