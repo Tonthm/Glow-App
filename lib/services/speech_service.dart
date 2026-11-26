@@ -1,5 +1,7 @@
 import 'package:speech_to_text/speech_to_text.dart';
 
+import 'speech_support.dart';
+
 /// Thai speech-to-text using the phone's own recogniser (CLAUDE.md section
 /// 11). Only turns audio into text; core/thai_schedule_parser does the rest.
 class SpeechService {
@@ -27,7 +29,7 @@ class SpeechService {
     await _speech.listen(
       onResult: (result) => onText(result.recognizedWords),
       listenOptions: SpeechListenOptions(
-        localeId: 'th_TH',
+        localeId: thaiSpeechLocale,
         partialResults: true,
         listenMode: ListenMode.dictation,
         // A timetable has pauses between subjects.

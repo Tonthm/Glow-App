@@ -8,11 +8,15 @@ import 'package:material_ui/material_ui.dart';
 void main() {
   Future<void> openAddSheet(
     WidgetTester tester,
-    PlatformCapabilities platform,
-  ) async {
+    PlatformCapabilities platform, {
+    bool speech = true,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [platformCapabilitiesProvider.overrideWithValue(platform)],
+        overrides: [
+          platformCapabilitiesProvider.overrideWithValue(platform),
+          deviceHasSpeechProvider.overrideWithValue(speech),
+        ],
         child: MaterialApp(
           home: Scaffold(
             body: Builder(
@@ -29,11 +33,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the web hides voice and calendar import', (tester) async {
+  testWidgets('the web offers speech where the browser has it', (tester) async {
     await openAddSheet(tester, PlatformCapabilities.web);
     expect(find.text('พิมพ์'), findsOneWidget);
-    expect(find.text('พูด'), findsNothing);
+    expect(find.text('พูด'), findsOneWidget);
     expect(find.text('นำเข้าจากปฏิทิน'), findsNothing);
+  });
+
+  testWidgets('without browser speech it offers a sentence box instead', (
+    tester,
+  ) async {
+    await openAddSheet(tester, PlatformCapabilities.web, speech: false);
+    expect(find.text('พูด'), findsNothing);
+    expect(find.byIcon(Icons.mic_none_outlined), findsNothing);
+    expect(find.text('ใส่หลายคาบเป็นประโยค'), findsOneWidget);
   });
 
   testWidgets('Android shows every way of adding', (tester) async {

@@ -60,8 +60,9 @@ class PlatformCapabilities {
     calendarReminders: true,
     calendarImport: false,
     homeWidget: false,
-    // Not checked in Safari yet.
-    voiceInput: false,
+    // Only where the browser also has speech recognition (see
+    // micAvailableProvider). Not yet checked on an iPhone.
+    voiceInput: true,
     deviceSetupHelp: false,
     webApp: true,
     keyInBrowserStorage: true,

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/speech_problem.dart';
 import '../../core/ai_config.dart';
 import '../../core/evening_planner.dart';
 import '../../core/thai_task_parser.dart';
@@ -93,26 +94,34 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
       return;
     }
     if (!await acceptVoiceNotice(context, ref)) return;
-    final ready = await _speech.prepare();
-    if (!mounted) return;
-    if (!ready) {
-      setState(() => _message = 'ใช้ไมค์ไม่ได้ พิมพ์แทนได้เลย');
-      return;
+    try {
+      if (!await _speech.prepare()) {
+        _micFailed(SpeechProblem.unavailable);
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _message = null);
+      await _speech.listen(
+        onText: _fillFrom,
+        onListeningChanged: (value) {
+          if (mounted) setState(() => _listening = value);
+        },
+        onError: (code) => _micFailed(speechProblem(code)),
+      );
+    } catch (_) {
+      _micFailed(SpeechProblem.unavailable);
     }
-    setState(() => _message = null);
-    await _speech.listen(
-      onText: _fillFrom,
-      onListeningChanged: (value) {
-        if (mounted) setState(() => _listening = value);
-      },
-      onError: (_) {
-        if (!mounted) return;
-        setState(() {
-          _listening = false;
-          _message = 'แปลงเสียงไม่สำเร็จ ลองอีกครั้งหรือพิมพ์แทน';
-        });
-      },
-    );
+  }
+
+  void _micFailed(SpeechProblem problem) {
+    if (!mounted) return;
+    if (micCannotWork(problem)) {
+      ref.read(micBrokenProvider.notifier).state = true;
+    }
+    setState(() {
+      _listening = false;
+      _message = speechProblemMessage(problem);
+    });
   }
 
   /// With AI on, speech goes into the AI box; otherwise straight to the form.
@@ -236,7 +245,7 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
                     style: textTheme.titleLarge,
                   ),
                 ),
-                if (ref.watch(platformCapabilitiesProvider).voiceInput)
+                if (ref.watch(micAvailableProvider))
                   IconButton(
                     icon: Icon(
                       _listening ? Icons.stop : Icons.mic_none_outlined,

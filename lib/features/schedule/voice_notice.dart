@@ -21,8 +21,8 @@ Future<bool> acceptVoiceNotice(BuildContext context, WidgetRef ref) async {
         Text('ก่อนใช้ไมค์', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: GlowSpacing.sm),
         Text(
-          'Glow ใช้ระบบแปลงเสียงของเครื่อง ถ้าเครื่องไม่มีภาษาไทยแบบ'
-          'ออฟไลน์ เสียงของคุณจะถูกส่งไปที่ Google เพื่อแปลงเป็นข้อความ '
+          'Glow ใช้ระบบแปลงเสียงของเครื่องหรือเบราว์เซอร์ เสียงของคุณอาจ'
+          'ถูกส่งไปประมวลผลที่ Google หรือ Apple เพื่อแปลงเป็นข้อความ '
           'Glow ไม่ได้บันทึกเสียงไว้ ถ้าไม่สะดวก พิมพ์แทนได้',
           style: Theme.of(context).textTheme.bodyLarge,
         ),

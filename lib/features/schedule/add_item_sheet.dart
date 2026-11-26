@@ -15,6 +15,7 @@ Future<AddMethod?> showAddMethodSheet(BuildContext context) {
     builder: (context) => Consumer(
       builder: (context, ref, _) {
         final platform = ref.watch(platformCapabilitiesProvider);
+        final mic = ref.watch(micAvailableProvider);
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -23,12 +24,18 @@ Future<AddMethod?> showAddMethodSheet(BuildContext context) {
               title: const Text('พิมพ์'),
               onTap: () => Navigator.of(context).pop(AddMethod.type),
             ),
-            if (platform.voiceInput)
-              ListTile(
-                leading: const Icon(Icons.mic_none_outlined),
-                title: const Text('พูด'),
-                onTap: () => Navigator.of(context).pop(AddMethod.voice),
+            // Without a mic this page still takes a whole sentence, which
+            // the phone's own keyboard can dictate.
+            ListTile(
+              leading: Icon(
+                mic ? Icons.mic_none_outlined : Icons.notes_outlined,
               ),
+              title: Text(mic ? 'พูด' : 'ใส่หลายคาบเป็นประโยค'),
+              subtitle: mic
+                  ? null
+                  : const Text('พิมพ์ หรือใช้ไมค์บนคีย์บอร์ด'),
+              onTap: () => Navigator.of(context).pop(AddMethod.voice),
+            ),
             if (platform.calendarImport)
               ListTile(
                 leading: const Icon(Icons.calendar_month_outlined),

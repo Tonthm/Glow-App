@@ -28,6 +28,7 @@ import 'services/photo_picker.dart';
 import 'services/platform/platform_capabilities.dart';
 import 'services/screen_service.dart';
 import 'services/speech_service.dart';
+import 'services/speech_support.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -227,6 +228,20 @@ final photoPickerProvider = Provider<PhotoPicker>((ref) {
 final screenServiceProvider = Provider<ScreenService>((ref) {
   return ScreenService();
 });
+
+/// Whether this browser or phone has a speech recogniser at all.
+final deviceHasSpeechProvider = Provider<bool>((ref) => deviceHasSpeech());
+
+/// Set once the mic has shown it cannot work here.
+final micBrokenProvider = StateProvider<bool>((ref) => false);
+
+/// Whether to show a mic button: never one that is known not to work.
+final micAvailableProvider = Provider<bool>(
+  (ref) =>
+      ref.watch(platformCapabilitiesProvider).voiceInput &&
+      ref.watch(deviceHasSpeechProvider) &&
+      !ref.watch(micBrokenProvider),
+);
 
 final speechServiceProvider = Provider<SpeechService>((ref) {
   return SpeechService();
