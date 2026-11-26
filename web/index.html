@@ -1,58 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
+  <!-- Filled in by `flutter build web` from the base-href option. -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Glow วางแผนเวลานอนจากตารางเรียน">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
 
-  <!--
-    Uncomment the tag below to lay the app out underneath the parts of the
-    screen that the device obstructs, such as a display cutout, the rounded
-    corners of the screen, or a home indicator.
-
-    Without it, the browser keeps the app clear of them, and `SafeArea` and
-    `MediaQuery.paddingOf` report no padding. With it, the app covers the whole
-    screen, and it is up to the app to keep its own content out of the way,
-    which is what `SafeArea` is for.
-  -->
-  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"> -->
-
-  <!-- iOS meta tags & icons -->
+  <!-- Home screen app on iOS -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="glow">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Glow">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>glow</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <title>Glow</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    body { background: #FFFFFF; }
+    @media (prefers-color-scheme: dark) { body { background: #000000; } }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <script>
+    // Registers the offline cache and tells the app when a newer version is
+    // waiting. The app calls the two glow* functions.
+    (function () {
+      var waiting = null;
+      var reloadWanted = false;
+      window.glowUpdateReady = function () { return waiting !== null; };
+      window.glowApplyUpdate = function () {
+        if (!waiting) return;
+        reloadWanted = true;
+        waiting.postMessage('SKIP_WAITING');
+      };
+      if (!('serviceWorker' in navigator)) return;
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (reloadWanted) window.location.reload();
+      });
+
+      window.addEventListener('load', function () {
+        navigator.serviceWorker
+          .register('sw.js', { updateViaCache: 'none' })
+          .then(function (registration) {
+            // With no controller this is the first install, not an update.
+            function noteIfUpdate(worker) {
+              if (worker && navigator.serviceWorker.controller) {
+                waiting = worker;
+              }
+            }
+            noteIfUpdate(registration.waiting);
+            registration.addEventListener('updatefound', function () {
+              var worker = registration.installing;
+              worker.addEventListener('statechange', function () {
+                if (worker.state === 'installed') noteIfUpdate(worker);
+              });
+            });
+            // A home screen app can stay open for days.
+            document.addEventListener('visibilitychange', function () {
+              if (document.visibilityState === 'visible') {
+                registration.update().catch(function () {});
+              }
+            });
+          })
+          .catch(function () {});
+      });
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

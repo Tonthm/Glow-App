@@ -1,11 +1,13 @@
 {
-    "name": "glow",
-    "short_name": "glow",
+    "name": "Glow",
+    "short_name": "Glow",
+    "lang": "th",
     "start_url": ".",
+    "scope": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "Glow วางแผนเวลานอนจากตารางเรียน",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
