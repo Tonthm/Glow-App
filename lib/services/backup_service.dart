@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:file_picker/file_picker.dart';
 
 import '../data/database.dart';
+import 'ai/api_key_store.dart';
 
 /// Exports/imports every table as a single JSON file, per CLAUDE.md section
 /// 12 ("สำรองข้อมูลเป็นไฟล์ JSON และนำเข้าได้ ใช้ตอนย้ายเครื่อง").
@@ -12,7 +13,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 4;
+  static const _version = 5;
 
   Future<Map<String, dynamic>> buildSnapshot() async {
     Future<List<Map<String, dynamic>>>
@@ -37,6 +38,8 @@ class BackupService {
       'dayActivities': await dump(db.dayActivities),
       'routineLogs': await dump(db.routineLogs),
       'eveningTasks': await dump(db.eveningTasks),
+      // The API key is in secure storage and is never part of a backup.
+      'aiSettings': await dump(db.aiSettings),
     };
   }
 
@@ -187,9 +190,23 @@ class BackupService {
         db.eveningTasks,
         (j) => EveningTask.fromJson(j).toCompanion(false),
       );
+      await load(
+        'aiSettings',
+        db.aiSettings,
+        // A restored backup never switches AI on by itself.
+        (j) =>
+            AiSettingsRow.fromJson({...j, 'enabled': false}).toCompanion(false),
+      );
     });
   }
 
+  /// "ลบข้อมูลทั้งหมด": the database and the API key.
+  Future<void> deleteEverything(ApiKeyStore keys) async {
+    await keys.delete();
+    await deleteAllData();
+  }
+
+  /// Empties the database only; restoring a backup keeps this phone's key.
   Future<void> deleteAllData() async {
     await db.transaction(() async {
       for (final table in db.allTables) {

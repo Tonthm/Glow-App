@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../core/day_overrides.dart';
+import '../core/split_scheduler.dart';
 import '../core/evening_planner.dart';
 import '../core/schedule_load.dart';
 import '../core/schedule_models.dart';
@@ -10,6 +11,9 @@ import 'settings_repository.dart';
 
 const int _todo = 0;
 const int _done = 1;
+
+/// The original of a split task. Hidden: its parts are what gets planned.
+const int _split = 2;
 
 /// The evening being planned at [now]. Before 04:00 it is still last night's.
 DateTime eveningDateFor(DateTime now) {
@@ -34,6 +38,7 @@ class EveningView {
   final bool canStartNow;
   final List<StudySuggestion> suggestions;
   final DateTime notifyTime;
+  final bool examTomorrow;
 
   const EveningView({
     required this.eveningDate,
@@ -44,7 +49,13 @@ class EveningView {
     required this.canStartNow,
     required this.suggestions,
     required this.notifyTime,
+    required this.examTomorrow,
   });
+
+  /// What the planner was given, in planning order.
+  List<PlannerTask> get plannerTasks => [
+    for (final t in tasks) EveningRepository.toPlanner(t),
+  ];
 
   EveningTask? taskById(int id) {
     for (final task in tasks) {
@@ -63,7 +74,7 @@ class EveningRepository {
 
   EveningRepository(this.db, this.planning, this.settingsRepo);
 
-  static PlannerTask _toPlanner(EveningTask row) => PlannerTask(
+  static PlannerTask toPlanner(EveningTask row) => PlannerTask(
     id: row.id,
     title: row.title,
     minutes: row.minutes - row.doneMinutes,
@@ -103,7 +114,7 @@ class EveningRepository {
       startNow: planRow?.eveningStartedAt,
     );
     final rows = await _tasksFor(eveningDate, _todo);
-    final plannerTasks = rows.map(_toPlanner).toList();
+    final plannerTasks = rows.map(toPlanner).toList();
     final plan = planEvening(
       windowStart: windowStart,
       notifyTime: notifyTime,
@@ -157,6 +168,9 @@ class EveningRepository {
             redNight || plan.overflow.isNotEmpty || !now.isBefore(plan.end),
       ),
       notifyTime: notifyTime,
+      examTomorrow: upcomingExams.any(
+        (e) => e.date == _addDays(eveningDate, 1),
+      ),
     );
   }
 
@@ -169,6 +183,7 @@ class EveningRepository {
     DateTime? examDate,
     ItemSource source = ItemSource.typed,
     bool suggested = false,
+    int? aiEstimateMinutes,
     DateTime? now,
   }) async {
     // Adding during the evening lays the work out from now, so a new task is
@@ -186,6 +201,7 @@ class EveningRepository {
             examDate: Value(examDate),
             source: Value(source),
             suggested: Value(suggested),
+            aiEstimateMinutes: Value(aiEstimateMinutes),
           ),
         );
   }
@@ -193,8 +209,52 @@ class EveningRepository {
   Future<void> updateTask(EveningTask task) =>
       db.update(db.eveningTasks).replace(task);
 
-  Future<void> removeTask(int id) =>
-      (db.delete(db.eveningTasks)..where((t) => t.id.equals(id))).go();
+  /// Removing a split task's original removes every part with it. Removing
+  /// the last part leaves no hidden original behind.
+  Future<void> removeTask(int id) => db.transaction(() async {
+    final parentId = (await _task(id))?.parentId;
+    await (db.delete(
+      db.eveningTasks,
+    )..where((t) => t.id.equals(id) | t.parentId.equals(id))).go();
+    if (parentId == null) return;
+    final left = await (db.select(
+      db.eveningTasks,
+    )..where((t) => t.parentId.equals(parentId))).get();
+    if (left.isEmpty) {
+      await (db.delete(
+        db.eveningTasks,
+      )..where((t) => t.id.equals(parentId))).go();
+    }
+  });
+
+  /// Replaces [original] with parts the user has accepted. The original stays,
+  /// hidden, so the parts can be removed together.
+  Future<void> acceptSplit(
+    EveningTask original,
+    List<ScheduledPart> parts, {
+    required DateTime now,
+  }) => db.transaction(() async {
+    if (parts.any((p) => p.date == eveningDateFor(now))) {
+      await replanFrom(now);
+    }
+    await updateTask(original.copyWith(status: _split));
+    for (final scheduled in parts) {
+      await db
+          .into(db.eveningTasks)
+          .insert(
+            EveningTasksCompanion.insert(
+              title: scheduled.part.title,
+              minutes: scheduled.part.minutes,
+              kind: original.kind,
+              planDate: scheduled.date,
+              dueDate: Value(original.dueDate),
+              examDate: Value(original.examDate),
+              source: const Value(ItemSource.ai),
+              parentId: Value(original.id),
+            ),
+          );
+    }
+  });
 
   Future<EveningTask?> _task(int id) => (db.select(
     db.eveningTasks,

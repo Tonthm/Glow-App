@@ -6976,6 +6976,28 @@ class $EveningTasksTable extends EveningTasks
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _aiEstimateMinutesMeta = const VerificationMeta(
+    'aiEstimateMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> aiEstimateMinutes = GeneratedColumn<int>(
+    'ai_estimate_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _parentIdMeta = const VerificationMeta(
+    'parentId',
+  );
+  @override
+  late final GeneratedColumn<int> parentId = GeneratedColumn<int>(
+    'parent_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -6991,6 +7013,8 @@ class $EveningTasksTable extends EveningTasks
     carried,
     source,
     suggested,
+    aiEstimateMinutes,
+    parentId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7084,6 +7108,21 @@ class $EveningTasksTable extends EveningTasks
         suggested.isAcceptableOrUnknown(data['suggested']!, _suggestedMeta),
       );
     }
+    if (data.containsKey('ai_estimate_minutes')) {
+      context.handle(
+        _aiEstimateMinutesMeta,
+        aiEstimateMinutes.isAcceptableOrUnknown(
+          data['ai_estimate_minutes']!,
+          _aiEstimateMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('parent_id')) {
+      context.handle(
+        _parentIdMeta,
+        parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
+      );
+    }
     return context;
   }
 
@@ -7147,6 +7186,14 @@ class $EveningTasksTable extends EveningTasks
         DriftSqlType.bool,
         data['${effectivePrefix}suggested'],
       )!,
+      aiEstimateMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ai_estimate_minutes'],
+      ),
+      parentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}parent_id'],
+      ),
     );
   }
 
@@ -7177,7 +7224,7 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
   /// The evening it is to be done.
   final DateTime planDate;
 
-  /// 0 to do, 1 done.
+  /// 0 to do, 1 done, 2 split into parts (hidden; the parts are shown).
   final int status;
   final int? userOrder;
   final bool carried;
@@ -7185,6 +7232,12 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
 
   /// Accepted from a study suggestion.
   final bool suggested;
+
+  /// What the AI estimated, kept apart from [minutes], what the user used.
+  final int? aiEstimateMinutes;
+
+  /// The task this is one part of.
+  final int? parentId;
   const EveningTask({
     required this.id,
     required this.title,
@@ -7199,6 +7252,8 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
     required this.carried,
     required this.source,
     required this.suggested,
+    this.aiEstimateMinutes,
+    this.parentId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7226,6 +7281,12 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
       );
     }
     map['suggested'] = Variable<bool>(suggested);
+    if (!nullToAbsent || aiEstimateMinutes != null) {
+      map['ai_estimate_minutes'] = Variable<int>(aiEstimateMinutes);
+    }
+    if (!nullToAbsent || parentId != null) {
+      map['parent_id'] = Variable<int>(parentId);
+    }
     return map;
   }
 
@@ -7250,6 +7311,12 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
       carried: Value(carried),
       source: Value(source),
       suggested: Value(suggested),
+      aiEstimateMinutes: aiEstimateMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(aiEstimateMinutes),
+      parentId: parentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentId),
     );
   }
 
@@ -7274,6 +7341,8 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
         serializer.fromJson<int>(json['source']),
       ),
       suggested: serializer.fromJson<bool>(json['suggested']),
+      aiEstimateMinutes: serializer.fromJson<int?>(json['aiEstimateMinutes']),
+      parentId: serializer.fromJson<int?>(json['parentId']),
     );
   }
   @override
@@ -7295,6 +7364,8 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
         $EveningTasksTable.$convertersource.toJson(source),
       ),
       'suggested': serializer.toJson<bool>(suggested),
+      'aiEstimateMinutes': serializer.toJson<int?>(aiEstimateMinutes),
+      'parentId': serializer.toJson<int?>(parentId),
     };
   }
 
@@ -7312,6 +7383,8 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
     bool? carried,
     ItemSource? source,
     bool? suggested,
+    Value<int?> aiEstimateMinutes = const Value.absent(),
+    Value<int?> parentId = const Value.absent(),
   }) => EveningTask(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -7326,6 +7399,10 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
     carried: carried ?? this.carried,
     source: source ?? this.source,
     suggested: suggested ?? this.suggested,
+    aiEstimateMinutes: aiEstimateMinutes.present
+        ? aiEstimateMinutes.value
+        : this.aiEstimateMinutes,
+    parentId: parentId.present ? parentId.value : this.parentId,
   );
   EveningTask copyWithCompanion(EveningTasksCompanion data) {
     return EveningTask(
@@ -7344,6 +7421,10 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
       carried: data.carried.present ? data.carried.value : this.carried,
       source: data.source.present ? data.source.value : this.source,
       suggested: data.suggested.present ? data.suggested.value : this.suggested,
+      aiEstimateMinutes: data.aiEstimateMinutes.present
+          ? data.aiEstimateMinutes.value
+          : this.aiEstimateMinutes,
+      parentId: data.parentId.present ? data.parentId.value : this.parentId,
     );
   }
 
@@ -7362,7 +7443,9 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
           ..write('userOrder: $userOrder, ')
           ..write('carried: $carried, ')
           ..write('source: $source, ')
-          ..write('suggested: $suggested')
+          ..write('suggested: $suggested, ')
+          ..write('aiEstimateMinutes: $aiEstimateMinutes, ')
+          ..write('parentId: $parentId')
           ..write(')'))
         .toString();
   }
@@ -7382,6 +7465,8 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
     carried,
     source,
     suggested,
+    aiEstimateMinutes,
+    parentId,
   );
   @override
   bool operator ==(Object other) =>
@@ -7399,7 +7484,9 @@ class EveningTask extends DataClass implements Insertable<EveningTask> {
           other.userOrder == this.userOrder &&
           other.carried == this.carried &&
           other.source == this.source &&
-          other.suggested == this.suggested);
+          other.suggested == this.suggested &&
+          other.aiEstimateMinutes == this.aiEstimateMinutes &&
+          other.parentId == this.parentId);
 }
 
 class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
@@ -7416,6 +7503,8 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
   final Value<bool> carried;
   final Value<ItemSource> source;
   final Value<bool> suggested;
+  final Value<int?> aiEstimateMinutes;
+  final Value<int?> parentId;
   const EveningTasksCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -7430,6 +7519,8 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
     this.carried = const Value.absent(),
     this.source = const Value.absent(),
     this.suggested = const Value.absent(),
+    this.aiEstimateMinutes = const Value.absent(),
+    this.parentId = const Value.absent(),
   });
   EveningTasksCompanion.insert({
     this.id = const Value.absent(),
@@ -7445,6 +7536,8 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
     this.carried = const Value.absent(),
     this.source = const Value.absent(),
     this.suggested = const Value.absent(),
+    this.aiEstimateMinutes = const Value.absent(),
+    this.parentId = const Value.absent(),
   }) : title = Value(title),
        minutes = Value(minutes),
        kind = Value(kind),
@@ -7463,6 +7556,8 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
     Expression<bool>? carried,
     Expression<int>? source,
     Expression<bool>? suggested,
+    Expression<int>? aiEstimateMinutes,
+    Expression<int>? parentId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -7478,6 +7573,8 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
       if (carried != null) 'carried': carried,
       if (source != null) 'source': source,
       if (suggested != null) 'suggested': suggested,
+      if (aiEstimateMinutes != null) 'ai_estimate_minutes': aiEstimateMinutes,
+      if (parentId != null) 'parent_id': parentId,
     });
   }
 
@@ -7495,6 +7592,8 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
     Value<bool>? carried,
     Value<ItemSource>? source,
     Value<bool>? suggested,
+    Value<int?>? aiEstimateMinutes,
+    Value<int?>? parentId,
   }) {
     return EveningTasksCompanion(
       id: id ?? this.id,
@@ -7510,6 +7609,8 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
       carried: carried ?? this.carried,
       source: source ?? this.source,
       suggested: suggested ?? this.suggested,
+      aiEstimateMinutes: aiEstimateMinutes ?? this.aiEstimateMinutes,
+      parentId: parentId ?? this.parentId,
     );
   }
 
@@ -7557,6 +7658,12 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
     if (suggested.present) {
       map['suggested'] = Variable<bool>(suggested.value);
     }
+    if (aiEstimateMinutes.present) {
+      map['ai_estimate_minutes'] = Variable<int>(aiEstimateMinutes.value);
+    }
+    if (parentId.present) {
+      map['parent_id'] = Variable<int>(parentId.value);
+    }
     return map;
   }
 
@@ -7575,7 +7682,508 @@ class EveningTasksCompanion extends UpdateCompanion<EveningTask> {
           ..write('userOrder: $userOrder, ')
           ..write('carried: $carried, ')
           ..write('source: $source, ')
-          ..write('suggested: $suggested')
+          ..write('suggested: $suggested, ')
+          ..write('aiEstimateMinutes: $aiEstimateMinutes, ')
+          ..write('parentId: $parentId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AiSettingsTable extends AiSettings
+    with TableInfo<$AiSettingsTable, AiSettingsRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AiSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _providerMeta = const VerificationMeta(
+    'provider',
+  );
+  @override
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+    'provider',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(aiProviderId),
+  );
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(aiDefaultModel),
+  );
+  static const VerificationMeta _consentVersionMeta = const VerificationMeta(
+    'consentVersion',
+  );
+  @override
+  late final GeneratedColumn<int> consentVersion = GeneratedColumn<int>(
+    'consent_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _callDayMeta = const VerificationMeta(
+    'callDay',
+  );
+  @override
+  late final GeneratedColumn<DateTime> callDay = GeneratedColumn<DateTime>(
+    'call_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _callCountMeta = const VerificationMeta(
+    'callCount',
+  );
+  @override
+  late final GeneratedColumn<int> callCount = GeneratedColumn<int>(
+    'call_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dailyQuotaMeta = const VerificationMeta(
+    'dailyQuota',
+  );
+  @override
+  late final GeneratedColumn<int> dailyQuota = GeneratedColumn<int>(
+    'daily_quota',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(aiDefaultDailyQuota),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    enabled,
+    provider,
+    model,
+    consentVersion,
+    callDay,
+    callCount,
+    dailyQuota,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ai_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AiSettingsRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('provider')) {
+      context.handle(
+        _providerMeta,
+        provider.isAcceptableOrUnknown(data['provider']!, _providerMeta),
+      );
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    }
+    if (data.containsKey('consent_version')) {
+      context.handle(
+        _consentVersionMeta,
+        consentVersion.isAcceptableOrUnknown(
+          data['consent_version']!,
+          _consentVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('call_day')) {
+      context.handle(
+        _callDayMeta,
+        callDay.isAcceptableOrUnknown(data['call_day']!, _callDayMeta),
+      );
+    }
+    if (data.containsKey('call_count')) {
+      context.handle(
+        _callCountMeta,
+        callCount.isAcceptableOrUnknown(data['call_count']!, _callCountMeta),
+      );
+    }
+    if (data.containsKey('daily_quota')) {
+      context.handle(
+        _dailyQuotaMeta,
+        dailyQuota.isAcceptableOrUnknown(data['daily_quota']!, _dailyQuotaMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AiSettingsRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AiSettingsRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      provider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provider'],
+      )!,
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      )!,
+      consentVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}consent_version'],
+      )!,
+      callDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}call_day'],
+      ),
+      callCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}call_count'],
+      )!,
+      dailyQuota: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}daily_quota'],
+      )!,
+    );
+  }
+
+  @override
+  $AiSettingsTable createAlias(String alias) {
+    return $AiSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
+  final int id;
+  final bool enabled;
+  final String provider;
+  final String model;
+
+  /// The version of the consent text the user agreed to; 0 for none.
+  final int consentVersion;
+  final DateTime? callDay;
+  final int callCount;
+  final int dailyQuota;
+  const AiSettingsRow({
+    required this.id,
+    required this.enabled,
+    required this.provider,
+    required this.model,
+    required this.consentVersion,
+    this.callDay,
+    required this.callCount,
+    required this.dailyQuota,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['enabled'] = Variable<bool>(enabled);
+    map['provider'] = Variable<String>(provider);
+    map['model'] = Variable<String>(model);
+    map['consent_version'] = Variable<int>(consentVersion);
+    if (!nullToAbsent || callDay != null) {
+      map['call_day'] = Variable<DateTime>(callDay);
+    }
+    map['call_count'] = Variable<int>(callCount);
+    map['daily_quota'] = Variable<int>(dailyQuota);
+    return map;
+  }
+
+  AiSettingsCompanion toCompanion(bool nullToAbsent) {
+    return AiSettingsCompanion(
+      id: Value(id),
+      enabled: Value(enabled),
+      provider: Value(provider),
+      model: Value(model),
+      consentVersion: Value(consentVersion),
+      callDay: callDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(callDay),
+      callCount: Value(callCount),
+      dailyQuota: Value(dailyQuota),
+    );
+  }
+
+  factory AiSettingsRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AiSettingsRow(
+      id: serializer.fromJson<int>(json['id']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      provider: serializer.fromJson<String>(json['provider']),
+      model: serializer.fromJson<String>(json['model']),
+      consentVersion: serializer.fromJson<int>(json['consentVersion']),
+      callDay: serializer.fromJson<DateTime?>(json['callDay']),
+      callCount: serializer.fromJson<int>(json['callCount']),
+      dailyQuota: serializer.fromJson<int>(json['dailyQuota']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'enabled': serializer.toJson<bool>(enabled),
+      'provider': serializer.toJson<String>(provider),
+      'model': serializer.toJson<String>(model),
+      'consentVersion': serializer.toJson<int>(consentVersion),
+      'callDay': serializer.toJson<DateTime?>(callDay),
+      'callCount': serializer.toJson<int>(callCount),
+      'dailyQuota': serializer.toJson<int>(dailyQuota),
+    };
+  }
+
+  AiSettingsRow copyWith({
+    int? id,
+    bool? enabled,
+    String? provider,
+    String? model,
+    int? consentVersion,
+    Value<DateTime?> callDay = const Value.absent(),
+    int? callCount,
+    int? dailyQuota,
+  }) => AiSettingsRow(
+    id: id ?? this.id,
+    enabled: enabled ?? this.enabled,
+    provider: provider ?? this.provider,
+    model: model ?? this.model,
+    consentVersion: consentVersion ?? this.consentVersion,
+    callDay: callDay.present ? callDay.value : this.callDay,
+    callCount: callCount ?? this.callCount,
+    dailyQuota: dailyQuota ?? this.dailyQuota,
+  );
+  AiSettingsRow copyWithCompanion(AiSettingsCompanion data) {
+    return AiSettingsRow(
+      id: data.id.present ? data.id.value : this.id,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      provider: data.provider.present ? data.provider.value : this.provider,
+      model: data.model.present ? data.model.value : this.model,
+      consentVersion: data.consentVersion.present
+          ? data.consentVersion.value
+          : this.consentVersion,
+      callDay: data.callDay.present ? data.callDay.value : this.callDay,
+      callCount: data.callCount.present ? data.callCount.value : this.callCount,
+      dailyQuota: data.dailyQuota.present
+          ? data.dailyQuota.value
+          : this.dailyQuota,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiSettingsRow(')
+          ..write('id: $id, ')
+          ..write('enabled: $enabled, ')
+          ..write('provider: $provider, ')
+          ..write('model: $model, ')
+          ..write('consentVersion: $consentVersion, ')
+          ..write('callDay: $callDay, ')
+          ..write('callCount: $callCount, ')
+          ..write('dailyQuota: $dailyQuota')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    enabled,
+    provider,
+    model,
+    consentVersion,
+    callDay,
+    callCount,
+    dailyQuota,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AiSettingsRow &&
+          other.id == this.id &&
+          other.enabled == this.enabled &&
+          other.provider == this.provider &&
+          other.model == this.model &&
+          other.consentVersion == this.consentVersion &&
+          other.callDay == this.callDay &&
+          other.callCount == this.callCount &&
+          other.dailyQuota == this.dailyQuota);
+}
+
+class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
+  final Value<int> id;
+  final Value<bool> enabled;
+  final Value<String> provider;
+  final Value<String> model;
+  final Value<int> consentVersion;
+  final Value<DateTime?> callDay;
+  final Value<int> callCount;
+  final Value<int> dailyQuota;
+  const AiSettingsCompanion({
+    this.id = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.provider = const Value.absent(),
+    this.model = const Value.absent(),
+    this.consentVersion = const Value.absent(),
+    this.callDay = const Value.absent(),
+    this.callCount = const Value.absent(),
+    this.dailyQuota = const Value.absent(),
+  });
+  AiSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.provider = const Value.absent(),
+    this.model = const Value.absent(),
+    this.consentVersion = const Value.absent(),
+    this.callDay = const Value.absent(),
+    this.callCount = const Value.absent(),
+    this.dailyQuota = const Value.absent(),
+  });
+  static Insertable<AiSettingsRow> custom({
+    Expression<int>? id,
+    Expression<bool>? enabled,
+    Expression<String>? provider,
+    Expression<String>? model,
+    Expression<int>? consentVersion,
+    Expression<DateTime>? callDay,
+    Expression<int>? callCount,
+    Expression<int>? dailyQuota,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (enabled != null) 'enabled': enabled,
+      if (provider != null) 'provider': provider,
+      if (model != null) 'model': model,
+      if (consentVersion != null) 'consent_version': consentVersion,
+      if (callDay != null) 'call_day': callDay,
+      if (callCount != null) 'call_count': callCount,
+      if (dailyQuota != null) 'daily_quota': dailyQuota,
+    });
+  }
+
+  AiSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<bool>? enabled,
+    Value<String>? provider,
+    Value<String>? model,
+    Value<int>? consentVersion,
+    Value<DateTime?>? callDay,
+    Value<int>? callCount,
+    Value<int>? dailyQuota,
+  }) {
+    return AiSettingsCompanion(
+      id: id ?? this.id,
+      enabled: enabled ?? this.enabled,
+      provider: provider ?? this.provider,
+      model: model ?? this.model,
+      consentVersion: consentVersion ?? this.consentVersion,
+      callDay: callDay ?? this.callDay,
+      callCount: callCount ?? this.callCount,
+      dailyQuota: dailyQuota ?? this.dailyQuota,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (consentVersion.present) {
+      map['consent_version'] = Variable<int>(consentVersion.value);
+    }
+    if (callDay.present) {
+      map['call_day'] = Variable<DateTime>(callDay.value);
+    }
+    if (callCount.present) {
+      map['call_count'] = Variable<int>(callCount.value);
+    }
+    if (dailyQuota.present) {
+      map['daily_quota'] = Variable<int>(dailyQuota.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('enabled: $enabled, ')
+          ..write('provider: $provider, ')
+          ..write('model: $model, ')
+          ..write('consentVersion: $consentVersion, ')
+          ..write('callDay: $callDay, ')
+          ..write('callCount: $callCount, ')
+          ..write('dailyQuota: $dailyQuota')
           ..write(')'))
         .toString();
   }
@@ -7600,6 +8208,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DayActivitiesTable dayActivities = $DayActivitiesTable(this);
   late final $RoutineLogsTable routineLogs = $RoutineLogsTable(this);
   late final $EveningTasksTable eveningTasks = $EveningTasksTable(this);
+  late final $AiSettingsTable aiSettings = $AiSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7618,6 +8227,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     dayActivities,
     routineLogs,
     eveningTasks,
+    aiSettings,
   ];
 }
 
@@ -11054,6 +11664,8 @@ typedef $$EveningTasksTableCreateCompanionBuilder =
       Value<bool> carried,
       Value<ItemSource> source,
       Value<bool> suggested,
+      Value<int?> aiEstimateMinutes,
+      Value<int?> parentId,
     });
 typedef $$EveningTasksTableUpdateCompanionBuilder =
     EveningTasksCompanion Function({
@@ -11070,6 +11682,8 @@ typedef $$EveningTasksTableUpdateCompanionBuilder =
       Value<bool> carried,
       Value<ItemSource> source,
       Value<bool> suggested,
+      Value<int?> aiEstimateMinutes,
+      Value<int?> parentId,
     });
 
 class $$EveningTasksTableFilterComposer
@@ -11144,6 +11758,16 @@ class $$EveningTasksTableFilterComposer
 
   ColumnFilters<bool> get suggested => $composableBuilder(
     column: $table.suggested,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get aiEstimateMinutes => $composableBuilder(
+    column: $table.aiEstimateMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get parentId => $composableBuilder(
+    column: $table.parentId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -11221,6 +11845,16 @@ class $$EveningTasksTableOrderingComposer
     column: $table.suggested,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get aiEstimateMinutes => $composableBuilder(
+    column: $table.aiEstimateMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get parentId => $composableBuilder(
+    column: $table.parentId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$EveningTasksTableAnnotationComposer
@@ -11272,6 +11906,14 @@ class $$EveningTasksTableAnnotationComposer
 
   GeneratedColumn<bool> get suggested =>
       $composableBuilder(column: $table.suggested, builder: (column) => column);
+
+  GeneratedColumn<int> get aiEstimateMinutes => $composableBuilder(
+    column: $table.aiEstimateMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get parentId =>
+      $composableBuilder(column: $table.parentId, builder: (column) => column);
 }
 
 class $$EveningTasksTableTableManager
@@ -11318,6 +11960,8 @@ class $$EveningTasksTableTableManager
                 Value<bool> carried = const Value.absent(),
                 Value<ItemSource> source = const Value.absent(),
                 Value<bool> suggested = const Value.absent(),
+                Value<int?> aiEstimateMinutes = const Value.absent(),
+                Value<int?> parentId = const Value.absent(),
               }) => EveningTasksCompanion(
                 id: id,
                 title: title,
@@ -11332,6 +11976,8 @@ class $$EveningTasksTableTableManager
                 carried: carried,
                 source: source,
                 suggested: suggested,
+                aiEstimateMinutes: aiEstimateMinutes,
+                parentId: parentId,
               ),
           createCompanionCallback:
               ({
@@ -11348,6 +11994,8 @@ class $$EveningTasksTableTableManager
                 Value<bool> carried = const Value.absent(),
                 Value<ItemSource> source = const Value.absent(),
                 Value<bool> suggested = const Value.absent(),
+                Value<int?> aiEstimateMinutes = const Value.absent(),
+                Value<int?> parentId = const Value.absent(),
               }) => EveningTasksCompanion.insert(
                 id: id,
                 title: title,
@@ -11362,6 +12010,8 @@ class $$EveningTasksTableTableManager
                 carried: carried,
                 source: source,
                 suggested: suggested,
+                aiEstimateMinutes: aiEstimateMinutes,
+                parentId: parentId,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -11397,6 +12047,268 @@ typedef $$EveningTasksTableProcessedTableManager =
       EveningTask,
       PrefetchHooks Function()
     >;
+typedef $$AiSettingsTableCreateCompanionBuilder = AiSettingsCompanion Function({
+  Value<int> id,
+  Value<bool> enabled,
+  Value<String> provider,
+  Value<String> model,
+  Value<int> consentVersion,
+  Value<DateTime?> callDay,
+  Value<int> callCount,
+  Value<int> dailyQuota,
+});
+typedef $$AiSettingsTableUpdateCompanionBuilder = AiSettingsCompanion Function({
+  Value<int> id,
+  Value<bool> enabled,
+  Value<String> provider,
+  Value<String> model,
+  Value<int> consentVersion,
+  Value<DateTime?> callDay,
+  Value<int> callCount,
+  Value<int> dailyQuota,
+});
+
+class $$AiSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AiSettingsTable> {
+  $$AiSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get consentVersion => $composableBuilder(
+    column: $table.consentVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get callDay => $composableBuilder(
+    column: $table.callDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get callCount => $composableBuilder(
+    column: $table.callCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dailyQuota => $composableBuilder(
+    column: $table.dailyQuota,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AiSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AiSettingsTable> {
+  $$AiSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get consentVersion => $composableBuilder(
+    column: $table.consentVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get callDay => $composableBuilder(
+    column: $table.callDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get callCount => $composableBuilder(
+    column: $table.callCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dailyQuota => $composableBuilder(
+    column: $table.dailyQuota,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AiSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AiSettingsTable> {
+  $$AiSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<int> get consentVersion => $composableBuilder(
+    column: $table.consentVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get callDay =>
+      $composableBuilder(column: $table.callDay, builder: (column) => column);
+
+  GeneratedColumn<int> get callCount =>
+      $composableBuilder(column: $table.callCount, builder: (column) => column);
+
+  GeneratedColumn<int> get dailyQuota => $composableBuilder(
+    column: $table.dailyQuota,
+    builder: (column) => column,
+  );
+}
+
+class $$AiSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AiSettingsTable,
+          AiSettingsRow,
+          $$AiSettingsTableFilterComposer,
+          $$AiSettingsTableOrderingComposer,
+          $$AiSettingsTableAnnotationComposer,
+          $$AiSettingsTableCreateCompanionBuilder,
+          $$AiSettingsTableUpdateCompanionBuilder,
+          (
+            AiSettingsRow,
+            BaseReferences<_$AppDatabase, $AiSettingsTable, AiSettingsRow>,
+          ),
+          AiSettingsRow,
+          PrefetchHooks Function()
+        > {
+  $$AiSettingsTableTableManager(_$AppDatabase db, $AiSettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AiSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AiSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AiSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<String> provider = const Value.absent(),
+                Value<String> model = const Value.absent(),
+                Value<int> consentVersion = const Value.absent(),
+                Value<DateTime?> callDay = const Value.absent(),
+                Value<int> callCount = const Value.absent(),
+                Value<int> dailyQuota = const Value.absent(),
+              }) => AiSettingsCompanion(
+                id: id,
+                enabled: enabled,
+                provider: provider,
+                model: model,
+                consentVersion: consentVersion,
+                callDay: callDay,
+                callCount: callCount,
+                dailyQuota: dailyQuota,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<String> provider = const Value.absent(),
+                Value<String> model = const Value.absent(),
+                Value<int> consentVersion = const Value.absent(),
+                Value<DateTime?> callDay = const Value.absent(),
+                Value<int> callCount = const Value.absent(),
+                Value<int> dailyQuota = const Value.absent(),
+              }) => AiSettingsCompanion.insert(
+                id: id,
+                enabled: enabled,
+                provider: provider,
+                model: model,
+                consentVersion: consentVersion,
+                callDay: callDay,
+                callCount: callCount,
+                dailyQuota: dailyQuota,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AiSettingsTable, AiSettingsRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $AiSettingsTable,
+                    AiSettingsRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AiSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AiSettingsTable,
+      AiSettingsRow,
+      $$AiSettingsTableFilterComposer,
+      $$AiSettingsTableOrderingComposer,
+      $$AiSettingsTableAnnotationComposer,
+      $$AiSettingsTableCreateCompanionBuilder,
+      $$AiSettingsTableUpdateCompanionBuilder,
+      (
+        AiSettingsRow,
+        BaseReferences<_$AppDatabase, $AiSettingsTable, AiSettingsRow>,
+      ),
+      AiSettingsRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11427,4 +12339,6 @@ class $AppDatabaseManager {
       $$RoutineLogsTableTableManager(_db, _db.routineLogs);
   $$EveningTasksTableTableManager get eveningTasks =>
       $$EveningTasksTableTableManager(_db, _db.eveningTasks);
+  $$AiSettingsTableTableManager get aiSettings =>
+      $$AiSettingsTableTableManager(_db, _db.aiSettings);
 }

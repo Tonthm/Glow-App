@@ -4,7 +4,15 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
+/// What schema 14 added. Must run before evening_tasks is dropped.
+const _rewindFrom14 = [
+  'ALTER TABLE evening_tasks DROP COLUMN ai_estimate_minutes',
+  'ALTER TABLE evening_tasks DROP COLUMN parent_id',
+  'DROP TABLE ai_settings',
+];
+
 const _rewindFrom12 = [
+  ..._rewindFrom14,
   'ALTER TABLE settings DROP COLUMN travel_overrides',
   'ALTER TABLE night_plans DROP COLUMN prep_override_minutes',
   'ALTER TABLE settings DROP COLUMN evening_enabled',
@@ -108,6 +116,23 @@ void main() {
     expect(checkIn.pressedInBed, isTrue);
     expect(checkIn.onTime, isTrue);
     expect(await db.select(db.dayActivities).get(), isEmpty);
+    await db.close();
+  });
+
+  test('a version 13 database keeps its tasks and starts with AI off', () async {
+    await prepare([
+      'INSERT INTO evening_tasks (title, minutes, kind, plan_date)'
+          " VALUES ('เลข', 30, 0, 1795392000)",
+      ..._rewindFrom14,
+      'PRAGMA user_version = 13',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    final task = await db.select(db.eveningTasks).getSingle();
+    expect(task.title, 'เลข');
+    expect(task.aiEstimateMinutes, isNull);
+    expect(task.parentId, isNull);
+    expect(await db.select(db.aiSettings).get(), isEmpty);
     await db.close();
   });
 

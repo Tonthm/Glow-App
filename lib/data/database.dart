@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../core/ai_config.dart';
+
 part 'database.g.dart';
 
 enum AgeGroup { under18, adult }
@@ -9,7 +11,7 @@ enum WeeklyItemType { classSession, activity }
 
 enum OneTimeItemType { exam, activity, holiday }
 
-enum ItemSource { typed, voice, calendar }
+enum ItemSource { typed, voice, calendar, ai }
 
 enum AppThemeMode { system, light, dark }
 
@@ -320,7 +322,7 @@ class EveningTasks extends Table {
   /// The evening it is to be done.
   DateTimeColumn get planDate => dateTime()();
 
-  /// 0 to do, 1 done.
+  /// 0 to do, 1 done, 2 split into parts (hidden; the parts are shown).
   IntColumn get status => integer().withDefault(const Constant(0))();
   IntColumn get userOrder => integer().nullable()();
   BoolColumn get carried => boolean().withDefault(const Constant(false))();
@@ -329,6 +331,32 @@ class EveningTasks extends Table {
 
   /// Accepted from a study suggestion.
   BoolColumn get suggested => boolean().withDefault(const Constant(false))();
+
+  /// What the AI estimated, kept apart from [minutes], what the user used.
+  IntColumn get aiEstimateMinutes => integer().nullable()();
+
+  /// The task this is one part of.
+  IntColumn get parentId => integer().nullable()();
+}
+
+/// Single-row table (id always 0) for the AI assistant. The API key is never
+/// stored here: it is only in secure storage.
+@DataClassName('AiSettingsRow')
+class AiSettings extends Table {
+  IntColumn get id => integer().withDefault(const Constant(0))();
+  BoolColumn get enabled => boolean().withDefault(const Constant(false))();
+  TextColumn get provider => text().withDefault(const Constant(aiProviderId))();
+  TextColumn get model => text().withDefault(const Constant(aiDefaultModel))();
+
+  /// The version of the consent text the user agreed to; 0 for none.
+  IntColumn get consentVersion => integer().withDefault(const Constant(0))();
+  DateTimeColumn get callDay => dateTime().nullable()();
+  IntColumn get callCount => integer().withDefault(const Constant(0))();
+  IntColumn get dailyQuota =>
+      integer().withDefault(const Constant(aiDefaultDailyQuota))();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 @DriftDatabase(
@@ -346,6 +374,7 @@ class EveningTasks extends Table {
     DayActivities,
     RoutineLogs,
     EveningTasks,
+    AiSettings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -354,7 +383,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -452,6 +481,15 @@ class AppDatabase extends _$AppDatabase {
           nightPlans,
           nightPlans.prepOverrideMinutes,
         );
+      }
+      if (from < 14) {
+        await m.createTable(aiSettings);
+        await _addColumnIfMissing(
+          m,
+          eveningTasks,
+          eveningTasks.aiEstimateMinutes,
+        );
+        await _addColumnIfMissing(m, eveningTasks, eveningTasks.parentId);
       }
     },
   );
