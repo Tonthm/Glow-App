@@ -1,6 +1,8 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/core/check_in.dart';
+import 'package:glow/core/countdown.dart';
+import 'package:glow/core/task_status.dart';
 import 'package:glow/core/quests.dart';
 import 'package:glow/core/routine_builder.dart';
 import 'package:glow/core/routine_config.dart';
@@ -13,12 +15,45 @@ import 'package:glow/data/quest_repository.dart';
 import 'package:glow/data/routine_repository.dart';
 import 'package:glow/data/schedule_repository.dart';
 import 'package:glow/data/settings_repository.dart';
+import 'package:glow/data/task_list_repository.dart';
 import 'package:glow/data/wallet_repository.dart';
 import 'package:glow/features/demo/demo_data.dart';
 
 /// Walks the pitch demo through the data layer, whichever weekday it is
 /// presented on.
 void main() {
+  test('the demo shows everything this round added', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final today = DateTime(2026, 11, 26);
+    await resetDemoData(db, today);
+
+    final profile = await db.select(db.cardProfiles).getSingle();
+    expect(profile.displayName, isNotEmpty);
+    final colors = await db.select(db.subjectColors).get();
+    expect(colors.map((c) => c.color).toSet().length, greaterThan(3));
+
+    final entries = await TaskListRepository(db).entries();
+    final states = {
+      for (final e in entries)
+        taskState(done: e.done, due: e.task.dueDate, now: today),
+    };
+    expect(states, TaskState.values.toSet());
+    final withSteps = entries.singleWhere((e) => e.checklist.isNotEmpty);
+    expect(stepProgress([for (final i in withSteps.checklist) i.done]), (2, 5));
+
+    final soon = countdowns([
+      for (final item in await db.select(db.oneTimeItems).get())
+        if (item.type == OneTimeItemType.exam)
+          CountdownSource(
+            kind: CountdownKind.exam,
+            title: item.title,
+            date: item.date,
+          ),
+    ], now: today);
+    expect(soon.single.daysLeft, 5);
+  });
+
   for (var offset = 0; offset < 7; offset++) {
     final today = DateTime(2026, 11, 23 + offset);
 

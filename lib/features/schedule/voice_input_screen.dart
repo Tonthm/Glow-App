@@ -32,7 +32,9 @@ class VoiceInputScreen extends ConsumerStatefulWidget {
 
 class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
   final _text = TextEditingController();
-  late final SpeechService _speech = ref.read(speechServiceProvider);
+  /// Read when the screen opens: reading it lazily could first happen in
+  /// dispose, where it is no longer allowed.
+  late final SpeechService _speech;
   bool _listening = false;
   String? _message;
 
@@ -42,6 +44,12 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
   /// What was already in the box when listening started; new speech is added
   /// after it so a second try doesn't erase the first.
   String _before = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _speech = ref.read(speechServiceProvider);
+  }
 
   @override
   void dispose() {

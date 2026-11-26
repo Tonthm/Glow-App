@@ -64,7 +64,9 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
       ? EveningTaskKind.homework
       : EveningTaskKind.values[widget.existing!.kind];
   late DateTime? _examDate = widget.existing?.examDate;
-  late final SpeechService _speech = ref.read(speechServiceProvider);
+  /// Read when the screen opens: reading it lazily could first happen in
+  /// dispose, where it is no longer allowed.
+  late final SpeechService _speech;
   bool _listening = false;
   bool _spoken = false;
   String? _message;
@@ -80,6 +82,12 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
   /// True once the user or their voice has given a time.
   bool _minutesChosen = false;
   int? _aiEstimate;
+
+  @override
+  void initState() {
+    super.initState();
+    _speech = ref.read(speechServiceProvider);
+  }
 
   @override
   void dispose() {

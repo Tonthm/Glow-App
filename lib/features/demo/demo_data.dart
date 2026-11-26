@@ -10,7 +10,9 @@ import '../../core/economy_config.dart';
 import '../../core/night_date.dart';
 import '../../data/database.dart';
 import '../../data/settings_repository.dart';
+import '../../data/subject_color_repository.dart';
 import '../../services/backup_service.dart';
+import '../../theme/tokens.dart';
 
 /// The demo starts here: late enough that pressing "เข้านอนแล้ว" gives a
 /// full night that is also on time.
@@ -33,7 +35,77 @@ Future<void> resetDemoData(AppDatabase db, DateTime today) async {
     await _addSchedule(db, today);
     await _addHistory(db, today);
     await _addRewards(db, today);
+    await _addSubjectColors(db);
+    await _addTasksAndExam(db, today);
   });
+}
+
+Future<void> _addSubjectColors(AppDatabase db) async {
+  const colors = {
+    'คณิตศาสตร์': 'ม่วง',
+    'ฟิสิกส์': 'น้ำเงิน',
+    'ภาษาอังกฤษ': 'ชมพู',
+    'เคมี': 'เขียว',
+    'ชีวะ': 'เหลือง',
+    'ภาษาไทย': 'ส้ม',
+  };
+  final repo = SubjectColorRepository(db);
+  for (final entry in colors.entries) {
+    await repo.set(entry.key, GlowSubjectColors.all[entry.value]);
+  }
+}
+
+/// One task of each kind the list can show, one with steps half done, and an
+/// exam close enough to count down to.
+Future<void> _addTasksAndExam(AppDatabase db, DateTime today) async {
+  Future<int> task(String title, int minutes, int due, {bool done = false}) =>
+      db
+          .into(db.eveningTasks)
+          .insert(
+            EveningTasksCompanion.insert(
+              title: title,
+              minutes: minutes,
+              kind: 0,
+              planDate: _day(today, done ? -2 : 0),
+              dueDate: Value(_day(today, due)),
+              status: Value(done ? 1 : 0),
+              doneMinutes: Value(done ? minutes : 0),
+            ),
+          );
+  final report = await task('รายงานชีวะ', 60, 3);
+  await task('ภาษาอังกฤษ', 30, 1);
+  await task('ใบงานสังคม', 20, -1);
+  await task('แบบฝึกหัดเคมี', 30, -1, done: true);
+  const steps = [
+    'หาข้อมูล',
+    'ทำโครงร่าง',
+    'เขียนเนื้อหา',
+    'ใส่รูป',
+    'ตรวจทาน',
+  ];
+  for (var i = 0; i < steps.length; i++) {
+    await db
+        .into(db.taskSteps)
+        .insert(
+          TaskStepsCompanion.insert(
+            taskId: report,
+            title: steps[i],
+            position: i + 1,
+            done: Value(i < 2),
+          ),
+        );
+  }
+  await db
+      .into(db.oneTimeItems)
+      .insert(
+        OneTimeItemsCompanion.insert(
+          title: 'สอบกลางภาค ฟิสิกส์',
+          date: _day(today, 5),
+          type: OneTimeItemType.exam,
+          startMinutes: const Value(9 * 60),
+          endMinutes: const Value(11 * 60),
+        ),
+      );
 }
 
 Future<void> _addSchedule(AppDatabase db, DateTime today) async {
