@@ -20,6 +20,11 @@ class CheckInOutcome {
 
 const int _onTimeToleranceMinutes = 45;
 
+/// "เกือบครบ" is short of the minimum target by no more than this. It also
+/// decides the yellow dot on the shared picture. Changing it changes the
+/// check-in verdict, and so fire and quests too.
+const int slightlyShortMinutes = 60;
+
 /// Classifies a morning check-in, per CLAUDE.md section 6:
 /// - ชั่วโมงนอน = ตื่น − ปิดไฟ − เวลากว่าจะหลับ
 /// - ตรงเวลา = กดเข้านอนแล้ว และปิดไฟห่างจากแผนไม่เกิน ±45 นาที
@@ -44,7 +49,8 @@ CheckInOutcome classifyCheckIn({
     result = CheckInResult.over;
   } else if (sleepMinutes >= settings.targetMinMinutes) {
     result = CheckInResult.enough;
-  } else if (settings.targetMinMinutes - sleepMinutes <= 60) {
+  } else if (settings.targetMinMinutes - sleepMinutes <=
+      slightlyShortMinutes) {
     result = CheckInResult.almostEnough;
   } else {
     result = CheckInResult.notEnough;
