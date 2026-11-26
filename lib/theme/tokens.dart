@@ -28,6 +28,21 @@ class GlowMarkColors {
   static const holidayDark = Color(0xFFFFB680);
 }
 
+/// The ready-made subject colors. Blocks mix them with the theme so text
+/// stays readable (core/subject_color).
+class GlowSubjectColors {
+  static const Map<String, int> all = {
+    'ม่วง': 0xFFA99BFF,
+    'ชมพู': 0xFFFF9EC4,
+    'แดง': 0xFFFF8A80,
+    'ส้ม': 0xFFFFB074,
+    'เหลือง': 0xFFFFD95A,
+    'เขียว': 0xFF8EDCA8,
+    'ฟ้า': 0xFF86D0F5,
+    'น้ำเงิน': 0xFF8FA8FF,
+  };
+}
+
 class GlowRadius {
   static const double button = 14;
   static const double card = 20;

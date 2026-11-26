@@ -4,8 +4,12 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
-/// What schema 18 added.
+/// What schema 19 added.
+const _rewindFrom19 = ['DROP TABLE subject_colors'];
+
+/// What schema 18 added, and the newer tables on top of it.
 const _rewindFrom18 = [
+  ..._rewindFrom19,
   'ALTER TABLE settings DROP COLUMN calendar_first_weekday',
 ];
 

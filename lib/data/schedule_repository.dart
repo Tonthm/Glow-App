@@ -43,6 +43,25 @@ class ScheduleRepository {
         );
   }
 
+  /// One class or activity on each of [days], all or none.
+  Future<void> addWeeklyItems({
+    required String title,
+    required Iterable<int> days,
+    required int startMinutes,
+    required int endMinutes,
+    required WeeklyItemType type,
+  }) => db.transaction(() async {
+    for (final day in days.toList()..sort()) {
+      await addWeeklyItem(
+        title: title,
+        dayOfWeek: day,
+        startMinutes: startMinutes,
+        endMinutes: endMinutes,
+        type: type,
+      );
+    }
+  });
+
   /// Copies [item] onto each day in [dayOfWeekTargets] (1=Mon..7=Sun).
   Future<void> copyWeeklyItemToDays(
     WeeklyItem item,

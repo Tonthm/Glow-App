@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/evening_planner.dart';
+import '../../providers.dart';
 import '../../services/app_clock.dart';
+import '../shared/subject_colors.dart';
 import '../../theme/tokens.dart';
 import 'evening_providers.dart';
 import 'evening_screen.dart';
@@ -37,7 +39,17 @@ class EveningCard extends ConsumerWidget {
           Text('ยังไม่มีงานคืนนี้', style: textTheme.bodyMedium)
         else ...[
           for (final block in upcoming)
-            Text(describe(block), style: textTheme.bodyMedium),
+            Row(
+              children: [
+                SubjectDot(
+                  ref.watch(subjectColorsProvider).value ?? const {},
+                  block.title,
+                ),
+                Expanded(
+                  child: Text(describe(block), style: textTheme.bodyMedium),
+                ),
+              ],
+            ),
           if (view.plan.overflow.isNotEmpty)
             Text(
               'งานเกินไป ${view.plan.overflowMinutes} นาที',

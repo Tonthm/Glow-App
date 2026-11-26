@@ -16,7 +16,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 9;
+  static const _version = 10;
 
   /// The card photo goes in only if [includePhoto] is asked for.
   Future<Map<String, dynamic>> buildSnapshot({
@@ -44,6 +44,7 @@ class BackupService {
       'wallets': await dump(db.wallets),
       'ownedItems': await dump(db.ownedItems),
       'cardProfiles': await dump(db.cardProfiles),
+      'subjectColors': await dump(db.subjectColors),
       'weeklyQuestProgresses': await dump(db.weeklyQuestProgresses),
       'examPeriodClaims': await dump(db.examPeriodClaims),
       'dayActivities': await dump(db.dayActivities),
@@ -200,6 +201,11 @@ class BackupService {
         'cardProfiles',
         db.cardProfiles,
         (j) => CardProfileRow.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'subjectColors',
+        db.subjectColors,
+        (j) => SubjectColorRow.fromJson(j).toCompanion(false),
       );
       await load(
         'weeklyQuestProgresses',

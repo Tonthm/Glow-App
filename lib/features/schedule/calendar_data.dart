@@ -18,6 +18,9 @@ class CalendarData {
   final DateTime? termEnd;
   final int firstWeekday;
 
+  /// Subject colors by subjectKey.
+  final Map<String, int> colors;
+
   const CalendarData({
     required this.weekly,
     required this.oneTime,
@@ -25,6 +28,7 @@ class CalendarData {
     required this.termStart,
     required this.termEnd,
     required this.firstWeekday,
+    required this.colors,
   });
 
   Map<DateTime, List<CalendarItem>> itemsFor(List<DateTime> days) {
@@ -83,7 +87,9 @@ final calendarDataProvider = Provider.autoDispose<CalendarData?>((ref) {
   final oneTime = ref.watch(oneTimeItemsStreamProvider).value;
   final tasks = ref.watch(eveningTasksStreamProvider).value;
   final settings = ref.watch(settingsStreamProvider).value;
-  if (weekly == null ||
+  final colors = ref.watch(subjectColorsProvider).value;
+  if (colors == null ||
+      weekly == null ||
       oneTime == null ||
       tasks == null ||
       settings == null) {
@@ -96,5 +102,6 @@ final calendarDataProvider = Provider.autoDispose<CalendarData?>((ref) {
     termStart: settings.termStart,
     termEnd: settings.termEnd,
     firstWeekday: settings.calendarFirstWeekday,
+    colors: colors,
   );
 });

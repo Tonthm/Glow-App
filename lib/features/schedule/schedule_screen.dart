@@ -8,6 +8,7 @@ import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_fold.dart';
 import '../calendar_import/calendar_import_screen.dart';
 import '../shared/settings_button.dart';
+import '../shared/subject_colors.dart';
 import 'add_item_sheet.dart';
 import 'calendar_data.dart';
 import 'day_items.dart';
@@ -197,13 +198,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             firstWeekday: data.firstWeekday,
             items: items,
             onDayTap: _openDay,
+            colors: data.colors,
           ),
           const SizedBox(height: GlowSpacing.lg),
           GlowFold(
             icon: Icons.event_outlined,
             title: 'รายการครั้งเดียว',
             summary: 'สอบ กิจกรรม และวันหยุดทั้งหมด',
-            child: _OneTimeList(items: data.oneTime, now: _today),
+            child: _OneTimeList(
+              items: data.oneTime,
+              now: _today,
+              colors: data.colors,
+            ),
           ),
         ];
       case CalendarMode.week:
@@ -215,6 +221,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             onEmptyTap: addAt,
             onItemTap: open,
             onDayTap: _openDay,
+            colors: data.colors,
           ),
         ];
       case CalendarMode.day:
@@ -223,13 +230,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           // What has no time can't be placed on the grid.
           for (final item in items[day]!)
             if (!item.isTimed)
-              CalendarItemRow(item: item, onTap: () => open(item)),
+              CalendarItemRow(
+                item: item,
+                colors: data.colors,
+                onTap: () => open(item),
+              ),
           TimeGrid(
             days: days,
             today: _today,
             items: items,
             onEmptyTap: addAt,
             onItemTap: open,
+            colors: data.colors,
           ),
           const SizedBox(height: GlowSpacing.md),
           OutlinedButton.icon(
@@ -336,7 +348,12 @@ String _formatDate(DateTime d) =>
 class _OneTimeList extends StatelessWidget {
   final List<OneTimeItem> items;
   final DateTime now;
-  const _OneTimeList({required this.items, required this.now});
+  final Map<String, int> colors;
+  const _OneTimeList({
+    required this.items,
+    required this.now,
+    required this.colors,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +375,14 @@ class _OneTimeList extends StatelessWidget {
         for (final item in [...upcoming, ...past])
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(item.title, style: textTheme.bodyLarge),
+            title: Row(
+              children: [
+                SubjectDot(colors, item.title),
+                Expanded(
+                  child: Text(item.title, style: textTheme.bodyLarge),
+                ),
+              ],
+            ),
             subtitle: Text(
               '${_oneTimeTypeLabel(item.type)} · ${_formatDate(item.date)}'
               '${item.startMinutes != null ? ' · ${formatMinutes(item.startMinutes!)}–${formatMinutes(item.endMinutes!)}' : ''}',

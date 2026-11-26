@@ -1,8 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/subject_color.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
+import '../shared/subject_color_picker.dart';
 import '../shared/time_of_day_field.dart';
 import '../shared/title_autocomplete_field.dart';
 
@@ -55,7 +57,12 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
   late TimeOfDay _start;
   late TimeOfDay _end;
   late WeeklyItemType _type;
-  final Set<int> _copyToDays = {};
+  /// For a new item: the days it happens on.
+  late final Set<int> _days;
+
+  /// The color picked in this form; otherwise the name's saved color shows.
+  int? _color;
+  bool _colorPicked = false;
 
   @override
   void initState() {
@@ -64,6 +71,7 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
     _title = existing?.title ?? '';
     _dayOfWeek =
         existing?.dayOfWeek ?? widget.initialDayOfWeek ?? DateTime.monday;
+    _days = {_dayOfWeek};
     final startMinutes =
         existing?.startMinutes ??
         _timeOfDayToMinutes(widget.initialStart) ??
@@ -81,6 +89,8 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
   @override
   Widget build(BuildContext context) {
     final titlesAsync = ref.watch(weeklyItemsStreamProvider);
+    final colors = ref.watch(subjectColorsProvider).value ?? const {};
+    final color = _colorPicked ? _color : colorOfSubject(colors, _title);
     final oneTimeTitlesAsync = ref.watch(oneTimeItemsStreamProvider);
     final suggestions = <String>{
       ...titlesAsync.value?.map((e) => e.title) ?? [],
@@ -124,17 +134,35 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
               onSelectionChanged: (v) => setState(() => _type = v.first),
             ),
             const SizedBox(height: 12),
+            Text(
+              _isEdit ? 'วัน' : 'เลือกได้หลายวัน',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             Wrap(
               spacing: 8,
               children: List.generate(7, (i) {
                 final day = i + 1;
-                return ChoiceChip(
+                if (_isEdit) {
+                  return ChoiceChip(
+                    label: Text(_dayLabels[i]),
+                    selected: _dayOfWeek == day,
+                    onSelected: (_) => setState(() => _dayOfWeek = day),
+                  );
+                }
+                return FilterChip(
                   label: Text(_dayLabels[i]),
-                  selected: _dayOfWeek == day,
-                  onSelected: (_) => setState(() => _dayOfWeek = day),
+                  selected: _days.contains(day),
+                  onSelected: (on) => setState(
+                    () => on ? _days.add(day) : _days.remove(day),
+                  ),
                 );
               }),
             ),
+            if (!_isEdit && _days.isEmpty)
+              Text(
+                'เลือกอย่างน้อย 1 วัน',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             TimeOfDayField(
               label: 'เวลาเริ่ม',
               time: _start,
@@ -151,28 +179,14 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
               time: _end,
               onChanged: (t) => setState(() => _end = t),
             ),
-            if (!_isEdit) ...[
-              const SizedBox(height: 8),
-              const Text('คัดลอกไปวันอื่น (เลือกได้หลายวัน)'),
-              Wrap(
-                spacing: 8,
-                children: List.generate(7, (i) {
-                  final day = i + 1;
-                  if (day == _dayOfWeek) return const SizedBox.shrink();
-                  return FilterChip(
-                    label: Text(_dayLabels[i]),
-                    selected: _copyToDays.contains(day),
-                    onSelected: (sel) => setState(() {
-                      if (sel) {
-                        _copyToDays.add(day);
-                      } else {
-                        _copyToDays.remove(day);
-                      }
-                    }),
-                  );
-                }),
-              ),
-            ],
+            const SizedBox(height: 8),
+            SubjectColorPicker(
+              color: color,
+              onChanged: (v) => setState(() {
+                _color = v;
+                _colorPicked = true;
+              }),
+            ),
             if (!_hasValidTimes)
               Text(
                 'เวลาจบต้องอยู่หลังเวลาเริ่ม',
@@ -198,7 +212,10 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
                   ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: _title.trim().isEmpty || !_hasValidTimes
+                  onPressed:
+                      _title.trim().isEmpty ||
+                          !_hasValidTimes ||
+                          (!_isEdit && _days.isEmpty)
                       ? null
                       : _save,
                   child: const Text('บันทึก'),
@@ -213,6 +230,7 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
 
   Future<void> _save() async {
     final repo = ref.read(scheduleRepositoryProvider);
+    final colorRepo = ref.read(subjectColorRepositoryProvider);
     final startMinutes = _start.hour * 60 + _start.minute;
     final endMinutes = _end.hour * 60 + _end.minute;
 
@@ -227,23 +245,15 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
         ),
       );
     } else {
-      await repo.addWeeklyItem(
+      await repo.addWeeklyItems(
         title: _title.trim(),
-        dayOfWeek: _dayOfWeek,
+        days: _days,
         startMinutes: startMinutes,
         endMinutes: endMinutes,
         type: _type,
       );
-      for (final day in _copyToDays) {
-        await repo.addWeeklyItem(
-          title: _title.trim(),
-          dayOfWeek: day,
-          startMinutes: startMinutes,
-          endMinutes: endMinutes,
-          type: _type,
-        );
-      }
     }
+    if (_colorPicked) await colorRepo.set(_title, _color);
     if (mounted) Navigator.of(context).pop();
   }
 }

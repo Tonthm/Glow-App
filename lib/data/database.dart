@@ -285,6 +285,17 @@ class CardPhotos extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// The color the user gave a subject, by name (core/subject_color). Added in
+/// schema 19.
+@DataClassName('SubjectColorRow')
+class SubjectColors extends Table {
+  TextColumn get subject => text()();
+  IntColumn get color => integer()();
+
+  @override
+  Set<Column> get primaryKey => {subject};
+}
+
 /// One row per shop/reward item the player owns (section 9 blankets, plus
 /// the non-sellable fire-level and exam-period reward blankets).
 class OwnedItems extends Table {
@@ -443,6 +454,7 @@ class CalendarReminderStates extends Table {
     CalendarReminderStates,
     CardProfiles,
     CardPhotos,
+    SubjectColors,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -461,7 +473,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -584,6 +596,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 18) {
         await _addColumnIfMissing(m, settings, settings.calendarFirstWeekday);
+      }
+      if (from < 19) {
+        // A new table only: the timetable itself is untouched.
+        await m.createTable(subjectColors);
       }
     },
     // A removed photo or birth date is wiped from the file, not only

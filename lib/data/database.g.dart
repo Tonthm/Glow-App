@@ -9458,6 +9458,218 @@ class CardPhotosCompanion extends UpdateCompanion<CardPhotoRow> {
   }
 }
 
+class $SubjectColorsTable extends SubjectColors
+    with TableInfo<$SubjectColorsTable, SubjectColorRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SubjectColorsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _subjectMeta = const VerificationMeta(
+    'subject',
+  );
+  @override
+  late final GeneratedColumn<String> subject = GeneratedColumn<String>(
+    'subject',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [subject, color];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'subject_colors';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SubjectColorRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('subject')) {
+      context.handle(
+        _subjectMeta,
+        subject.isAcceptableOrUnknown(data['subject']!, _subjectMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {subject};
+  @override
+  SubjectColorRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SubjectColorRow(
+      subject: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      )!,
+    );
+  }
+
+  @override
+  $SubjectColorsTable createAlias(String alias) {
+    return $SubjectColorsTable(attachedDatabase, alias);
+  }
+}
+
+class SubjectColorRow extends DataClass implements Insertable<SubjectColorRow> {
+  final String subject;
+  final int color;
+  const SubjectColorRow({required this.subject, required this.color});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['subject'] = Variable<String>(subject);
+    map['color'] = Variable<int>(color);
+    return map;
+  }
+
+  SubjectColorsCompanion toCompanion(bool nullToAbsent) {
+    return SubjectColorsCompanion(subject: Value(subject), color: Value(color));
+  }
+
+  factory SubjectColorRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SubjectColorRow(
+      subject: serializer.fromJson<String>(json['subject']),
+      color: serializer.fromJson<int>(json['color']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'subject': serializer.toJson<String>(subject),
+      'color': serializer.toJson<int>(color),
+    };
+  }
+
+  SubjectColorRow copyWith({String? subject, int? color}) => SubjectColorRow(
+    subject: subject ?? this.subject,
+    color: color ?? this.color,
+  );
+  SubjectColorRow copyWithCompanion(SubjectColorsCompanion data) {
+    return SubjectColorRow(
+      subject: data.subject.present ? data.subject.value : this.subject,
+      color: data.color.present ? data.color.value : this.color,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SubjectColorRow(')
+          ..write('subject: $subject, ')
+          ..write('color: $color')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(subject, color);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SubjectColorRow &&
+          other.subject == this.subject &&
+          other.color == this.color);
+}
+
+class SubjectColorsCompanion extends UpdateCompanion<SubjectColorRow> {
+  final Value<String> subject;
+  final Value<int> color;
+  final Value<int> rowid;
+  const SubjectColorsCompanion({
+    this.subject = const Value.absent(),
+    this.color = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SubjectColorsCompanion.insert({
+    required String subject,
+    required int color,
+    this.rowid = const Value.absent(),
+  }) : subject = Value(subject),
+       color = Value(color);
+  static Insertable<SubjectColorRow> custom({
+    Expression<String>? subject,
+    Expression<int>? color,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (subject != null) 'subject': subject,
+      if (color != null) 'color': color,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SubjectColorsCompanion copyWith({
+    Value<String>? subject,
+    Value<int>? color,
+    Value<int>? rowid,
+  }) {
+    return SubjectColorsCompanion(
+      subject: subject ?? this.subject,
+      color: color ?? this.color,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (subject.present) {
+      map['subject'] = Variable<String>(subject.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SubjectColorsCompanion(')
+          ..write('subject: $subject, ')
+          ..write('color: $color, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -9482,6 +9694,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CalendarReminderStatesTable(this);
   late final $CardProfilesTable cardProfiles = $CardProfilesTable(this);
   late final $CardPhotosTable cardPhotos = $CardPhotosTable(this);
+  late final $SubjectColorsTable subjectColors = $SubjectColorsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9504,6 +9717,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     calendarReminderStates,
     cardProfiles,
     cardPhotos,
+    subjectColors,
   ];
 }
 
@@ -14296,6 +14510,158 @@ typedef $$CardPhotosTableProcessedTableManager =
       CardPhotoRow,
       PrefetchHooks Function()
     >;
+typedef $$SubjectColorsTableCreateCompanionBuilder =
+    SubjectColorsCompanion Function({
+      required String subject,
+      required int color,
+      Value<int> rowid,
+    });
+typedef $$SubjectColorsTableUpdateCompanionBuilder =
+    SubjectColorsCompanion Function({
+      Value<String> subject,
+      Value<int> color,
+      Value<int> rowid,
+    });
+
+class $$SubjectColorsTableFilterComposer
+    extends Composer<_$AppDatabase, $SubjectColorsTable> {
+  $$SubjectColorsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get subject => $composableBuilder(
+    column: $table.subject,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SubjectColorsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SubjectColorsTable> {
+  $$SubjectColorsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get subject => $composableBuilder(
+    column: $table.subject,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SubjectColorsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SubjectColorsTable> {
+  $$SubjectColorsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get subject =>
+      $composableBuilder(column: $table.subject, builder: (column) => column);
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+}
+
+class $$SubjectColorsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SubjectColorsTable,
+          SubjectColorRow,
+          $$SubjectColorsTableFilterComposer,
+          $$SubjectColorsTableOrderingComposer,
+          $$SubjectColorsTableAnnotationComposer,
+          $$SubjectColorsTableCreateCompanionBuilder,
+          $$SubjectColorsTableUpdateCompanionBuilder,
+          (
+            SubjectColorRow,
+            BaseReferences<_$AppDatabase, $SubjectColorsTable, SubjectColorRow>,
+          ),
+          SubjectColorRow,
+          PrefetchHooks Function()
+        > {
+  $$SubjectColorsTableTableManager(_$AppDatabase db, $SubjectColorsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SubjectColorsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SubjectColorsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SubjectColorsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> subject = const Value.absent(),
+                Value<int> color = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SubjectColorsCompanion(
+                subject: subject,
+                color: color,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String subject,
+                required int color,
+                Value<int> rowid = const Value.absent(),
+              }) => SubjectColorsCompanion.insert(
+                subject: subject,
+                color: color,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SubjectColorsTable, SubjectColorRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $SubjectColorsTable,
+                    SubjectColorRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SubjectColorsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SubjectColorsTable,
+      SubjectColorRow,
+      $$SubjectColorsTableFilterComposer,
+      $$SubjectColorsTableOrderingComposer,
+      $$SubjectColorsTableAnnotationComposer,
+      $$SubjectColorsTableCreateCompanionBuilder,
+      $$SubjectColorsTableUpdateCompanionBuilder,
+      (
+        SubjectColorRow,
+        BaseReferences<_$AppDatabase, $SubjectColorsTable, SubjectColorRow>,
+      ),
+      SubjectColorRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14337,4 +14703,6 @@ class $AppDatabaseManager {
       $$CardProfilesTableTableManager(_db, _db.cardProfiles);
   $$CardPhotosTableTableManager get cardPhotos =>
       $$CardPhotosTableTableManager(_db, _db.cardPhotos);
+  $$SubjectColorsTableTableManager get subjectColors =>
+      $$SubjectColorsTableTableManager(_db, _db.subjectColors);
 }

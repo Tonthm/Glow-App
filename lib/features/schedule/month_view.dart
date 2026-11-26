@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/calendar_view.dart';
+import '../../core/subject_color.dart';
 import '../../theme/tokens.dart';
 import 'calendar_marks.dart';
 
@@ -12,6 +13,7 @@ class MonthView extends StatelessWidget {
   final int firstWeekday;
   final Map<DateTime, List<CalendarItem>> items;
   final ValueChanged<DateTime> onDayTap;
+  final Map<String, int> colors;
 
   const MonthView({
     super.key,
@@ -20,6 +22,7 @@ class MonthView extends StatelessWidget {
     required this.firstWeekday,
     required this.items,
     required this.onDayTap,
+    this.colors = const {},
   });
 
   @override
@@ -66,6 +69,7 @@ class MonthView extends StatelessWidget {
                       inMonth: day.month == month.month,
                       isToday: isSameDay(day, today),
                       items: items[day] ?? const [],
+                      colors: colors,
                       onTap: () => onDayTap(day),
                     ),
                   ),
@@ -85,8 +89,10 @@ class _DayCell extends StatelessWidget {
   final bool isToday;
   final List<CalendarItem> items;
   final VoidCallback onTap;
+  final Map<String, int> colors;
 
   const _DayCell({
+    required this.colors,
     required this.day,
     required this.inMonth,
     required this.isToday,
@@ -153,10 +159,16 @@ class _DayCell extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    for (final kind in marks)
+                    for (final mark in dayColorMarks(
+                      items,
+                      (title) => colorOfSubject(colors, title),
+                    ))
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 1),
-                        child: CalendarMark(kind),
+                        child: CalendarMark(
+                          mark.kind,
+                          subjectColor: mark.color,
+                        ),
                       ),
                   ],
                 ),

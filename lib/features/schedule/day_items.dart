@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/calendar_view.dart';
+import '../../core/subject_color.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_card.dart';
@@ -59,8 +60,14 @@ String _detail(CalendarItem item) => [
 class CalendarItemRow extends StatelessWidget {
   final CalendarItem item;
   final VoidCallback onTap;
+  final Map<String, int> colors;
 
-  const CalendarItemRow({super.key, required this.item, required this.onTap});
+  const CalendarItemRow({
+    super.key,
+    required this.item,
+    required this.onTap,
+    this.colors = const {},
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +79,11 @@ class CalendarItemRow extends StatelessWidget {
         padding: const EdgeInsets.all(GlowSpacing.md),
         child: Row(
           children: [
-            CalendarMark(item.kind, size: 10),
+            CalendarMark(
+              item.kind,
+              size: 10,
+              subjectColor: colorOfSubject(colors, item.title),
+            ),
             const SizedBox(width: GlowSpacing.md),
             Expanded(
               child: Column(
@@ -136,6 +147,7 @@ class _DaySheet extends ConsumerWidget {
               for (final item in items)
                 CalendarItemRow(
                   item: item,
+                  colors: data.colors,
                   onTap: () => openCalendarItem(context, data, item),
                 ),
             ],

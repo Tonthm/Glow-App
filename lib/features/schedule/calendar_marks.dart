@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/calendar_view.dart';
 import '../../theme/glow_colors.dart';
 import '../../theme/tokens.dart';
+import '../shared/subject_colors.dart';
 
 String calendarKindLabel(CalendarKind kind) => switch (kind) {
   CalendarKind.holiday => 'วันหยุด',
@@ -44,12 +45,25 @@ class CalendarMark extends StatelessWidget {
   final CalendarKind kind;
   final double size;
 
-  const CalendarMark(this.kind, {super.key, this.size = 7});
+  /// The subject's own color; the shape still says the kind.
+  final int? subjectColor;
+
+  const CalendarMark(
+    this.kind, {
+    super.key,
+    this.size = 7,
+    this.subjectColor,
+  });
 
   @override
   Widget build(BuildContext context) => CustomPaint(
     size: Size.square(size),
-    painter: _MarkPainter(kind, calendarMarkColor(context, kind)),
+    painter: _MarkPainter(
+      kind,
+      subjectColor == null
+          ? calendarMarkColor(context, kind)
+          : visibleMarkColor(context, subjectColor!),
+    ),
   );
 }
 

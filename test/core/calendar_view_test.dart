@@ -403,6 +403,29 @@ void main() {
     );
   });
 
+  test('subjects with their own colors get their own marks', () {
+    final items = _on(
+      today,
+      weekly: [
+        _weekly(1, DateTime.thursday, 8, 9, title: 'a'),
+        _weekly(2, DateTime.thursday, 9, 10, title: 'b'),
+        _weekly(3, DateTime.thursday, 10, 11, title: 'c'),
+        _weekly(4, DateTime.thursday, 11, 12, title: 'd'),
+        _weekly(5, DateTime.thursday, 12, 13, title: 'e'),
+      ],
+      oneTime: [_once(6, today, ItemKind.exam, from: 14, to: 15)],
+    );
+    final colors = {'a': 1, 'b': 1, 'c': 2};
+    final marks = dayColorMarks(items, (title) => colors[title]);
+    // Two reds share a mark; there is room for four, exam first.
+    expect(marks, [
+      (kind: CalendarKind.exam, color: null),
+      (kind: CalendarKind.classSession, color: 1),
+      (kind: CalendarKind.classSession, color: 2),
+      (kind: CalendarKind.classSession, color: null),
+    ]);
+  });
+
   group('time grid', () {
     List<CalendarItem> timed(List<(int, int)> spans) => [
       for (final (i, (from, to)) in spans.indexed)

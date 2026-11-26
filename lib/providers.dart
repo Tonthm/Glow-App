@@ -16,6 +16,7 @@ import 'data/schedule_repository.dart';
 import 'data/settings_repository.dart';
 import 'data/shop_repository.dart';
 import 'data/stats_repository.dart';
+import 'data/subject_color_repository.dart';
 import 'data/wallet_repository.dart';
 import 'services/backup_service.dart';
 import 'services/calendar_import_service.dart';
@@ -124,6 +125,15 @@ final cardRepositoryProvider = Provider<CardRepository>((ref) {
 
 final cardProfileStreamProvider = StreamProvider<CardProfileRow>((ref) {
   return ref.watch(cardRepositoryProvider).watch();
+});
+
+final subjectColorRepositoryProvider = Provider<SubjectColorRepository>((ref) {
+  return SubjectColorRepository(ref.watch(databaseProvider));
+});
+
+/// Subject colors by subjectKey.
+final subjectColorsProvider = StreamProvider<Map<String, int>>((ref) {
+  return ref.watch(subjectColorRepositoryProvider).watch();
 });
 
 final eveningTasksStreamProvider = StreamProvider<List<EveningTask>>((ref) {

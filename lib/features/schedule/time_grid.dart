@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/calendar_view.dart';
 import '../../theme/tokens.dart';
+import '../shared/subject_colors.dart';
 import 'calendar_marks.dart';
 
 const double _hourHeight = 48;
@@ -20,6 +21,7 @@ class TimeGrid extends StatelessWidget {
   /// With it, each column has a heading that opens that day. It also marks
   /// what has no time, which the grid can't place.
   final ValueChanged<DateTime>? onDayTap;
+  final Map<String, int> colors;
 
   const TimeGrid({
     super.key,
@@ -29,6 +31,7 @@ class TimeGrid extends StatelessWidget {
     required this.onEmptyTap,
     required this.onItemTap,
     this.onDayTap,
+    this.colors = const {},
   });
 
   @override
@@ -106,6 +109,7 @@ class TimeGrid extends StatelessWidget {
                       line: line,
                       onEmptyTap: onEmptyTap,
                       onItemTap: onItemTap,
+                      colors: colors,
                     ),
                   ),
                 ),
@@ -201,8 +205,10 @@ class _DayColumn extends StatelessWidget {
   final BorderSide line;
   final void Function(DateTime date, TimeOfDay start) onEmptyTap;
   final ValueChanged<CalendarItem> onItemTap;
+  final Map<String, int> colors;
 
   const _DayColumn({
+    required this.colors,
     required this.day,
     required this.items,
     required this.wide,
@@ -257,7 +263,9 @@ class _DayColumn extends StatelessWidget {
                   excludeSemantics: true,
                   onTap: () => onItemTap(item),
                   child: Material(
-                    color: calendarKindFill(context, item.kind),
+                    color:
+                        subjectBlockColor(context, colors, item.title) ??
+                        calendarKindFill(context, item.kind),
                     shape: RoundedRectangleBorder(
                       side: BorderSide(
                         color: theme.colorScheme.outline,

@@ -344,6 +344,29 @@ List<CalendarKind> dayMarks(List<CalendarItem> items) => [
     if (kind != CalendarKind.holiday && items.any((i) => i.kind == kind)) kind,
 ];
 
+/// One mark in a month cell: its kind, and its subject's color if it has one.
+typedef DayMark = ({CalendarKind kind, int? color});
+
+const int maxDayMarks = 4;
+
+/// Like [dayMarks], but subjects with their own colors get their own marks.
+/// Exams come first, so they are never the ones left out.
+List<DayMark> dayColorMarks(
+  List<CalendarItem> items,
+  int? Function(String title) colorOf,
+) {
+  final marks = <DayMark>[];
+  for (final kind in CalendarKind.values) {
+    if (kind == CalendarKind.holiday) continue;
+    for (final item in items) {
+      if (item.kind != kind) continue;
+      final mark = (kind: kind, color: colorOf(item.title));
+      if (!marks.contains(mark)) marks.add(mark);
+    }
+  }
+  return marks.length > maxDayMarks ? marks.sublist(0, maxDayMarks) : marks;
+}
+
 // ---------- the time grid of the week and day views ----------
 
 const int _defaultFirstHour = 7;

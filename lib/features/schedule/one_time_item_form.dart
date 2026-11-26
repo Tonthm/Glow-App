@@ -2,8 +2,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' show Value;
 
+import '../../core/subject_color.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
+import '../shared/subject_color_picker.dart';
 import '../shared/time_of_day_field.dart';
 import '../shared/title_autocomplete_field.dart';
 import '../../services/app_clock.dart';
@@ -45,6 +47,8 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
   late bool _hasTime;
   late TimeOfDay _start;
   late TimeOfDay _end;
+  int? _color;
+  bool _colorPicked = false;
 
   @override
   void initState() {
@@ -72,6 +76,8 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
   @override
   Widget build(BuildContext context) {
     final weeklyAsync = ref.watch(weeklyItemsStreamProvider);
+    final colors = ref.watch(subjectColorsProvider).value ?? const {};
+    final color = _colorPicked ? _color : colorOfSubject(colors, _title);
     final oneTimeAsync = ref.watch(oneTimeItemsStreamProvider);
     final suggestions = <String>{
       ...weeklyAsync.value?.map((e) => e.title) ?? [],
@@ -169,6 +175,17 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
                 ),
               ],
             ],
+            // A holiday isn't a subject.
+            if (_type != OneTimeItemType.holiday) ...[
+              const SizedBox(height: 8),
+              SubjectColorPicker(
+                color: color,
+                onChanged: (v) => setState(() {
+                  _color = v;
+                  _colorPicked = true;
+                }),
+              ),
+            ],
             if (!_hasValidTimes)
               Text(
                 'เวลาจบต้องอยู่หลังเวลาเริ่ม',
@@ -209,6 +226,7 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
 
   Future<void> _save() async {
     final repo = ref.read(scheduleRepositoryProvider);
+    final colorRepo = ref.read(subjectColorRepositoryProvider);
     final includeTime = _type != OneTimeItemType.holiday && _hasTime;
     final startMinutes = includeTime ? _start.hour * 60 + _start.minute : null;
     final endMinutes = includeTime ? _end.hour * 60 + _end.minute : null;
@@ -232,6 +250,9 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
         startMinutes: startMinutes,
         endMinutes: endMinutes,
       );
+    }
+    if (_colorPicked && _type != OneTimeItemType.holiday) {
+      await colorRepo.set(_title, _color);
     }
     if (mounted) Navigator.of(context).pop();
   }

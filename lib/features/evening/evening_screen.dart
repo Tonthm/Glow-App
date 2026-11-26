@@ -10,6 +10,7 @@ import '../../data/evening_repository.dart';
 import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../../theme/tokens.dart';
+import '../shared/subject_colors.dart';
 import '../../theme/widgets/empty_state.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
@@ -261,9 +262,15 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
       padding: const EdgeInsets.symmetric(horizontal: GlowSpacing.md),
       constraints: const BoxConstraints(minHeight: 48),
       decoration: BoxDecoration(
-        color: isTask
-            ? theme.colorScheme.primary.withValues(alpha: 0.16)
-            : null,
+        color:
+            subjectBlockColor(
+              context,
+              ref.watch(subjectColorsProvider).value ?? const {},
+              block.title,
+            ) ??
+            (isTask
+                ? theme.colorScheme.primary.withValues(alpha: 0.16)
+                : null),
         border: Border.all(color: theme.dividerColor),
         borderRadius: BorderRadius.circular(GlowRadius.button),
       ),
@@ -372,7 +379,15 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
 
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(task.title),
+      title: Row(
+        children: [
+          SubjectDot(
+            ref.watch(subjectColorsProvider).value ?? const {},
+            task.title,
+          ),
+          Expanded(child: Text(task.title)),
+        ],
+      ),
       subtitle: Text(
         [
           '${task.minutes - task.doneMinutes} นาที',
