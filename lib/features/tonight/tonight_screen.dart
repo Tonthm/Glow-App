@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:home_widget/home_widget.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,6 +34,7 @@ import '../settings/setting_row.dart';
 import '../shared/settings_button.dart';
 import '../stats/heatmap.dart';
 import '../stats/night_detail_sheet.dart';
+import '../web/web_reminder_bars.dart';
 import 'check_in_card.dart';
 import 'check_in_result_screen.dart';
 import 'fire_badge.dart';
@@ -142,7 +142,9 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
 
   // The widgets follow every change to the plan, the press, and check-ins.
   final database = ref.watch(databaseProvider);
-  unawaited(updateHomeWidgets(database, now));
+  if (ref.watch(platformCapabilitiesProvider).homeWidget) {
+    unawaited(updateHomeWidgets(database, now));
+  }
 
   final wakeDate = resolveTonightWakeDate(now);
   final draft = await repo.getOrLockPlan(wakeDate, now: now);
@@ -232,11 +234,13 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   @override
   void initState() {
     super.initState();
-    _widgetTaps = HomeWidget.widgetClicked.listen((_) {
-      if (!mounted) return;
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      ref.read(selectedTabIndexProvider.notifier).state = 0;
-    }, onError: (_) {});
+    if (ref.read(platformCapabilitiesProvider).homeWidget) {
+      _widgetTaps = widgetTaps().listen((_) {
+        if (!mounted) return;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        ref.read(selectedTabIndexProvider.notifier).state = 0;
+      }, onError: (_) {});
+    }
     _notifications.routineRequested.addListener(_onRoutineRequested);
     _checkPermissions();
     _minuteTick = Timer.periodic(const Duration(seconds: 20), (_) {
@@ -332,6 +336,13 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                       error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
                       data: _buildPlan,
                     ),
+                  if (hasSchedule &&
+                      ref
+                          .watch(platformCapabilitiesProvider)
+                          .calendarReminders) ...[
+                    const SizedBox(height: GlowSpacing.lg),
+                    const WebReminderBars(),
+                  ],
                 ],
               ),
             ),

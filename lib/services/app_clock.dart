@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
+
+import 'clock_offset_store.dart';
 
 /// The one source of "now" for screens and services, so demo mode can move
 /// time. Outside debug builds the offset is always zero.
@@ -37,18 +36,13 @@ final clockProvider = Provider<DateTime Function()>((ref) {
   return () => DateTime.now().add(offset);
 });
 
-Future<File> _offsetFile() async {
-  final dir = await getApplicationSupportDirectory();
-  return File('${dir.path}/demo_clock_offset');
-}
-
 /// Kept across restarts so closing the app mid-demo doesn't jump back.
 Future<Duration> loadClockOffset() async {
   if (!kDebugMode) return Duration.zero;
   try {
-    final file = await _offsetFile();
-    if (!await file.exists()) return Duration.zero;
-    return Duration(seconds: int.parse(await file.readAsString()));
+    final stored = await readStoredClockOffset();
+    if (stored == null) return Duration.zero;
+    return Duration(seconds: int.parse(stored));
   } catch (_) {
     return Duration.zero;
   }
@@ -56,8 +50,7 @@ Future<Duration> loadClockOffset() async {
 
 Future<void> saveClockOffset(Duration offset) async {
   try {
-    final file = await _offsetFile();
-    await file.writeAsString('${offset.inSeconds}');
+    await writeStoredClockOffset('${offset.inSeconds}');
   } catch (_) {
     // Losing the demo offset is harmless.
   }

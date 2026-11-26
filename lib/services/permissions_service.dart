@@ -1,32 +1,27 @@
-import 'package:permission_handler/permission_handler.dart';
+import 'permissions_service_io.dart'
+    if (dart.library.js_interop) 'permissions_service_web.dart'
+    as platform;
 
-/// Thin wrapper around permission_handler for the permissions Glow needs.
+/// The permissions Glow needs.
 /// Never requests battery-optimization exemption via a popup (Play policy +
 /// CLAUDE.md section 5) — that one is always a manual trip to system
 /// Settings, guided by [BatteryOptimizationGuide].
-class PermissionsService {
-  Future<bool> requestNotifications() async {
-    final status = await Permission.notification.request();
-    return status.isGranted;
-  }
+abstract interface class PermissionsService {
+  Future<bool> requestNotifications();
 
-  Future<bool> hasNotificationsPermission() async {
-    return Permission.notification.isGranted;
-  }
+  Future<bool> hasNotificationsPermission();
 
   /// Android 12+: exact alarms. If denied, callers should fall back to
   /// inexact scheduling and warn the user it may drift by a few minutes.
-  Future<bool> requestExactAlarms() async {
-    final status = await Permission.scheduleExactAlarm.request();
-    return status.isGranted;
-  }
+  Future<bool> requestExactAlarms();
 
-  Future<bool> hasExactAlarmPermission() async {
-    return Permission.scheduleExactAlarm.isGranted;
-  }
+  Future<bool> hasExactAlarmPermission();
 
-  Future<void> openSystemAppSettings() => openAppSettings();
+  Future<void> openSystemAppSettings();
 }
+
+PermissionsService createPermissionsService() =>
+    platform.createPermissionsService();
 
 enum PhoneBrand { xiaomi, oppo, vivo, samsung, other }
 

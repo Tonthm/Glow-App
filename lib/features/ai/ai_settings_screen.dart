@@ -166,7 +166,10 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ],
           ),
           Text(
-            'key เก็บในที่เก็บแบบเข้ารหัสของเครื่อง ไม่อยู่ในไฟล์สำรอง',
+            ref.watch(platformCapabilitiesProvider).keyInBrowserStorage
+                ? 'key เก็บในที่เก็บข้อมูลของเบราว์เซอร์ ซึ่งปลอดภัยน้อยกว่าบน '
+                      'Android ใช้ key ที่จำกัดสิทธิ์และวงเงินไว้ ไม่อยู่ในไฟล์สำรอง'
+                : 'key เก็บในที่เก็บแบบเข้ารหัสของเครื่อง ไม่อยู่ในไฟล์สำรอง',
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: GlowSpacing.md),

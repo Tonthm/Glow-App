@@ -154,24 +154,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               if (picked != null) setState(() => _freeDayWake = picked);
             },
           ),
-          const Divider(height: 32),
-          const Text(
-            'การแจ้งเตือน',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          FilledButton.tonal(
-            onPressed: _notificationsRequested ? null : _requestNotifications,
-            child: Text(
-              _notificationsRequested
-                  ? 'ขอสิทธิ์แจ้งเตือนแล้ว'
-                  : 'ขอสิทธิ์แจ้งเตือน',
+          if (ref.watch(platformCapabilitiesProvider).deviceSetupHelp) ...[
+            const Divider(height: 32),
+            const Text(
+              'การแจ้งเตือน',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: () => showBatteryOptimizationSheet(context),
-            child: const Text('ปิดการประหยัดแบตให้ Glow'),
-          ),
+            FilledButton.tonal(
+              onPressed: _notificationsRequested ? null : _requestNotifications,
+              child: Text(
+                _notificationsRequested
+                    ? 'ขอสิทธิ์แจ้งเตือนแล้ว'
+                    : 'ขอสิทธิ์แจ้งเตือน',
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: () => showBatteryOptimizationSheet(context),
+              child: const Text('ปิดการประหยัดแบตให้ Glow'),
+            ),
+          ],
           const SizedBox(height: 32),
           FilledButton(
             onPressed: () async {

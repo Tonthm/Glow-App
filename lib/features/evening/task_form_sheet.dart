@@ -236,11 +236,14 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
                     style: textTheme.titleLarge,
                   ),
                 ),
-                IconButton(
-                  icon: Icon(_listening ? Icons.stop : Icons.mic_none_outlined),
-                  tooltip: _listening ? 'หยุดฟัง' : 'พูดเพิ่มงาน',
-                  onPressed: _toggleMic,
-                ),
+                if (ref.watch(platformCapabilitiesProvider).voiceInput)
+                  IconButton(
+                    icon: Icon(
+                      _listening ? Icons.stop : Icons.mic_none_outlined,
+                    ),
+                    tooltip: _listening ? 'หยุดฟัง' : 'พูดเพิ่มงาน',
+                    onPressed: _toggleMic,
+                  ),
               ],
             ),
             if (_listening || _message != null)

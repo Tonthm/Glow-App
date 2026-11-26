@@ -19,6 +19,7 @@ import 'services/calendar_import_service.dart';
 import 'services/debug_sample_data_service.dart';
 import 'services/notification_service.dart';
 import 'services/permissions_service.dart';
+import 'services/platform/platform_capabilities.dart';
 import 'services/screen_service.dart';
 import 'services/speech_service.dart';
 
@@ -155,11 +156,16 @@ final oneTimeItemsStreamProvider = StreamProvider<List<OneTimeItem>>((ref) {
 });
 
 final permissionsServiceProvider = Provider<PermissionsService>((ref) {
-  return PermissionsService();
+  return createPermissionsService();
 });
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
-  return NotificationService(ref.watch(permissionsServiceProvider));
+  return createNotificationService(ref.watch(permissionsServiceProvider));
+});
+
+/// Overridable, so tests can show the web version's screens.
+final platformCapabilitiesProvider = Provider<PlatformCapabilities>((ref) {
+  return PlatformCapabilities.current;
 });
 
 final screenServiceProvider = Provider<ScreenService>((ref) {

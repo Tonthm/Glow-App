@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../data/calendar_reminder_repository.dart';
 import '../data/database.dart';
 import 'ai/api_key_store.dart';
+import 'file_saver.dart';
 
 /// Exports/imports every table as a single JSON file, per CLAUDE.md section
 /// 12 ("สำรองข้อมูลเป็นไฟล์ JSON และนำเข้าได้ ใช้ตอนย้ายเครื่อง").
@@ -13,7 +15,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 5;
+  static const _version = 6;
 
   Future<Map<String, dynamic>> buildSnapshot() async {
     Future<List<Map<String, dynamic>>>
@@ -40,6 +42,8 @@ class BackupService {
       'eveningTasks': await dump(db.eveningTasks),
       // The API key is in secure storage and is never part of a backup.
       'aiSettings': await dump(db.aiSettings),
+      // Keeps the SEQUENCE counters, so re-added reminders still update.
+      'calendarReminderStates': await dump(db.calendarReminderStates),
     };
   }
 
@@ -48,12 +52,15 @@ class BackupService {
     final snapshot = await buildSnapshot();
     final bytes = Uint8List.fromList(utf8.encode(jsonEncode(snapshot)));
     final stamp = DateTime.now().toIso8601String().replaceAll(':', '-');
-    final uri = await FilePicker.saveFile(
-      fileName: 'glow_backup_$stamp.json',
-      bytes: bytes,
-      mimeType: 'application/json',
+    final saved = await saveFile(
+      'glow_backup_$stamp.json',
+      bytes,
+      'application/json',
     );
-    return uri != null;
+    if (saved) {
+      await CalendarReminderRepository.markBackedUp(db, DateTime.now());
+    }
+    return saved;
   }
 
   /// Returns true if the user picked a file and it was restored.
@@ -196,6 +203,11 @@ class BackupService {
         // A restored backup never switches AI on by itself.
         (j) =>
             AiSettingsRow.fromJson({...j, 'enabled': false}).toCompanion(false),
+      );
+      await load(
+        'calendarReminderStates',
+        db.calendarReminderStates,
+        (j) => CalendarReminderRow.fromJson(j).toCompanion(false),
       );
     });
   }

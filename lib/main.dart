@@ -6,15 +6,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_shell.dart';
 import 'data/database.dart';
 import 'features/onboarding/onboarding_screen.dart';
+import 'features/web/web_app_gate.dart';
 import 'providers.dart';
 import 'services/app_clock.dart';
 import 'services/background_refresh.dart';
+import 'services/web_app.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final clockOffset = await loadClockOffset();
   unawaited(registerBackgroundRefresh());
+  // Only does anything in a browser.
+  unawaited(requestPersistentStorage());
   // Riverpod's automatic retry keeps a failed provider in "loading", which
   // hides errors (e.g. a database that can't open) behind an endless spinner.
   runApp(
@@ -45,7 +49,7 @@ class GlowApp extends StatelessWidget {
         data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
         child: child!,
       ),
-      home: const _RootGate(),
+      home: const WebAppGate(child: _RootGate()),
     );
   }
 }

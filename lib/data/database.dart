@@ -359,6 +359,27 @@ class AiSettings extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Single-row table (id always 0) for the web version's calendar reminders
+/// and backup nudge (CLAUDE.md section 12).
+@DataClassName('CalendarReminderRow')
+class CalendarReminderStates extends Table {
+  IntColumn get id => integer().withDefault(const Constant(0))();
+  DateTimeColumn get lastAddedAt => dateTime().nullable()();
+
+  /// The start of the last reminder added.
+  DateTimeColumn get coveredUntil => dateTime().nullable()();
+
+  /// JSON: event id to its last SEQUENCE.
+  TextColumn get sequences => text().withDefault(const Constant('{}'))();
+
+  /// JSON: event id to start time, as last added. Shows if the plan moved.
+  TextColumn get events => text().withDefault(const Constant('{}'))();
+  DateTimeColumn get lastBackupAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Settings,
@@ -375,15 +396,26 @@ class AiSettings extends Table {
     RoutineLogs,
     EveningTasks,
     AiSettings,
+    CalendarReminderStates,
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(driftDatabase(name: 'glow'));
+  AppDatabase()
+    : super(
+        driftDatabase(
+          name: 'glow',
+          // Only used on the web; both files are in web/.
+          web: DriftWebOptions(
+            sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+            driftWorker: Uri.parse('drift_worker.js'),
+          ),
+        ),
+      );
 
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -490,6 +522,9 @@ class AppDatabase extends _$AppDatabase {
           eveningTasks.aiEstimateMinutes,
         );
         await _addColumnIfMissing(m, eveningTasks, eveningTasks.parentId);
+      }
+      if (from < 15) {
+        await m.createTable(calendarReminderStates);
       }
     },
   );

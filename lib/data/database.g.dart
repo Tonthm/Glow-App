@@ -8189,6 +8189,430 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
   }
 }
 
+class $CalendarReminderStatesTable extends CalendarReminderStates
+    with TableInfo<$CalendarReminderStatesTable, CalendarReminderRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CalendarReminderStatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastAddedAtMeta = const VerificationMeta(
+    'lastAddedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastAddedAt = GeneratedColumn<DateTime>(
+    'last_added_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _coveredUntilMeta = const VerificationMeta(
+    'coveredUntil',
+  );
+  @override
+  late final GeneratedColumn<DateTime> coveredUntil = GeneratedColumn<DateTime>(
+    'covered_until',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sequencesMeta = const VerificationMeta(
+    'sequences',
+  );
+  @override
+  late final GeneratedColumn<String> sequences = GeneratedColumn<String>(
+    'sequences',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _eventsMeta = const VerificationMeta('events');
+  @override
+  late final GeneratedColumn<String> events = GeneratedColumn<String>(
+    'events',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _lastBackupAtMeta = const VerificationMeta(
+    'lastBackupAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastBackupAt = GeneratedColumn<DateTime>(
+    'last_backup_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    lastAddedAt,
+    coveredUntil,
+    sequences,
+    events,
+    lastBackupAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'calendar_reminder_states';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CalendarReminderRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('last_added_at')) {
+      context.handle(
+        _lastAddedAtMeta,
+        lastAddedAt.isAcceptableOrUnknown(
+          data['last_added_at']!,
+          _lastAddedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('covered_until')) {
+      context.handle(
+        _coveredUntilMeta,
+        coveredUntil.isAcceptableOrUnknown(
+          data['covered_until']!,
+          _coveredUntilMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sequences')) {
+      context.handle(
+        _sequencesMeta,
+        sequences.isAcceptableOrUnknown(data['sequences']!, _sequencesMeta),
+      );
+    }
+    if (data.containsKey('events')) {
+      context.handle(
+        _eventsMeta,
+        events.isAcceptableOrUnknown(data['events']!, _eventsMeta),
+      );
+    }
+    if (data.containsKey('last_backup_at')) {
+      context.handle(
+        _lastBackupAtMeta,
+        lastBackupAt.isAcceptableOrUnknown(
+          data['last_backup_at']!,
+          _lastBackupAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CalendarReminderRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CalendarReminderRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      lastAddedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_added_at'],
+      ),
+      coveredUntil: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}covered_until'],
+      ),
+      sequences: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sequences'],
+      )!,
+      events: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}events'],
+      )!,
+      lastBackupAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_backup_at'],
+      ),
+    );
+  }
+
+  @override
+  $CalendarReminderStatesTable createAlias(String alias) {
+    return $CalendarReminderStatesTable(attachedDatabase, alias);
+  }
+}
+
+class CalendarReminderRow extends DataClass
+    implements Insertable<CalendarReminderRow> {
+  final int id;
+  final DateTime? lastAddedAt;
+
+  /// The start of the last reminder added.
+  final DateTime? coveredUntil;
+
+  /// JSON: event id to its last SEQUENCE.
+  final String sequences;
+
+  /// JSON: event id to start time, as last added. Shows if the plan moved.
+  final String events;
+  final DateTime? lastBackupAt;
+  const CalendarReminderRow({
+    required this.id,
+    this.lastAddedAt,
+    this.coveredUntil,
+    required this.sequences,
+    required this.events,
+    this.lastBackupAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || lastAddedAt != null) {
+      map['last_added_at'] = Variable<DateTime>(lastAddedAt);
+    }
+    if (!nullToAbsent || coveredUntil != null) {
+      map['covered_until'] = Variable<DateTime>(coveredUntil);
+    }
+    map['sequences'] = Variable<String>(sequences);
+    map['events'] = Variable<String>(events);
+    if (!nullToAbsent || lastBackupAt != null) {
+      map['last_backup_at'] = Variable<DateTime>(lastBackupAt);
+    }
+    return map;
+  }
+
+  CalendarReminderStatesCompanion toCompanion(bool nullToAbsent) {
+    return CalendarReminderStatesCompanion(
+      id: Value(id),
+      lastAddedAt: lastAddedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastAddedAt),
+      coveredUntil: coveredUntil == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coveredUntil),
+      sequences: Value(sequences),
+      events: Value(events),
+      lastBackupAt: lastBackupAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastBackupAt),
+    );
+  }
+
+  factory CalendarReminderRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CalendarReminderRow(
+      id: serializer.fromJson<int>(json['id']),
+      lastAddedAt: serializer.fromJson<DateTime?>(json['lastAddedAt']),
+      coveredUntil: serializer.fromJson<DateTime?>(json['coveredUntil']),
+      sequences: serializer.fromJson<String>(json['sequences']),
+      events: serializer.fromJson<String>(json['events']),
+      lastBackupAt: serializer.fromJson<DateTime?>(json['lastBackupAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'lastAddedAt': serializer.toJson<DateTime?>(lastAddedAt),
+      'coveredUntil': serializer.toJson<DateTime?>(coveredUntil),
+      'sequences': serializer.toJson<String>(sequences),
+      'events': serializer.toJson<String>(events),
+      'lastBackupAt': serializer.toJson<DateTime?>(lastBackupAt),
+    };
+  }
+
+  CalendarReminderRow copyWith({
+    int? id,
+    Value<DateTime?> lastAddedAt = const Value.absent(),
+    Value<DateTime?> coveredUntil = const Value.absent(),
+    String? sequences,
+    String? events,
+    Value<DateTime?> lastBackupAt = const Value.absent(),
+  }) => CalendarReminderRow(
+    id: id ?? this.id,
+    lastAddedAt: lastAddedAt.present ? lastAddedAt.value : this.lastAddedAt,
+    coveredUntil: coveredUntil.present ? coveredUntil.value : this.coveredUntil,
+    sequences: sequences ?? this.sequences,
+    events: events ?? this.events,
+    lastBackupAt: lastBackupAt.present ? lastBackupAt.value : this.lastBackupAt,
+  );
+  CalendarReminderRow copyWithCompanion(CalendarReminderStatesCompanion data) {
+    return CalendarReminderRow(
+      id: data.id.present ? data.id.value : this.id,
+      lastAddedAt: data.lastAddedAt.present
+          ? data.lastAddedAt.value
+          : this.lastAddedAt,
+      coveredUntil: data.coveredUntil.present
+          ? data.coveredUntil.value
+          : this.coveredUntil,
+      sequences: data.sequences.present ? data.sequences.value : this.sequences,
+      events: data.events.present ? data.events.value : this.events,
+      lastBackupAt: data.lastBackupAt.present
+          ? data.lastBackupAt.value
+          : this.lastBackupAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CalendarReminderRow(')
+          ..write('id: $id, ')
+          ..write('lastAddedAt: $lastAddedAt, ')
+          ..write('coveredUntil: $coveredUntil, ')
+          ..write('sequences: $sequences, ')
+          ..write('events: $events, ')
+          ..write('lastBackupAt: $lastBackupAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    lastAddedAt,
+    coveredUntil,
+    sequences,
+    events,
+    lastBackupAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CalendarReminderRow &&
+          other.id == this.id &&
+          other.lastAddedAt == this.lastAddedAt &&
+          other.coveredUntil == this.coveredUntil &&
+          other.sequences == this.sequences &&
+          other.events == this.events &&
+          other.lastBackupAt == this.lastBackupAt);
+}
+
+class CalendarReminderStatesCompanion
+    extends UpdateCompanion<CalendarReminderRow> {
+  final Value<int> id;
+  final Value<DateTime?> lastAddedAt;
+  final Value<DateTime?> coveredUntil;
+  final Value<String> sequences;
+  final Value<String> events;
+  final Value<DateTime?> lastBackupAt;
+  const CalendarReminderStatesCompanion({
+    this.id = const Value.absent(),
+    this.lastAddedAt = const Value.absent(),
+    this.coveredUntil = const Value.absent(),
+    this.sequences = const Value.absent(),
+    this.events = const Value.absent(),
+    this.lastBackupAt = const Value.absent(),
+  });
+  CalendarReminderStatesCompanion.insert({
+    this.id = const Value.absent(),
+    this.lastAddedAt = const Value.absent(),
+    this.coveredUntil = const Value.absent(),
+    this.sequences = const Value.absent(),
+    this.events = const Value.absent(),
+    this.lastBackupAt = const Value.absent(),
+  });
+  static Insertable<CalendarReminderRow> custom({
+    Expression<int>? id,
+    Expression<DateTime>? lastAddedAt,
+    Expression<DateTime>? coveredUntil,
+    Expression<String>? sequences,
+    Expression<String>? events,
+    Expression<DateTime>? lastBackupAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (lastAddedAt != null) 'last_added_at': lastAddedAt,
+      if (coveredUntil != null) 'covered_until': coveredUntil,
+      if (sequences != null) 'sequences': sequences,
+      if (events != null) 'events': events,
+      if (lastBackupAt != null) 'last_backup_at': lastBackupAt,
+    });
+  }
+
+  CalendarReminderStatesCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime?>? lastAddedAt,
+    Value<DateTime?>? coveredUntil,
+    Value<String>? sequences,
+    Value<String>? events,
+    Value<DateTime?>? lastBackupAt,
+  }) {
+    return CalendarReminderStatesCompanion(
+      id: id ?? this.id,
+      lastAddedAt: lastAddedAt ?? this.lastAddedAt,
+      coveredUntil: coveredUntil ?? this.coveredUntil,
+      sequences: sequences ?? this.sequences,
+      events: events ?? this.events,
+      lastBackupAt: lastBackupAt ?? this.lastBackupAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (lastAddedAt.present) {
+      map['last_added_at'] = Variable<DateTime>(lastAddedAt.value);
+    }
+    if (coveredUntil.present) {
+      map['covered_until'] = Variable<DateTime>(coveredUntil.value);
+    }
+    if (sequences.present) {
+      map['sequences'] = Variable<String>(sequences.value);
+    }
+    if (events.present) {
+      map['events'] = Variable<String>(events.value);
+    }
+    if (lastBackupAt.present) {
+      map['last_backup_at'] = Variable<DateTime>(lastBackupAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CalendarReminderStatesCompanion(')
+          ..write('id: $id, ')
+          ..write('lastAddedAt: $lastAddedAt, ')
+          ..write('coveredUntil: $coveredUntil, ')
+          ..write('sequences: $sequences, ')
+          ..write('events: $events, ')
+          ..write('lastBackupAt: $lastBackupAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -8209,6 +8633,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RoutineLogsTable routineLogs = $RoutineLogsTable(this);
   late final $EveningTasksTable eveningTasks = $EveningTasksTable(this);
   late final $AiSettingsTable aiSettings = $AiSettingsTable(this);
+  late final $CalendarReminderStatesTable calendarReminderStates =
+      $CalendarReminderStatesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8228,6 +8654,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     routineLogs,
     eveningTasks,
     aiSettings,
+    calendarReminderStates,
   ];
 }
 
@@ -12309,6 +12736,256 @@ typedef $$AiSettingsTableProcessedTableManager =
       AiSettingsRow,
       PrefetchHooks Function()
     >;
+typedef $$CalendarReminderStatesTableCreateCompanionBuilder =
+    CalendarReminderStatesCompanion Function({
+      Value<int> id,
+      Value<DateTime?> lastAddedAt,
+      Value<DateTime?> coveredUntil,
+      Value<String> sequences,
+      Value<String> events,
+      Value<DateTime?> lastBackupAt,
+    });
+typedef $$CalendarReminderStatesTableUpdateCompanionBuilder =
+    CalendarReminderStatesCompanion Function({
+      Value<int> id,
+      Value<DateTime?> lastAddedAt,
+      Value<DateTime?> coveredUntil,
+      Value<String> sequences,
+      Value<String> events,
+      Value<DateTime?> lastBackupAt,
+    });
+
+class $$CalendarReminderStatesTableFilterComposer
+    extends Composer<_$AppDatabase, $CalendarReminderStatesTable> {
+  $$CalendarReminderStatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastAddedAt => $composableBuilder(
+    column: $table.lastAddedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get coveredUntil => $composableBuilder(
+    column: $table.coveredUntil,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sequences => $composableBuilder(
+    column: $table.sequences,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get events => $composableBuilder(
+    column: $table.events,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastBackupAt => $composableBuilder(
+    column: $table.lastBackupAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CalendarReminderStatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CalendarReminderStatesTable> {
+  $$CalendarReminderStatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastAddedAt => $composableBuilder(
+    column: $table.lastAddedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get coveredUntil => $composableBuilder(
+    column: $table.coveredUntil,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sequences => $composableBuilder(
+    column: $table.sequences,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get events => $composableBuilder(
+    column: $table.events,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastBackupAt => $composableBuilder(
+    column: $table.lastBackupAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CalendarReminderStatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CalendarReminderStatesTable> {
+  $$CalendarReminderStatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastAddedAt => $composableBuilder(
+    column: $table.lastAddedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get coveredUntil => $composableBuilder(
+    column: $table.coveredUntil,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sequences =>
+      $composableBuilder(column: $table.sequences, builder: (column) => column);
+
+  GeneratedColumn<String> get events =>
+      $composableBuilder(column: $table.events, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastBackupAt => $composableBuilder(
+    column: $table.lastBackupAt,
+    builder: (column) => column,
+  );
+}
+
+class $$CalendarReminderStatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CalendarReminderStatesTable,
+          CalendarReminderRow,
+          $$CalendarReminderStatesTableFilterComposer,
+          $$CalendarReminderStatesTableOrderingComposer,
+          $$CalendarReminderStatesTableAnnotationComposer,
+          $$CalendarReminderStatesTableCreateCompanionBuilder,
+          $$CalendarReminderStatesTableUpdateCompanionBuilder,
+          (
+            CalendarReminderRow,
+            BaseReferences<
+              _$AppDatabase,
+              $CalendarReminderStatesTable,
+              CalendarReminderRow
+            >,
+          ),
+          CalendarReminderRow,
+          PrefetchHooks Function()
+        > {
+  $$CalendarReminderStatesTableTableManager(
+    _$AppDatabase db,
+    $CalendarReminderStatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CalendarReminderStatesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$CalendarReminderStatesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CalendarReminderStatesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime?> lastAddedAt = const Value.absent(),
+                Value<DateTime?> coveredUntil = const Value.absent(),
+                Value<String> sequences = const Value.absent(),
+                Value<String> events = const Value.absent(),
+                Value<DateTime?> lastBackupAt = const Value.absent(),
+              }) => CalendarReminderStatesCompanion(
+                id: id,
+                lastAddedAt: lastAddedAt,
+                coveredUntil: coveredUntil,
+                sequences: sequences,
+                events: events,
+                lastBackupAt: lastBackupAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime?> lastAddedAt = const Value.absent(),
+                Value<DateTime?> coveredUntil = const Value.absent(),
+                Value<String> sequences = const Value.absent(),
+                Value<String> events = const Value.absent(),
+                Value<DateTime?> lastBackupAt = const Value.absent(),
+              }) => CalendarReminderStatesCompanion.insert(
+                id: id,
+                lastAddedAt: lastAddedAt,
+                coveredUntil: coveredUntil,
+                sequences: sequences,
+                events: events,
+                lastBackupAt: lastBackupAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $CalendarReminderStatesTable,
+                    CalendarReminderRow
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $CalendarReminderStatesTable,
+                    CalendarReminderRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CalendarReminderStatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CalendarReminderStatesTable,
+      CalendarReminderRow,
+      $$CalendarReminderStatesTableFilterComposer,
+      $$CalendarReminderStatesTableOrderingComposer,
+      $$CalendarReminderStatesTableAnnotationComposer,
+      $$CalendarReminderStatesTableCreateCompanionBuilder,
+      $$CalendarReminderStatesTableUpdateCompanionBuilder,
+      (
+        CalendarReminderRow,
+        BaseReferences<
+          _$AppDatabase,
+          $CalendarReminderStatesTable,
+          CalendarReminderRow
+        >,
+      ),
+      CalendarReminderRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -12341,4 +13018,9 @@ class $AppDatabaseManager {
       $$EveningTasksTableTableManager(_db, _db.eveningTasks);
   $$AiSettingsTableTableManager get aiSettings =>
       $$AiSettingsTableTableManager(_db, _db.aiSettings);
+  $$CalendarReminderStatesTableTableManager get calendarReminderStates =>
+      $$CalendarReminderStatesTableTableManager(
+        _db,
+        _db.calendarReminderStates,
+      );
 }

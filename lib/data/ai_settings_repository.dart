@@ -8,7 +8,13 @@ class AiSettingsRepository {
 
   AiSettingsRepository(this.db);
 
+  /// Reads first: an insert, even an ignored one, can wake the watchers, and
+  /// they call this again.
   Future<AiSettingsRow> get() async {
+    final existing = await (db.select(
+      db.aiSettings,
+    )..where((t) => t.id.equals(0))).getSingleOrNull();
+    if (existing != null) return existing;
     await db
         .into(db.aiSettings)
         .insert(

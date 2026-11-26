@@ -9,6 +9,7 @@ import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../ai/ai_providers.dart';
 import '../ai/ai_settings_screen.dart';
+import '../web/web_reminder_bars.dart';
 import '../demo/demo_button.dart';
 import '../../theme/theme_gallery_screen.dart';
 import '../shared/minutes_stepper.dart';
@@ -25,6 +26,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsStreamProvider);
+    final platform = ref.watch(platformCapabilitiesProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('ตั้งค่า')),
@@ -125,7 +127,9 @@ class SettingsScreen extends ConsumerWidget {
                   }
                 },
               ),
-              const _SectionHeader('การแจ้งเตือน'),
+              _SectionHeader(
+                platform.calendarReminders ? 'เตือนในปฏิทิน' : 'การแจ้งเตือน',
+              ),
               SwitchListTile(
                 title: const Text('เตือนวางมือถือ'),
                 value: settings.notifyPutPhoneDown,
@@ -151,27 +155,36 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: (v) => repo.updateNotificationToggles(checkIn: v),
               ),
               const Divider(),
-              const _ExactAlarmRow(),
-              SettingRow(
-                title: 'ทดสอบแจ้งเตือน',
-                value: 'อีก 1 นาที',
-                onTap: () async {
-                  await ref
-                      .read(notificationServiceProvider)
-                      .showTestNotification();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('ตั้งการแจ้งเตือนทดสอบแล้ว รออีก 1 นาที'),
-                      ),
-                    );
-                  }
-                },
-              ),
-              SettingRow(
-                title: 'ปิดการประหยัดแบตให้ Glow',
-                onTap: () => showBatteryOptimizationSheet(context),
-              ),
+              if (platform.calendarReminders)
+                SettingRow(
+                  title: 'เพิ่มเตือนลงปฏิทิน (7 วัน)',
+                  onTap: () => addCalendarReminders(context, ref),
+                ),
+              if (platform.deviceSetupHelp) const _ExactAlarmRow(),
+              if (platform.localNotifications)
+                SettingRow(
+                  title: 'ทดสอบแจ้งเตือน',
+                  value: 'อีก 1 นาที',
+                  onTap: () async {
+                    await ref
+                        .read(notificationServiceProvider)
+                        .showTestNotification();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'ตั้งการแจ้งเตือนทดสอบแล้ว รออีก 1 นาที',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              if (platform.deviceSetupHelp)
+                SettingRow(
+                  title: 'ปิดการประหยัดแบตให้ Glow',
+                  onTap: () => showBatteryOptimizationSheet(context),
+                ),
               const _SectionHeader('ท่าก่อนนอน'),
               SwitchListTile(
                 title: const Text('ท่าก่อนนอน'),
@@ -187,16 +200,17 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _SectionHeader('ตารางเย็น'),
               EveningSettingsRows(settings: settings),
-              const _SectionHeader('ผู้ช่วย AI'),
-              SettingRow(
-                title: 'ผู้ช่วย AI',
-                value: ref.watch(aiSettingsProvider).value?.enabled == true
-                    ? 'เปิด'
-                    : 'ปิด',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
+              if (platform.aiAssistant) const _SectionHeader('ผู้ช่วย AI'),
+              if (platform.aiAssistant)
+                SettingRow(
+                  title: 'ผู้ช่วย AI',
+                  value: ref.watch(aiSettingsProvider).value?.enabled == true
+                      ? 'เปิด'
+                      : 'ปิด',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
+                  ),
                 ),
-              ),
               const _SectionHeader('ลักษณะที่ปรากฏ'),
               SettingRow(
                 title: 'โหมดสี',

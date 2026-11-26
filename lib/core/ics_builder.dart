@@ -116,20 +116,20 @@ List<IcsEvent> icsEvents({
   required DateTime now,
 }) {
   return [
-    for (final night in nights)
-      for (final kind in IcsEventKind.values)
-        if (enabled.contains(kind))
-          IcsEvent(
-            uid: icsUid(night.wakeDate, kind),
-            kind: kind,
-            wakeDate: night.wakeDate,
-            start: switch (kind) {
-              IcsEventKind.putPhoneDown => night.notifyTime,
-              IcsEventKind.bedtime => night.bedtime,
-              IcsEventKind.checkIn => night.wakeTime.add(_checkInAfterWake),
-            },
-          ),
-  ].where((e) => e.start.isAfter(now)).toList()
+      for (final night in nights)
+        for (final kind in IcsEventKind.values)
+          if (enabled.contains(kind))
+            IcsEvent(
+              uid: icsUid(night.wakeDate, kind),
+              kind: kind,
+              wakeDate: night.wakeDate,
+              start: switch (kind) {
+                IcsEventKind.putPhoneDown => night.notifyTime,
+                IcsEventKind.bedtime => night.bedtime,
+                IcsEventKind.checkIn => night.wakeTime.add(_checkInAfterWake),
+              },
+            ),
+    ].where((e) => e.start.isAfter(now)).toList()
     ..sort((a, b) => a.start.compareTo(b.start));
 }
 

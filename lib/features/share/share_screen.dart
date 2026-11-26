@@ -1,14 +1,12 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
+import '../../services/image_share.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../room/blanket_color.dart';
@@ -50,12 +48,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       final image = await boundary.toImage(pixelRatio: 3);
       final data = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/glow_week.png');
-      await file.writeAsBytes(data!.buffer.asUint8List());
-      await SharePlus.instance.share(
-        ShareParams(files: [XFile(file.path, mimeType: 'image/png')]),
-      );
+      await sharePng(data!.buffer.asUint8List(), 'glow_week.png');
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

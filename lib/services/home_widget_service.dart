@@ -10,6 +10,9 @@ const _providers = [
   'com.example.glow.GlowMediumWidget',
 ];
 
+/// Taps on a home screen widget.
+Stream<Uri?> widgetTaps() => HomeWidget.widgetClicked;
+
 /// Pushes fresh text to the home screen widgets. A widget problem must never
 /// break the app, so failures are swallowed.
 Future<void> updateHomeWidgets(AppDatabase db, DateTime now) async {

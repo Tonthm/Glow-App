@@ -6,6 +6,7 @@ import 'package:glow/data/database.dart';
 
 /// What schema 14 added. Must run before evening_tasks is dropped.
 const _rewindFrom14 = [
+  'DROP TABLE calendar_reminder_states',
   'ALTER TABLE evening_tasks DROP COLUMN ai_estimate_minutes',
   'ALTER TABLE evening_tasks DROP COLUMN parent_id',
   'DROP TABLE ai_settings',
