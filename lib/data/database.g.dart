@@ -131,6 +131,47 @@ class $SettingsTable extends Settings
     requiredDuringInsert: false,
     defaultValue: const Constant(DateTime.sunday),
   );
+  static const VerificationMeta _notifyDeadlineMeta = const VerificationMeta(
+    'notifyDeadline',
+  );
+  @override
+  late final GeneratedColumn<bool> notifyDeadline = GeneratedColumn<bool>(
+    'notify_deadline',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("notify_deadline" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _notifyBeforeClassMeta = const VerificationMeta(
+    'notifyBeforeClass',
+  );
+  @override
+  late final GeneratedColumn<bool> notifyBeforeClass = GeneratedColumn<bool>(
+    'notify_before_class',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("notify_before_class" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _beforeClassMinutesMeta =
+      const VerificationMeta('beforeClassMinutes');
+  @override
+  late final GeneratedColumn<int> beforeClassMinutes = GeneratedColumn<int>(
+    'before_class_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(15),
+  );
   static const VerificationMeta _latestWakeMinutesMeta = const VerificationMeta(
     'latestWakeMinutes',
   );
@@ -449,6 +490,9 @@ class $SettingsTable extends Settings
     freeDayWakeMinutes,
     earliestClassMinutes,
     calendarFirstWeekday,
+    notifyDeadline,
+    notifyBeforeClass,
+    beforeClassMinutes,
     latestWakeMinutes,
     latestBedtimeMinutes,
     termStart,
@@ -567,6 +611,33 @@ class $SettingsTable extends Settings
         calendarFirstWeekday.isAcceptableOrUnknown(
           data['calendar_first_weekday']!,
           _calendarFirstWeekdayMeta,
+        ),
+      );
+    }
+    if (data.containsKey('notify_deadline')) {
+      context.handle(
+        _notifyDeadlineMeta,
+        notifyDeadline.isAcceptableOrUnknown(
+          data['notify_deadline']!,
+          _notifyDeadlineMeta,
+        ),
+      );
+    }
+    if (data.containsKey('notify_before_class')) {
+      context.handle(
+        _notifyBeforeClassMeta,
+        notifyBeforeClass.isAcceptableOrUnknown(
+          data['notify_before_class']!,
+          _notifyBeforeClassMeta,
+        ),
+      );
+    }
+    if (data.containsKey('before_class_minutes')) {
+      context.handle(
+        _beforeClassMinutesMeta,
+        beforeClassMinutes.isAcceptableOrUnknown(
+          data['before_class_minutes']!,
+          _beforeClassMinutesMeta,
         ),
       );
     }
@@ -826,6 +897,18 @@ class $SettingsTable extends Settings
         DriftSqlType.int,
         data['${effectivePrefix}calendar_first_weekday'],
       )!,
+      notifyDeadline: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}notify_deadline'],
+      )!,
+      notifyBeforeClass: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}notify_before_class'],
+      )!,
+      beforeClassMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}before_class_minutes'],
+      )!,
       latestWakeMinutes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}latest_wake_minutes'],
@@ -956,6 +1039,12 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   /// The first column of the calendar, 7 = Sunday, 1 = Monday. Only how it
   /// is drawn: quests and stats keep Monday. Added in schema 18.
   final int calendarFirstWeekday;
+
+  /// Deadline and before-class reminders, off until asked for. Added in
+  /// schema 20.
+  final bool notifyDeadline;
+  final bool notifyBeforeClass;
+  final int beforeClassMinutes;
   final int latestWakeMinutes;
   final int latestBedtimeMinutes;
   final DateTime? termStart;
@@ -1002,6 +1091,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.freeDayWakeMinutes,
     this.earliestClassMinutes,
     required this.calendarFirstWeekday,
+    required this.notifyDeadline,
+    required this.notifyBeforeClass,
+    required this.beforeClassMinutes,
     required this.latestWakeMinutes,
     required this.latestBedtimeMinutes,
     this.termStart,
@@ -1047,6 +1139,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       map['earliest_class_minutes'] = Variable<int>(earliestClassMinutes);
     }
     map['calendar_first_weekday'] = Variable<int>(calendarFirstWeekday);
+    map['notify_deadline'] = Variable<bool>(notifyDeadline);
+    map['notify_before_class'] = Variable<bool>(notifyBeforeClass);
+    map['before_class_minutes'] = Variable<int>(beforeClassMinutes);
     map['latest_wake_minutes'] = Variable<int>(latestWakeMinutes);
     map['latest_bedtime_minutes'] = Variable<int>(latestBedtimeMinutes);
     if (!nullToAbsent || termStart != null) {
@@ -1101,6 +1196,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ? const Value.absent()
           : Value(earliestClassMinutes),
       calendarFirstWeekday: Value(calendarFirstWeekday),
+      notifyDeadline: Value(notifyDeadline),
+      notifyBeforeClass: Value(notifyBeforeClass),
+      beforeClassMinutes: Value(beforeClassMinutes),
       latestWakeMinutes: Value(latestWakeMinutes),
       latestBedtimeMinutes: Value(latestBedtimeMinutes),
       termStart: termStart == null && nullToAbsent
@@ -1161,6 +1259,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       calendarFirstWeekday: serializer.fromJson<int>(
         json['calendarFirstWeekday'],
       ),
+      notifyDeadline: serializer.fromJson<bool>(json['notifyDeadline']),
+      notifyBeforeClass: serializer.fromJson<bool>(json['notifyBeforeClass']),
+      beforeClassMinutes: serializer.fromJson<int>(json['beforeClassMinutes']),
       latestWakeMinutes: serializer.fromJson<int>(json['latestWakeMinutes']),
       latestBedtimeMinutes: serializer.fromJson<int>(
         json['latestBedtimeMinutes'],
@@ -1214,6 +1315,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       'freeDayWakeMinutes': serializer.toJson<int>(freeDayWakeMinutes),
       'earliestClassMinutes': serializer.toJson<int?>(earliestClassMinutes),
       'calendarFirstWeekday': serializer.toJson<int>(calendarFirstWeekday),
+      'notifyDeadline': serializer.toJson<bool>(notifyDeadline),
+      'notifyBeforeClass': serializer.toJson<bool>(notifyBeforeClass),
+      'beforeClassMinutes': serializer.toJson<int>(beforeClassMinutes),
       'latestWakeMinutes': serializer.toJson<int>(latestWakeMinutes),
       'latestBedtimeMinutes': serializer.toJson<int>(latestBedtimeMinutes),
       'termStart': serializer.toJson<DateTime?>(termStart),
@@ -1257,6 +1361,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     int? freeDayWakeMinutes,
     Value<int?> earliestClassMinutes = const Value.absent(),
     int? calendarFirstWeekday,
+    bool? notifyDeadline,
+    bool? notifyBeforeClass,
+    int? beforeClassMinutes,
     int? latestWakeMinutes,
     int? latestBedtimeMinutes,
     Value<DateTime?> termStart = const Value.absent(),
@@ -1295,6 +1402,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
         ? earliestClassMinutes.value
         : this.earliestClassMinutes,
     calendarFirstWeekday: calendarFirstWeekday ?? this.calendarFirstWeekday,
+    notifyDeadline: notifyDeadline ?? this.notifyDeadline,
+    notifyBeforeClass: notifyBeforeClass ?? this.notifyBeforeClass,
+    beforeClassMinutes: beforeClassMinutes ?? this.beforeClassMinutes,
     latestWakeMinutes: latestWakeMinutes ?? this.latestWakeMinutes,
     latestBedtimeMinutes: latestBedtimeMinutes ?? this.latestBedtimeMinutes,
     termStart: termStart.present ? termStart.value : this.termStart,
@@ -1352,6 +1462,15 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       calendarFirstWeekday: data.calendarFirstWeekday.present
           ? data.calendarFirstWeekday.value
           : this.calendarFirstWeekday,
+      notifyDeadline: data.notifyDeadline.present
+          ? data.notifyDeadline.value
+          : this.notifyDeadline,
+      notifyBeforeClass: data.notifyBeforeClass.present
+          ? data.notifyBeforeClass.value
+          : this.notifyBeforeClass,
+      beforeClassMinutes: data.beforeClassMinutes.present
+          ? data.beforeClassMinutes.value
+          : this.beforeClassMinutes,
       latestWakeMinutes: data.latestWakeMinutes.present
           ? data.latestWakeMinutes.value
           : this.latestWakeMinutes,
@@ -1435,6 +1554,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('freeDayWakeMinutes: $freeDayWakeMinutes, ')
           ..write('earliestClassMinutes: $earliestClassMinutes, ')
           ..write('calendarFirstWeekday: $calendarFirstWeekday, ')
+          ..write('notifyDeadline: $notifyDeadline, ')
+          ..write('notifyBeforeClass: $notifyBeforeClass, ')
+          ..write('beforeClassMinutes: $beforeClassMinutes, ')
           ..write('latestWakeMinutes: $latestWakeMinutes, ')
           ..write('latestBedtimeMinutes: $latestBedtimeMinutes, ')
           ..write('termStart: $termStart, ')
@@ -1476,6 +1598,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     freeDayWakeMinutes,
     earliestClassMinutes,
     calendarFirstWeekday,
+    notifyDeadline,
+    notifyBeforeClass,
+    beforeClassMinutes,
     latestWakeMinutes,
     latestBedtimeMinutes,
     termStart,
@@ -1516,6 +1641,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.freeDayWakeMinutes == this.freeDayWakeMinutes &&
           other.earliestClassMinutes == this.earliestClassMinutes &&
           other.calendarFirstWeekday == this.calendarFirstWeekday &&
+          other.notifyDeadline == this.notifyDeadline &&
+          other.notifyBeforeClass == this.notifyBeforeClass &&
+          other.beforeClassMinutes == this.beforeClassMinutes &&
           other.latestWakeMinutes == this.latestWakeMinutes &&
           other.latestBedtimeMinutes == this.latestBedtimeMinutes &&
           other.termStart == this.termStart &&
@@ -1554,6 +1682,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<int> freeDayWakeMinutes;
   final Value<int?> earliestClassMinutes;
   final Value<int> calendarFirstWeekday;
+  final Value<bool> notifyDeadline;
+  final Value<bool> notifyBeforeClass;
+  final Value<int> beforeClassMinutes;
   final Value<int> latestWakeMinutes;
   final Value<int> latestBedtimeMinutes;
   final Value<DateTime?> termStart;
@@ -1590,6 +1721,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.freeDayWakeMinutes = const Value.absent(),
     this.earliestClassMinutes = const Value.absent(),
     this.calendarFirstWeekday = const Value.absent(),
+    this.notifyDeadline = const Value.absent(),
+    this.notifyBeforeClass = const Value.absent(),
+    this.beforeClassMinutes = const Value.absent(),
     this.latestWakeMinutes = const Value.absent(),
     this.latestBedtimeMinutes = const Value.absent(),
     this.termStart = const Value.absent(),
@@ -1627,6 +1761,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.freeDayWakeMinutes = const Value.absent(),
     this.earliestClassMinutes = const Value.absent(),
     this.calendarFirstWeekday = const Value.absent(),
+    this.notifyDeadline = const Value.absent(),
+    this.notifyBeforeClass = const Value.absent(),
+    this.beforeClassMinutes = const Value.absent(),
     this.latestWakeMinutes = const Value.absent(),
     this.latestBedtimeMinutes = const Value.absent(),
     this.termStart = const Value.absent(),
@@ -1664,6 +1801,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<int>? freeDayWakeMinutes,
     Expression<int>? earliestClassMinutes,
     Expression<int>? calendarFirstWeekday,
+    Expression<bool>? notifyDeadline,
+    Expression<bool>? notifyBeforeClass,
+    Expression<int>? beforeClassMinutes,
     Expression<int>? latestWakeMinutes,
     Expression<int>? latestBedtimeMinutes,
     Expression<DateTime>? termStart,
@@ -1706,6 +1846,10 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
         'earliest_class_minutes': earliestClassMinutes,
       if (calendarFirstWeekday != null)
         'calendar_first_weekday': calendarFirstWeekday,
+      if (notifyDeadline != null) 'notify_deadline': notifyDeadline,
+      if (notifyBeforeClass != null) 'notify_before_class': notifyBeforeClass,
+      if (beforeClassMinutes != null)
+        'before_class_minutes': beforeClassMinutes,
       if (latestWakeMinutes != null) 'latest_wake_minutes': latestWakeMinutes,
       if (latestBedtimeMinutes != null)
         'latest_bedtime_minutes': latestBedtimeMinutes,
@@ -1751,6 +1895,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<int>? freeDayWakeMinutes,
     Value<int?>? earliestClassMinutes,
     Value<int>? calendarFirstWeekday,
+    Value<bool>? notifyDeadline,
+    Value<bool>? notifyBeforeClass,
+    Value<int>? beforeClassMinutes,
     Value<int>? latestWakeMinutes,
     Value<int>? latestBedtimeMinutes,
     Value<DateTime?>? termStart,
@@ -1788,6 +1935,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       freeDayWakeMinutes: freeDayWakeMinutes ?? this.freeDayWakeMinutes,
       earliestClassMinutes: earliestClassMinutes ?? this.earliestClassMinutes,
       calendarFirstWeekday: calendarFirstWeekday ?? this.calendarFirstWeekday,
+      notifyDeadline: notifyDeadline ?? this.notifyDeadline,
+      notifyBeforeClass: notifyBeforeClass ?? this.notifyBeforeClass,
+      beforeClassMinutes: beforeClassMinutes ?? this.beforeClassMinutes,
       latestWakeMinutes: latestWakeMinutes ?? this.latestWakeMinutes,
       latestBedtimeMinutes: latestBedtimeMinutes ?? this.latestBedtimeMinutes,
       termStart: termStart ?? this.termStart,
@@ -1853,6 +2003,15 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     }
     if (calendarFirstWeekday.present) {
       map['calendar_first_weekday'] = Variable<int>(calendarFirstWeekday.value);
+    }
+    if (notifyDeadline.present) {
+      map['notify_deadline'] = Variable<bool>(notifyDeadline.value);
+    }
+    if (notifyBeforeClass.present) {
+      map['notify_before_class'] = Variable<bool>(notifyBeforeClass.value);
+    }
+    if (beforeClassMinutes.present) {
+      map['before_class_minutes'] = Variable<int>(beforeClassMinutes.value);
     }
     if (latestWakeMinutes.present) {
       map['latest_wake_minutes'] = Variable<int>(latestWakeMinutes.value);
@@ -1947,6 +2106,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('freeDayWakeMinutes: $freeDayWakeMinutes, ')
           ..write('earliestClassMinutes: $earliestClassMinutes, ')
           ..write('calendarFirstWeekday: $calendarFirstWeekday, ')
+          ..write('notifyDeadline: $notifyDeadline, ')
+          ..write('notifyBeforeClass: $notifyBeforeClass, ')
+          ..write('beforeClassMinutes: $beforeClassMinutes, ')
           ..write('latestWakeMinutes: $latestWakeMinutes, ')
           ..write('latestBedtimeMinutes: $latestBedtimeMinutes, ')
           ..write('termStart: $termStart, ')
@@ -9670,6 +9832,347 @@ class SubjectColorsCompanion extends UpdateCompanion<SubjectColorRow> {
   }
 }
 
+class $TaskStepsTable extends TaskSteps
+    with TableInfo<$TaskStepsTable, TaskStepRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TaskStepsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _taskIdMeta = const VerificationMeta('taskId');
+  @override
+  late final GeneratedColumn<int> taskId = GeneratedColumn<int>(
+    'task_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _doneMeta = const VerificationMeta('done');
+  @override
+  late final GeneratedColumn<bool> done = GeneratedColumn<bool>(
+    'done',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("done" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, taskId, title, done, position];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'task_steps';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TaskStepRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('task_id')) {
+      context.handle(
+        _taskIdMeta,
+        taskId.isAcceptableOrUnknown(data['task_id']!, _taskIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_taskIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('done')) {
+      context.handle(
+        _doneMeta,
+        done.isAcceptableOrUnknown(data['done']!, _doneMeta),
+      );
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TaskStepRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TaskStepRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      taskId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}task_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      done: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}done'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+    );
+  }
+
+  @override
+  $TaskStepsTable createAlias(String alias) {
+    return $TaskStepsTable(attachedDatabase, alias);
+  }
+}
+
+class TaskStepRow extends DataClass implements Insertable<TaskStepRow> {
+  final int id;
+  final int taskId;
+  final String title;
+  final bool done;
+  final int position;
+  const TaskStepRow({
+    required this.id,
+    required this.taskId,
+    required this.title,
+    required this.done,
+    required this.position,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['task_id'] = Variable<int>(taskId);
+    map['title'] = Variable<String>(title);
+    map['done'] = Variable<bool>(done);
+    map['position'] = Variable<int>(position);
+    return map;
+  }
+
+  TaskStepsCompanion toCompanion(bool nullToAbsent) {
+    return TaskStepsCompanion(
+      id: Value(id),
+      taskId: Value(taskId),
+      title: Value(title),
+      done: Value(done),
+      position: Value(position),
+    );
+  }
+
+  factory TaskStepRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TaskStepRow(
+      id: serializer.fromJson<int>(json['id']),
+      taskId: serializer.fromJson<int>(json['taskId']),
+      title: serializer.fromJson<String>(json['title']),
+      done: serializer.fromJson<bool>(json['done']),
+      position: serializer.fromJson<int>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'taskId': serializer.toJson<int>(taskId),
+      'title': serializer.toJson<String>(title),
+      'done': serializer.toJson<bool>(done),
+      'position': serializer.toJson<int>(position),
+    };
+  }
+
+  TaskStepRow copyWith({
+    int? id,
+    int? taskId,
+    String? title,
+    bool? done,
+    int? position,
+  }) => TaskStepRow(
+    id: id ?? this.id,
+    taskId: taskId ?? this.taskId,
+    title: title ?? this.title,
+    done: done ?? this.done,
+    position: position ?? this.position,
+  );
+  TaskStepRow copyWithCompanion(TaskStepsCompanion data) {
+    return TaskStepRow(
+      id: data.id.present ? data.id.value : this.id,
+      taskId: data.taskId.present ? data.taskId.value : this.taskId,
+      title: data.title.present ? data.title.value : this.title,
+      done: data.done.present ? data.done.value : this.done,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TaskStepRow(')
+          ..write('id: $id, ')
+          ..write('taskId: $taskId, ')
+          ..write('title: $title, ')
+          ..write('done: $done, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, taskId, title, done, position);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TaskStepRow &&
+          other.id == this.id &&
+          other.taskId == this.taskId &&
+          other.title == this.title &&
+          other.done == this.done &&
+          other.position == this.position);
+}
+
+class TaskStepsCompanion extends UpdateCompanion<TaskStepRow> {
+  final Value<int> id;
+  final Value<int> taskId;
+  final Value<String> title;
+  final Value<bool> done;
+  final Value<int> position;
+  const TaskStepsCompanion({
+    this.id = const Value.absent(),
+    this.taskId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.done = const Value.absent(),
+    this.position = const Value.absent(),
+  });
+  TaskStepsCompanion.insert({
+    this.id = const Value.absent(),
+    required int taskId,
+    required String title,
+    this.done = const Value.absent(),
+    required int position,
+  }) : taskId = Value(taskId),
+       title = Value(title),
+       position = Value(position);
+  static Insertable<TaskStepRow> custom({
+    Expression<int>? id,
+    Expression<int>? taskId,
+    Expression<String>? title,
+    Expression<bool>? done,
+    Expression<int>? position,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (taskId != null) 'task_id': taskId,
+      if (title != null) 'title': title,
+      if (done != null) 'done': done,
+      if (position != null) 'position': position,
+    });
+  }
+
+  TaskStepsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? taskId,
+    Value<String>? title,
+    Value<bool>? done,
+    Value<int>? position,
+  }) {
+    return TaskStepsCompanion(
+      id: id ?? this.id,
+      taskId: taskId ?? this.taskId,
+      title: title ?? this.title,
+      done: done ?? this.done,
+      position: position ?? this.position,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (taskId.present) {
+      map['task_id'] = Variable<int>(taskId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (done.present) {
+      map['done'] = Variable<bool>(done.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TaskStepsCompanion(')
+          ..write('id: $id, ')
+          ..write('taskId: $taskId, ')
+          ..write('title: $title, ')
+          ..write('done: $done, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -9695,6 +10198,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CardProfilesTable cardProfiles = $CardProfilesTable(this);
   late final $CardPhotosTable cardPhotos = $CardPhotosTable(this);
   late final $SubjectColorsTable subjectColors = $SubjectColorsTable(this);
+  late final $TaskStepsTable taskSteps = $TaskStepsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9718,6 +10222,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cardProfiles,
     cardPhotos,
     subjectColors,
+    taskSteps,
   ];
 }
 
@@ -9733,6 +10238,9 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<int> freeDayWakeMinutes,
   Value<int?> earliestClassMinutes,
   Value<int> calendarFirstWeekday,
+  Value<bool> notifyDeadline,
+  Value<bool> notifyBeforeClass,
+  Value<int> beforeClassMinutes,
   Value<int> latestWakeMinutes,
   Value<int> latestBedtimeMinutes,
   Value<DateTime?> termStart,
@@ -9770,6 +10278,9 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<int> freeDayWakeMinutes,
   Value<int?> earliestClassMinutes,
   Value<int> calendarFirstWeekday,
+  Value<bool> notifyDeadline,
+  Value<bool> notifyBeforeClass,
+  Value<int> beforeClassMinutes,
   Value<int> latestWakeMinutes,
   Value<int> latestBedtimeMinutes,
   Value<DateTime?> termStart,
@@ -9858,6 +10369,21 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<int> get calendarFirstWeekday => $composableBuilder(
     column: $table.calendarFirstWeekday,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get notifyDeadline => $composableBuilder(
+    column: $table.notifyDeadline,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get notifyBeforeClass => $composableBuilder(
+    column: $table.notifyBeforeClass,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get beforeClassMinutes => $composableBuilder(
+    column: $table.beforeClassMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10047,6 +10573,21 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get notifyDeadline => $composableBuilder(
+    column: $table.notifyDeadline,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get notifyBeforeClass => $composableBuilder(
+    column: $table.notifyBeforeClass,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get beforeClassMinutes => $composableBuilder(
+    column: $table.beforeClassMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get latestWakeMinutes => $composableBuilder(
     column: $table.latestWakeMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -10228,6 +10769,21 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get notifyDeadline => $composableBuilder(
+    column: $table.notifyDeadline,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get notifyBeforeClass => $composableBuilder(
+    column: $table.notifyBeforeClass,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get beforeClassMinutes => $composableBuilder(
+    column: $table.beforeClassMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get latestWakeMinutes => $composableBuilder(
     column: $table.latestWakeMinutes,
     builder: (column) => column,
@@ -10385,6 +10941,9 @@ class $$SettingsTableTableManager
                 Value<int> freeDayWakeMinutes = const Value.absent(),
                 Value<int?> earliestClassMinutes = const Value.absent(),
                 Value<int> calendarFirstWeekday = const Value.absent(),
+                Value<bool> notifyDeadline = const Value.absent(),
+                Value<bool> notifyBeforeClass = const Value.absent(),
+                Value<int> beforeClassMinutes = const Value.absent(),
                 Value<int> latestWakeMinutes = const Value.absent(),
                 Value<int> latestBedtimeMinutes = const Value.absent(),
                 Value<DateTime?> termStart = const Value.absent(),
@@ -10421,6 +10980,9 @@ class $$SettingsTableTableManager
                 freeDayWakeMinutes: freeDayWakeMinutes,
                 earliestClassMinutes: earliestClassMinutes,
                 calendarFirstWeekday: calendarFirstWeekday,
+                notifyDeadline: notifyDeadline,
+                notifyBeforeClass: notifyBeforeClass,
+                beforeClassMinutes: beforeClassMinutes,
                 latestWakeMinutes: latestWakeMinutes,
                 latestBedtimeMinutes: latestBedtimeMinutes,
                 termStart: termStart,
@@ -10459,6 +11021,9 @@ class $$SettingsTableTableManager
                 Value<int> freeDayWakeMinutes = const Value.absent(),
                 Value<int?> earliestClassMinutes = const Value.absent(),
                 Value<int> calendarFirstWeekday = const Value.absent(),
+                Value<bool> notifyDeadline = const Value.absent(),
+                Value<bool> notifyBeforeClass = const Value.absent(),
+                Value<int> beforeClassMinutes = const Value.absent(),
                 Value<int> latestWakeMinutes = const Value.absent(),
                 Value<int> latestBedtimeMinutes = const Value.absent(),
                 Value<DateTime?> termStart = const Value.absent(),
@@ -10495,6 +11060,9 @@ class $$SettingsTableTableManager
                 freeDayWakeMinutes: freeDayWakeMinutes,
                 earliestClassMinutes: earliestClassMinutes,
                 calendarFirstWeekday: calendarFirstWeekday,
+                notifyDeadline: notifyDeadline,
+                notifyBeforeClass: notifyBeforeClass,
+                beforeClassMinutes: beforeClassMinutes,
                 latestWakeMinutes: latestWakeMinutes,
                 latestBedtimeMinutes: latestBedtimeMinutes,
                 termStart: termStart,
@@ -14662,6 +15230,207 @@ typedef $$SubjectColorsTableProcessedTableManager =
       SubjectColorRow,
       PrefetchHooks Function()
     >;
+typedef $$TaskStepsTableCreateCompanionBuilder = TaskStepsCompanion Function({
+  Value<int> id,
+  required int taskId,
+  required String title,
+  Value<bool> done,
+  required int position,
+});
+typedef $$TaskStepsTableUpdateCompanionBuilder = TaskStepsCompanion Function({
+  Value<int> id,
+  Value<int> taskId,
+  Value<String> title,
+  Value<bool> done,
+  Value<int> position,
+});
+
+class $$TaskStepsTableFilterComposer
+    extends Composer<_$AppDatabase, $TaskStepsTable> {
+  $$TaskStepsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get taskId => $composableBuilder(
+    column: $table.taskId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get done => $composableBuilder(
+    column: $table.done,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TaskStepsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TaskStepsTable> {
+  $$TaskStepsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get taskId => $composableBuilder(
+    column: $table.taskId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get done => $composableBuilder(
+    column: $table.done,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TaskStepsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TaskStepsTable> {
+  $$TaskStepsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get taskId =>
+      $composableBuilder(column: $table.taskId, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<bool> get done =>
+      $composableBuilder(column: $table.done, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+}
+
+class $$TaskStepsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TaskStepsTable,
+          TaskStepRow,
+          $$TaskStepsTableFilterComposer,
+          $$TaskStepsTableOrderingComposer,
+          $$TaskStepsTableAnnotationComposer,
+          $$TaskStepsTableCreateCompanionBuilder,
+          $$TaskStepsTableUpdateCompanionBuilder,
+          (
+            TaskStepRow,
+            BaseReferences<_$AppDatabase, $TaskStepsTable, TaskStepRow>,
+          ),
+          TaskStepRow,
+          PrefetchHooks Function()
+        > {
+  $$TaskStepsTableTableManager(_$AppDatabase db, $TaskStepsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TaskStepsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TaskStepsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TaskStepsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> taskId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<bool> done = const Value.absent(),
+                Value<int> position = const Value.absent(),
+              }) => TaskStepsCompanion(
+                id: id,
+                taskId: taskId,
+                title: title,
+                done: done,
+                position: position,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int taskId,
+                required String title,
+                Value<bool> done = const Value.absent(),
+                required int position,
+              }) => TaskStepsCompanion.insert(
+                id: id,
+                taskId: taskId,
+                title: title,
+                done: done,
+                position: position,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TaskStepsTable, TaskStepRow>(table),
+                  BaseReferences<_$AppDatabase, $TaskStepsTable, TaskStepRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TaskStepsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TaskStepsTable,
+      TaskStepRow,
+      $$TaskStepsTableFilterComposer,
+      $$TaskStepsTableOrderingComposer,
+      $$TaskStepsTableAnnotationComposer,
+      $$TaskStepsTableCreateCompanionBuilder,
+      $$TaskStepsTableUpdateCompanionBuilder,
+      (
+        TaskStepRow,
+        BaseReferences<_$AppDatabase, $TaskStepsTable, TaskStepRow>,
+      ),
+      TaskStepRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14705,4 +15474,6 @@ class $AppDatabaseManager {
       $$CardPhotosTableTableManager(_db, _db.cardPhotos);
   $$SubjectColorsTableTableManager get subjectColors =>
       $$SubjectColorsTableTableManager(_db, _db.subjectColors);
+  $$TaskStepsTableTableManager get taskSteps =>
+      $$TaskStepsTableTableManager(_db, _db.taskSteps);
 }

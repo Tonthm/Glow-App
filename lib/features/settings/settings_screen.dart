@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/birth_date.dart';
 import '../../core/day_overrides.dart';
+import '../../core/task_reminders.dart';
 import '../../data/database.dart';
 import '../../data/settings_repository.dart';
 import '../../providers.dart';
@@ -199,6 +200,40 @@ class SettingsScreen extends ConsumerWidget {
                 value: settings.notifyCheckIn,
                 onChanged: (v) => repo.updateNotificationToggles(checkIn: v),
               ),
+              const Divider(),
+              SwitchListTile(
+                title: const Text('เตือนเดดไลน์'),
+                subtitle: const Text('เย็นก่อนวันส่ง ไม่เลยเวลาเข้านอน'),
+                value: settings.notifyDeadline,
+                onChanged: (v) => repo.updateTaskReminders(deadline: v),
+              ),
+              const Divider(),
+              SwitchListTile(
+                title: const Text('เตือนก่อนคาบเรียน'),
+                subtitle: const Text('ไม่ปลุกตอนนอน'),
+                value: settings.notifyBeforeClass,
+                onChanged: (v) => repo.updateTaskReminders(beforeClass: v),
+              ),
+              if (settings.notifyBeforeClass)
+                SettingRow(
+                  title: 'เตือนก่อนคาบกี่นาที',
+                  value: '${settings.beforeClassMinutes} นาที',
+                  onTap: () async {
+                    final minutes = await showChoiceSheet<int>(
+                      context,
+                      title: 'เตือนก่อนคาบ',
+                      selected: settings.beforeClassMinutes,
+                      choices: {
+                        for (final m in beforeClassChoices) m: '$m นาที',
+                      },
+                    );
+                    if (minutes != null) {
+                      await repo.updateTaskReminders(
+                        beforeClassMinutes: minutes,
+                      );
+                    }
+                  },
+                ),
               const Divider(),
               if (platform.calendarReminders)
                 SettingRow(

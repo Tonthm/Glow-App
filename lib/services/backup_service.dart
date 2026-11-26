@@ -16,7 +16,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 10;
+  static const _version = 11;
 
   /// The card photo goes in only if [includePhoto] is asked for.
   Future<Map<String, dynamic>> buildSnapshot({
@@ -50,6 +50,7 @@ class BackupService {
       'dayActivities': await dump(db.dayActivities),
       'routineLogs': await dump(db.routineLogs),
       'eveningTasks': await dump(db.eveningTasks),
+      'taskSteps': await dump(db.taskSteps),
       // The API key is in secure storage and is never part of a backup.
       'aiSettings': await dump(db.aiSettings),
       // Keeps the SEQUENCE counters, so re-added reminders still update.
@@ -149,6 +150,9 @@ class BackupService {
                 'bufferBeforeNotifyMinutes': 15,
                 'hiddenPoseIds': '',
                 'calendarFirstWeekday': DateTime.sunday,
+                'notifyDeadline': false,
+                'notifyBeforeClass': false,
+                'beforeClassMinutes': 15,
                 ...settingsJson,
               }).toCompanion(false),
               mode: InsertMode.insertOrReplace,
@@ -231,6 +235,11 @@ class BackupService {
         'eveningTasks',
         db.eveningTasks,
         (j) => EveningTask.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'taskSteps',
+        db.taskSteps,
+        (j) => TaskStepRow.fromJson(j).toCompanion(false),
       );
       await load(
         'aiSettings',

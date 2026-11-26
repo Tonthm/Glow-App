@@ -17,6 +17,7 @@ import 'data/settings_repository.dart';
 import 'data/shop_repository.dart';
 import 'data/stats_repository.dart';
 import 'data/subject_color_repository.dart';
+import 'data/task_list_repository.dart';
 import 'data/wallet_repository.dart';
 import 'services/backup_service.dart';
 import 'services/calendar_import_service.dart';
@@ -125,6 +126,22 @@ final cardRepositoryProvider = Provider<CardRepository>((ref) {
 
 final cardProfileStreamProvider = StreamProvider<CardProfileRow>((ref) {
   return ref.watch(cardRepositoryProvider).watch();
+});
+
+final taskListRepositoryProvider = Provider<TaskListRepository>((ref) {
+  return TaskListRepository(ref.watch(databaseProvider));
+});
+
+final taskStepsStreamProvider = StreamProvider<List<TaskStepRow>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.select(db.taskSteps).watch();
+});
+
+/// Every task, a split one as one entry; null while loading.
+final taskEntriesProvider = Provider<List<TaskEntry>?>((ref) {
+  final tasks = ref.watch(eveningTasksStreamProvider).value;
+  final steps = ref.watch(taskStepsStreamProvider).value;
+  return tasks == null || steps == null ? null : taskEntries(tasks, steps);
 });
 
 final subjectColorRepositoryProvider = Provider<SubjectColorRepository>((ref) {

@@ -6,7 +6,8 @@ import 'dart:convert';
 
 import 'reminder_messages.dart';
 
-enum IcsEventKind { putPhoneDown, bedtime, checkIn }
+/// [reminder] is a deadline or class reminder, with its own words.
+enum IcsEventKind { putPhoneDown, bedtime, checkIn, reminder }
 
 const Duration _eventLength = Duration(minutes: 5);
 const Duration _checkInAfterWake = Duration(minutes: 30);
@@ -39,7 +40,26 @@ class IcsNight {
   });
 }
 
+/// A reminder from outside the sleep plan, already at a time that doesn't
+/// cut into it (core/task_reminders).
+class IcsExtra {
+  final String uid;
+  final DateTime start;
+  final String title;
+  final String message;
+
+  const IcsExtra({
+    required this.uid,
+    required this.start,
+    required this.title,
+    required this.message,
+  });
+}
+
 class IcsEvent {
+  /// Only for [IcsEventKind.reminder].
+  final String? title;
+  final String? message;
   final String uid;
   final IcsEventKind kind;
   final DateTime wakeDate;
@@ -50,6 +70,8 @@ class IcsEvent {
     required this.kind,
     required this.wakeDate,
     required this.start,
+    this.title,
+    this.message,
   });
 }
 
@@ -114,11 +136,25 @@ List<IcsEvent> icsEvents({
   required List<IcsNight> nights,
   required Set<IcsEventKind> enabled,
   required DateTime now,
+  List<IcsExtra> extras = const [],
 }) {
   return [
+      for (final extra in extras)
+        IcsEvent(
+          uid: extra.uid,
+          kind: IcsEventKind.reminder,
+          wakeDate: DateTime(
+            extra.start.year,
+            extra.start.month,
+            extra.start.day,
+          ),
+          start: extra.start,
+          title: extra.title,
+          message: extra.message,
+        ),
       for (final night in nights)
         for (final kind in IcsEventKind.values)
-          if (enabled.contains(kind))
+          if (kind != IcsEventKind.reminder && enabled.contains(kind))
             IcsEvent(
               uid: icsUid(night.wakeDate, kind),
               kind: kind,
@@ -127,6 +163,7 @@ List<IcsEvent> icsEvents({
                 IcsEventKind.putPhoneDown => night.notifyTime,
                 IcsEventKind.bedtime => night.bedtime,
                 IcsEventKind.checkIn => night.wakeTime.add(_checkInAfterWake),
+                IcsEventKind.reminder => throw StateError('not a night'),
               },
             ),
     ].where((e) => e.start.isAfter(now)).toList()
@@ -151,8 +188,14 @@ IcsCalendar buildIcs({
   required Set<IcsEventKind> enabled,
   required Map<String, int> sequences,
   required DateTime now,
+  List<IcsExtra> extras = const [],
 }) {
-  final events = icsEvents(nights: nights, enabled: enabled, now: now);
+  final events = icsEvents(
+    nights: nights,
+    enabled: enabled,
+    now: now,
+    extras: extras,
+  );
   final updated = {...sequences};
   final lines = <String>[
     'BEGIN:VCALENDAR',
@@ -166,8 +209,10 @@ IcsCalendar buildIcs({
     final previous = updated[event.uid];
     final sequence = previous == null ? 0 : previous + 1;
     updated[event.uid] = sequence;
-    final title = escapeIcsText(_titles[event.kind]!);
-    final message = escapeIcsText(_messageFor(event));
+    final title = escapeIcsText(
+      event.title == null ? _titles[event.kind]! : 'Glow · ${event.title}',
+    );
+    final message = escapeIcsText(event.message ?? _messageFor(event));
     lines.addAll([
       'BEGIN:VEVENT',
       'UID:${event.uid}',

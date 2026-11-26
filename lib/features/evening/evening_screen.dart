@@ -11,6 +11,8 @@ import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../../theme/tokens.dart';
 import '../shared/subject_colors.dart';
+import '../tasks/task_detail_sheet.dart';
+import '../tasks/task_list_screen.dart';
 import '../../theme/widgets/empty_state.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
@@ -64,7 +66,19 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
     final async = ref.watch(eveningViewProvider);
     final view = async.value;
     return Scaffold(
-      appBar: AppBar(title: const Text('ตารางเย็นนี้')),
+      appBar: AppBar(
+        title: const Text('ตารางเย็นนี้'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.checklist),
+            tooltip: 'งานทั้งหมด',
+            onPressed: () async {
+              await openTaskList(context);
+              _reload();
+            },
+          ),
+        ],
+      ),
       body: view == null
           ? Center(
               child: async.hasError
@@ -432,6 +446,7 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
           Text(task.title, style: Theme.of(context).textTheme.titleLarge),
           for (final (id, label) in [
             ('edit', 'แก้'),
+            ('steps', 'งานย่อย'),
             if (canSplit) ('split', 'แบ่งงานให้'),
             ('postpone', 'เลื่อนไปพรุ่งนี้'),
             ('remove', 'เอาออก'),
@@ -449,6 +464,9 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
     switch (choice) {
       case 'edit':
         await showTaskForm(context, planDate: view.eveningDate, existing: task);
+      case 'steps':
+        // A part's checklist is the whole split task.
+        await showTaskDetail(context, task.parentId ?? task.id);
       case 'postpone':
         await _repo.postpone(task.id);
       case 'remove':

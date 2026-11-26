@@ -4,8 +4,16 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
-/// What schema 19 added.
-const _rewindFrom19 = ['DROP TABLE subject_colors'];
+/// What schema 20 added.
+const _rewindFrom20 = [
+  'DROP TABLE task_steps',
+  'ALTER TABLE settings DROP COLUMN notify_deadline',
+  'ALTER TABLE settings DROP COLUMN notify_before_class',
+  'ALTER TABLE settings DROP COLUMN before_class_minutes',
+];
+
+/// What schema 19 added, and the newer tables on top of it.
+const _rewindFrom19 = [..._rewindFrom20, 'DROP TABLE subject_colors'];
 
 /// What schema 18 added, and the newer tables on top of it.
 const _rewindFrom18 = [
@@ -249,6 +257,27 @@ void main() {
     final card = await db.select(db.cardProfiles).getSingle();
     expect(card.birthDate, isNotNull);
     expect((await db.select(db.cardPhotos).getSingle()).jpeg, [255, 216, 255, 0]);
+    await db.close();
+  });
+
+  test('a version 19 database keeps tasks, with new reminders off', () async {
+    await prepare([
+      'INSERT INTO settings (id, onboarding_completed) VALUES (0, 1)',
+      'INSERT INTO evening_tasks (title, minutes, kind, plan_date)'
+          " VALUES ('เลข', 30, 0, 1795392000)",
+      "INSERT INTO subject_colors (subject, color) VALUES ('เลข', 7)",
+      ..._rewindFrom20,
+      'PRAGMA user_version = 19',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    final settings = await db.select(db.settings).getSingle();
+    expect(settings.notifyDeadline, isFalse);
+    expect(settings.notifyBeforeClass, isFalse);
+    expect(settings.beforeClassMinutes, 15);
+    expect((await db.select(db.eveningTasks).getSingle()).title, 'เลข');
+    expect((await db.select(db.subjectColors).getSingle()).color, 7);
+    expect(await db.select(db.taskSteps).get(), isEmpty);
     await db.close();
   });
 

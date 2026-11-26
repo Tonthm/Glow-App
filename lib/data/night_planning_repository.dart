@@ -374,39 +374,4 @@ class NightPlanningRepository {
       ),
     );
   }
-
-  /// The next exam that hasn't finished yet, for the countdown banner. Null
-  /// outside exam mode (section 4).
-  Future<({OneTimeItem exam, int daysUntil})?> nextExamCountdown(
-    DateTime now,
-  ) async {
-    final today = _dateOnly(now);
-    final nowMinutes = now.hour * 60 + now.minute;
-    final exams = (await _upcomingExams(now)).where(
-      (e) =>
-          _dateOnly(e.date) != today ||
-          e.endMinutes == null ||
-          e.endMinutes! > nowMinutes,
-    );
-    if (exams.isEmpty) return null;
-    final soonest = exams.first;
-    if (!isExamModeOn(date: today, examDates: [soonest.date])) return null;
-    return (
-      exam: soonest,
-      daysUntil: _dateOnly(soonest.date).difference(today).inDays,
-    );
-  }
-
-  Future<List<OneTimeItem>> _upcomingExams(DateTime now) async {
-    final today = _dateOnly(now);
-    final rows =
-        await (db.select(db.oneTimeItems)..where(
-              (t) =>
-                  t.type.equalsValue(OneTimeItemType.exam) &
-                  t.date.isBiggerOrEqualValue(today),
-            ))
-            .get();
-    rows.sort((a, b) => a.date.compareTo(b.date));
-    return rows;
-  }
 }

@@ -128,6 +128,27 @@ class SettingsRepository {
     );
   }
 
+  Future<void> updateTaskReminders({
+    bool? deadline,
+    bool? beforeClass,
+    int? beforeClassMinutes,
+  }) async {
+    await ensureRowExists();
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      SettingsCompanion(
+        notifyDeadline: deadline == null
+            ? const Value.absent()
+            : Value(deadline),
+        notifyBeforeClass: beforeClass == null
+            ? const Value.absent()
+            : Value(beforeClass),
+        beforeClassMinutes: beforeClassMinutes == null
+            ? const Value.absent()
+            : Value(beforeClassMinutes),
+      ),
+    );
+  }
+
   Future<void> updateThemeMode(AppThemeMode mode) async {
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(themeMode: Value(mode)),

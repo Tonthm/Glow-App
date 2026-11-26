@@ -5,6 +5,7 @@ import '../../core/evening_planner.dart';
 import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../shared/subject_colors.dart';
+import '../tasks/task_list_screen.dart';
 import '../../theme/tokens.dart';
 import 'evening_providers.dart';
 import 'evening_screen.dart';
@@ -56,10 +57,17 @@ class EveningCard extends ConsumerWidget {
               style: textTheme.bodyLarge,
             ),
         ],
-        Row(
+        Wrap(
+          spacing: GlowSpacing.sm,
           children: [
             TextButton(onPressed: onOpen, child: const Text('ดูตารางเย็น')),
-            const SizedBox(width: GlowSpacing.sm),
+            TextButton(
+              onPressed: () async {
+                await openTaskList(context);
+                ref.invalidate(eveningViewProvider);
+              },
+              child: const Text('งานทั้งหมด'),
+            ),
             TextButton(
               onPressed: () async {
                 await showTaskForm(context, planDate: view.eveningDate);

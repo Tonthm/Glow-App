@@ -8,6 +8,7 @@ import '../core/web_reminders.dart';
 import 'database.dart';
 import 'night_planning_repository.dart';
 import 'settings_repository.dart';
+import 'task_reminder_source.dart';
 
 /// Tonight and the 7 nights after it; past events are dropped.
 const int _nightsCovered = 7;
@@ -76,16 +77,39 @@ class CalendarReminderRepository {
     return result;
   }
 
+  /// How far a file made from [nights] reaches: the last night's check-in.
+  /// Task reminders are few, so coverage can't be judged by the last event.
+  static DateTime _coverage(List<IcsNight> nights) =>
+      nights.last.wakeTime.add(const Duration(minutes: 30));
+
+  Future<List<IcsExtra>> _extras(
+    SettingsRow settings,
+    DateTime now,
+    DateTime until,
+  ) async => [
+    for (final r in await upcomingTaskReminders(
+      planning: planning,
+      settings: settings,
+      now: now,
+    ))
+      if (!r.at.isAfter(until))
+        IcsExtra(uid: r.uid, start: r.at, title: r.title, message: r.body),
+  ];
+
   /// Builds the next 7 days of reminders and records what was in them.
   /// Returns null if there is nothing to add.
   Future<IcsCalendar?> generate(DateTime now) async {
     final nights = await _nights(now);
-    final enabled = enabledKinds(await settingsRepo.get());
+    final settings = await settingsRepo.get();
+    final enabled = enabledKinds(settings);
+    final covered = _coverage(nights);
+    final extras = await _extras(settings, now, covered);
     return db.transaction(() async {
       final row = await _row(db);
       final calendar = buildIcs(
         nights: nights,
         enabled: enabled,
+        extras: extras,
         sequences: (jsonDecode(row.sequences) as Map<String, dynamic>)
             .cast<String, int>(),
         now: now,
@@ -95,7 +119,7 @@ class CalendarReminderRepository {
         db,
         CalendarReminderStatesCompanion(
           lastAddedAt: Value(now),
-          coveredUntil: Value(calendar.events.last.start),
+          coveredUntil: Value(covered),
           sequences: Value(jsonEncode(calendar.sequences)),
           events: Value(
             jsonEncode({
@@ -115,13 +139,16 @@ class CalendarReminderRepository {
     final exported = (jsonDecode(row.events) as Map<String, dynamic>).map(
       (uid, start) => MapEntry(uid, DateTime.parse(start as String)),
     );
+    final nights = await _nights(now);
+    final extras = await _extras(settings, now, _coverage(nights));
     return calendarReminderStatus(
       exported: exported,
       // The database keeps whole seconds, as do the exported times.
       coveredUntil: row.coveredUntil,
       current: icsEvents(
-        nights: await _nights(now),
+        nights: nights,
         enabled: enabledKinds(settings),
+        extras: extras,
         now: now,
       ),
       now: now,

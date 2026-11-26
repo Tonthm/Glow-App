@@ -47,6 +47,14 @@ class Settings extends Table {
   /// is drawn: quests and stats keep Monday. Added in schema 18.
   IntColumn get calendarFirstWeekday =>
       integer().withDefault(const Constant(DateTime.sunday))();
+  /// Deadline and before-class reminders, off until asked for. Added in
+  /// schema 20.
+  BoolColumn get notifyDeadline =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get notifyBeforeClass =>
+      boolean().withDefault(const Constant(false))();
+  IntColumn get beforeClassMinutes =>
+      integer().withDefault(const Constant(15))();
   IntColumn get latestWakeMinutes =>
       integer().withDefault(const Constant(480))();
   IntColumn get latestBedtimeMinutes =>
@@ -285,6 +293,17 @@ class CardPhotos extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// A step of a task that the user added to tick off. Parts of a split task
+/// are tasks of their own. Added in schema 20.
+@DataClassName('TaskStepRow')
+class TaskSteps extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get taskId => integer()();
+  TextColumn get title => text()();
+  BoolColumn get done => boolean().withDefault(const Constant(false))();
+  IntColumn get position => integer()();
+}
+
 /// The color the user gave a subject, by name (core/subject_color). Added in
 /// schema 19.
 @DataClassName('SubjectColorRow')
@@ -455,6 +474,7 @@ class CalendarReminderStates extends Table {
     CardProfiles,
     CardPhotos,
     SubjectColors,
+    TaskSteps,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -473,7 +493,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -600,6 +620,12 @@ class AppDatabase extends _$AppDatabase {
       if (from < 19) {
         // A new table only: the timetable itself is untouched.
         await m.createTable(subjectColors);
+      }
+      if (from < 20) {
+        await m.createTable(taskSteps);
+        await _addColumnIfMissing(m, settings, settings.notifyDeadline);
+        await _addColumnIfMissing(m, settings, settings.notifyBeforeClass);
+        await _addColumnIfMissing(m, settings, settings.beforeClassMinutes);
       }
     },
     // A removed photo or birth date is wiped from the file, not only

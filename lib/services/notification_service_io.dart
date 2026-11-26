@@ -11,6 +11,7 @@ import '../core/sleep_calculator.dart';
 import '../data/check_in_repository.dart';
 import '../data/database.dart';
 import '../data/night_planning_repository.dart';
+import '../data/task_reminder_source.dart';
 import 'notification_actions.dart';
 import 'notification_service.dart';
 import 'permissions_service.dart';
@@ -18,6 +19,12 @@ import 'permissions_service.dart';
 enum NotificationKind { putPhoneDown, bedtime, checkIn, redNight }
 
 const int _testNotificationId = 999999;
+
+/// Past every id [notificationIdFor] gives.
+const int _firstTaskReminderId = 500000;
+
+/// Android limits how many alarms an app may hold.
+const int _maxTaskReminders = 40;
 
 /// Stable per-night, per-kind notification ids so a reschedule can predict
 /// and cancel exactly the ones it set before (e.g. when "เข้านอนแล้ว" is
@@ -176,6 +183,27 @@ class _AndroidNotificationService implements NotificationService {
         scheduleMode: scheduleMode,
         alreadyCheckedIn: alreadyCheckedIn,
         inBed: inBed,
+      );
+    }
+
+    final reminders = await upcomingTaskReminders(
+      planning: repo,
+      settings: settings,
+      now: now,
+    );
+    for (var i = 0; i < reminders.length && i < _maxTaskReminders; i++) {
+      await _plugin.zonedSchedule(
+        id: _firstTaskReminderId + i,
+        scheduledDate: tz.TZDateTime.from(reminders[i].at, tz.local),
+        title: reminders[i].title,
+        body: reminders[i].body,
+        androidScheduleMode: scheduleMode,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'glow_task_reminders',
+            'เตือนงานและคาบเรียน',
+          ),
+        ),
       );
     }
   }

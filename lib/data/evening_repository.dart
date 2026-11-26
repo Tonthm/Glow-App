@@ -213,6 +213,10 @@ class EveningRepository {
   /// the last part leaves no hidden original behind.
   Future<void> removeTask(int id) => db.transaction(() async {
     final parentId = (await _task(id))?.parentId;
+    final parts = await (db.select(
+      db.eveningTasks,
+    )..where((t) => t.parentId.equals(id))).get();
+    await _removeSteps([id, ...parts.map((p) => p.id)]);
     await (db.delete(
       db.eveningTasks,
     )..where((t) => t.id.equals(id) | t.parentId.equals(id))).go();
@@ -221,11 +225,15 @@ class EveningRepository {
       db.eveningTasks,
     )..where((t) => t.parentId.equals(parentId))).get();
     if (left.isEmpty) {
+      await _removeSteps([parentId]);
       await (db.delete(
         db.eveningTasks,
       )..where((t) => t.id.equals(parentId))).go();
     }
   });
+
+  Future<void> _removeSteps(List<int> taskIds) =>
+      (db.delete(db.taskSteps)..where((s) => s.taskId.isIn(taskIds))).go();
 
   /// Replaces [original] with parts the user has accepted. The original stays,
   /// hidden, so the parts can be removed together.

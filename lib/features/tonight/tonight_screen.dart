@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'countdown_strip.dart';
 import '../../core/first_class.dart';
 import '../../core/activity_guess.dart';
 import '../../core/bed_press.dart';
@@ -17,7 +18,6 @@ import '../../core/schedule_load.dart';
 import '../../core/schedule_models.dart';
 import '../../core/sleep_calculator.dart';
 import '../../data/check_in_repository.dart';
-import '../../data/database.dart';
 import '../../data/night_planning_repository.dart';
 import '../../data/settings_repository.dart';
 import '../../data/stats_repository.dart';
@@ -50,7 +50,6 @@ class TonightPlanData {
   final DateTime wakeDate;
   final NightPlanDraft draft;
   final EveningLoadResult load;
-  final ({OneTimeItem exam, int daysUntil})? examCountdown;
   final PendingCheckIn? pendingCheckIn;
   final int weeklyPassCount;
   final DateTime? inBedAt;
@@ -78,7 +77,6 @@ class TonightPlanData {
     required this.wakeDate,
     required this.draft,
     required this.load,
-    required this.examCountdown,
     required this.pendingCheckIn,
     required this.weeklyPassCount,
     required this.inBedAt,
@@ -154,7 +152,6 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
   final wakeDate = resolveTonightWakeDate(now);
   final draft = await repo.getOrLockPlan(wakeDate, now: now);
   final load = await repo.computeEveningLoad(draft);
-  final examCountdown = await repo.nextExamCountdown(now);
   final pendingCheckIn = await ref
       .watch(checkInRepositoryProvider)
       .findPendingCheckIn(now);
@@ -171,7 +168,6 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     wakeDate: wakeDate,
     draft: draft,
     load: load,
-    examCountdown: examCountdown,
     pendingCheckIn: pendingCheckIn,
     weeklyPassCount: weeklyPassCount,
     inBedAt: planRow?.inBedAt,
@@ -297,6 +293,14 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   @override
   Widget build(BuildContext context) {
     final hasSchedule = ref.watch(_hasAnyScheduleProvider);
+    // A task changed: its phone reminder has to follow.
+    ref.listen(eveningTasksStreamProvider, (previous, next) {
+      if (previous?.hasValue != true) return;
+      if (ref.read(platformCapabilitiesProvider).localNotifications &&
+          ref.read(settingsStreamProvider).value?.notifyDeadline == true) {
+        ref.invalidate(tonightPlanProvider);
+      }
+    });
     final planAsync = ref.watch(tonightPlanProvider);
 
     return Scaffold(
@@ -548,10 +552,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         ),
       const SizedBox(height: GlowSpacing.md),
     ],
-    if (plan.examCountdown != null) ...[
-      _ExamCountdownBanner(plan.examCountdown!),
-      const SizedBox(height: GlowSpacing.md),
-    ],
+    const CountdownStrip(),
   ];
 
   /// The week's nights, tonight's quests, and "วันนี้หมดแรง".
@@ -882,43 +883,6 @@ class _QuestProgressDots extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ExamCountdownBanner extends StatelessWidget {
-  final ({OneTimeItem exam, int daysUntil}) countdown;
-  const _ExamCountdownBanner(this.countdown);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final days = countdown.daysUntil;
-    final label = days == 0 ? 'วันนี้' : 'อีก $days วัน';
-    final title = countdown.exam.title;
-    final name = title.startsWith('สอบ') ? title : 'สอบ $title';
-    return GlowCard(
-      pastel: GlowPastel.sky,
-      padding: const EdgeInsets.all(GlowSpacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.school_outlined),
-          const SizedBox(width: GlowSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$name $label', style: theme.textTheme.bodyLarge),
-                Text(
-                  'นอนให้พอช่วยให้จำสิ่งที่อ่านได้ดีขึ้น ไม่ควรโต้รุ่ง',
-                  style: theme.textTheme.bodyLarge,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

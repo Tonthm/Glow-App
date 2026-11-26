@@ -213,7 +213,10 @@ void main() {
       await cards.savePhoto(_jpeg(100));
       (file['settings'] as Map<String, dynamic>)
         ..remove('earliestClassMinutes')
-        ..remove('calendarFirstWeekday');
+        ..remove('calendarFirstWeekday')
+        ..remove('notifyDeadline')
+        ..remove('notifyBeforeClass')
+        ..remove('beforeClassMinutes');
       await backups.restoreSnapshot({...file, 'version': 7});
       expect((await settings.get()).earliestClassMinutes, isNull);
       expect(await cards.photo(), isNotNull);
