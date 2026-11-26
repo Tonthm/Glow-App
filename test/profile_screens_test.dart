@@ -160,10 +160,10 @@ void main() {
   testWidgets('settings hides AI from an under-18 birth date', (tester) async {
     await start();
     await settings.applyAgeGroupDefaults(AgeGroup.adult);
-    await show(tester, const SettingsScreen());
+    await show(tester, const AdvancedSettingsScreen());
     final ai = find.text('ผู้ช่วย AI', skipOffstage: false);
     await tester.scrollUntilVisible(
-      find.text('ลักษณะที่ปรากฏ'),
+      find.text('ปฏิทิน'),
       300,
       scrollable: find.byType(Scrollable).first,
     );

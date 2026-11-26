@@ -23,457 +23,507 @@ import 'setting_row.dart';
 import 'travel_by_day_sheet.dart';
 import 'battery_optimization_sheet.dart';
 
+/// The few settings most people need. Everything else is one tap further
+/// (CLAUDE.md section 1).
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settingsAsync = ref.watch(settingsStreamProvider);
     final platform = ref.watch(platformCapabilitiesProvider);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('ตั้งค่า')),
-      body: settingsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('เกิดข้อผิดพลาด: $e')),
-        data: (settings) {
-          final repo = ref.read(settingsRepositoryProvider);
-          final birthDate = ref
-              .watch(cardProfileStreamProvider)
-              .value
-              ?.birthDate;
-          final isAdult = birthDate == null
-              ? settings.ageGroup == AgeGroup.adult
-              : isAdultOn(birthDate, DateTime.now());
-          // Nothing about AI shows to someone whose birth date is under 18.
-          final showAi =
-              platform.aiAssistant &&
-              switch (ref.watch(aiAgeProvider).value) {
-                null || AiAgeState.hidden => false,
-                _ => true,
-              };
-          return ListView(
-            children: [
-              SettingRow(
-                title: 'โปรไฟล์และบัตร',
-                onTap: () => showCardDetailsSheet(context),
-              ),
-              const _SectionHeader('การนอน'),
-              SettingRow(
-                title: 'ช่วงอายุ',
-                value:
-                    (isAdult ? '18 ปีขึ้นไป' : 'ต่ำกว่า 18 ปี') +
-                    (birthDate == null ? '' : ' (จากวันเกิด)'),
-                onTap: () async {
-                  // A birth date decides the age; change it there.
-                  if (birthDate != null) {
-                    await showCardDetailsSheet(context);
-                    return;
-                  }
-                  final group = await showChoiceSheet<AgeGroup>(
-                    context,
-                    title: 'ช่วงอายุ (เป้าชั่วโมงจะกลับเป็นค่าแนะนำ)',
-                    selected: settings.ageGroup,
-                    choices: const {
-                      AgeGroup.under18: 'ต่ำกว่า 18 ปี',
-                      AgeGroup.adult: '18 ปีขึ้นไป',
-                    },
-                  );
-                  if (group != null && group != settings.ageGroup) {
-                    await repo.applyAgeGroupDefaults(group);
-                  }
-                },
-              ),
-              _durationRow(
+    return _SettingsPage(
+      title: 'ตั้งค่า',
+      rows: (context, settings) {
+        final repo = ref.read(settingsRepositoryProvider);
+        return [
+          // No more than five here.
+          SettingRow(
+            title: 'โปรไฟล์และบัตร',
+            onTap: () => showCardDetailsSheet(context),
+          ),
+          _durationRow(
+            context,
+            title: 'เวลาเดินทาง',
+            minutes: settings.defaultTravelMinutes,
+            step: 5,
+            min: 0,
+            max: 4 * 60,
+            onSave: (v) => repo.updatePrepAndTravel(travelMinutes: v),
+          ),
+          _durationRow(
+            context,
+            title: 'เวลาเตรียมตัว',
+            minutes: settings.prepMinutes,
+            step: 5,
+            min: 0,
+            max: 4 * 60,
+            onSave: (v) => repo.updatePrepAndTravel(prepMinutes: v),
+          ),
+          SettingRow(
+            title: platform.calendarReminders
+                ? 'เตือนในปฏิทิน'
+                : 'การแจ้งเตือน',
+            onTap: () => _open(context, const NotificationSettingsScreen()),
+          ),
+          SettingRow(
+            title: 'โหมดสี',
+            value: _themeLabels[settings.themeMode]!,
+            onTap: () async {
+              final mode = await showChoiceSheet<AppThemeMode>(
                 context,
-                title: 'เป้าต่ำสุด',
-                minutes: settings.targetMinMinutes,
-                step: 15,
-                min: 4 * 60,
-                max: settings.targetMaxMinutes,
-                onSave: (v) => repo.updateTargetHours(minMinutes: v),
-              ),
-              _durationRow(
-                context,
-                title: 'เป้าสูงสุด',
-                minutes: settings.targetMaxMinutes,
-                step: 15,
-                min: settings.targetMinMinutes,
-                max: 12 * 60,
-                onSave: (v) => repo.updateTargetHours(maxMinutes: v),
-              ),
-              SettingRow(
-                title: 'เรียนเช้าสุด (ตอนยังไม่มีตาราง)',
-                value: settings.earliestClassMinutes == null
-                    ? 'ไม่ได้ใส่'
-                    : formatTimeOfDay(
-                        _timeOf(settings.earliestClassMinutes!),
-                      ),
-                onTap: () async {
-                  final picked = await showTimeWheel(
-                    context,
-                    title: 'เรียนเช้าสุดกี่โมง',
-                    initial: _timeOf(settings.earliestClassMinutes ?? 8 * 60),
-                  );
-                  if (picked != null) {
-                    await repo.updateEarliestClass(
-                      picked.hour * 60 + picked.minute,
-                    );
-                  }
-                },
-              ),
-              _durationRow(
-                context,
-                title: 'เวลาเตรียมตัว',
-                minutes: settings.prepMinutes,
-                step: 5,
-                min: 0,
-                max: 4 * 60,
-                onSave: (v) => repo.updatePrepAndTravel(prepMinutes: v),
-              ),
-              _durationRow(
-                context,
-                title: 'เวลาเดินทาง',
-                minutes: settings.defaultTravelMinutes,
-                step: 5,
-                min: 0,
-                max: 4 * 60,
-                onSave: (v) => repo.updatePrepAndTravel(travelMinutes: v),
-              ),
-              SettingRow(
-                title: 'เวลาเดินทางแยกรายวัน',
-                value: switch (parseTravelOverrides(settings.travelOverrides)
-                    .length) {
-                  0 => 'ไม่มี',
-                  final n => '$n วัน',
-                },
-                onTap: () => showTravelByDaySheet(context),
-              ),
-              SettingRow(
-                title: 'เวลาตื่นวันว่าง',
-                value: formatTimeOfDay(
-                  TimeOfDay(
-                    hour: settings.freeDayWakeMinutes ~/ 60,
-                    minute: settings.freeDayWakeMinutes % 60,
-                  ),
-                ),
-                onTap: () async {
-                  final picked = await showTimeWheel(
-                    context,
-                    title: 'เวลาตื่นวันว่าง',
-                    initial: TimeOfDay(
-                      hour: settings.freeDayWakeMinutes ~/ 60,
-                      minute: settings.freeDayWakeMinutes % 60,
-                    ),
-                  );
-                  if (picked != null) {
-                    await repo.updateFreeDayWakeMinutes(
-                      picked.hour * 60 + picked.minute,
-                    );
-                  }
-                },
-              ),
-              _SectionHeader(
-                platform.calendarReminders ? 'เตือนในปฏิทิน' : 'การแจ้งเตือน',
-              ),
-              SwitchListTile(
-                title: const Text('เตือนวางมือถือ'),
-                value: settings.notifyPutPhoneDown,
-                onChanged: (v) =>
-                    repo.updateNotificationToggles(putPhoneDown: v),
-              ),
-              const Divider(),
-              SwitchListTile(
-                title: const Text('เตือนถึงเวลานอน'),
-                value: settings.notifyBedtime,
-                onChanged: (v) => repo.updateNotificationToggles(bedtime: v),
-              ),
-              const Divider(),
-              SwitchListTile(
-                title: const Text('เตือนคืนแดงข้างหน้า'),
-                value: settings.notifyBusyNight,
-                onChanged: (v) => repo.updateNotificationToggles(busyNight: v),
-              ),
-              const Divider(),
-              SwitchListTile(
-                title: const Text('เตือนเช็กอิน'),
-                value: settings.notifyCheckIn,
-                onChanged: (v) => repo.updateNotificationToggles(checkIn: v),
-              ),
-              const Divider(),
-              SwitchListTile(
-                title: const Text('เตือนเดดไลน์'),
-                subtitle: const Text('เย็นก่อนวันส่ง ไม่เลยเวลาเข้านอน'),
-                value: settings.notifyDeadline,
-                onChanged: (v) => repo.updateTaskReminders(deadline: v),
-              ),
-              const Divider(),
-              SwitchListTile(
-                title: const Text('เตือนก่อนคาบเรียน'),
-                subtitle: const Text('ไม่ปลุกตอนนอน'),
-                value: settings.notifyBeforeClass,
-                onChanged: (v) => repo.updateTaskReminders(beforeClass: v),
-              ),
-              if (settings.notifyBeforeClass)
-                SettingRow(
-                  title: 'เตือนก่อนคาบกี่นาที',
-                  value: '${settings.beforeClassMinutes} นาที',
-                  onTap: () async {
-                    final minutes = await showChoiceSheet<int>(
-                      context,
-                      title: 'เตือนก่อนคาบ',
-                      selected: settings.beforeClassMinutes,
-                      choices: {
-                        for (final m in beforeClassChoices) m: '$m นาที',
-                      },
-                    );
-                    if (minutes != null) {
-                      await repo.updateTaskReminders(
-                        beforeClassMinutes: minutes,
-                      );
-                    }
-                  },
-                ),
-              const Divider(),
-              if (platform.calendarReminders)
-                SettingRow(
-                  title: 'เพิ่มเตือนลงปฏิทิน (7 วัน)',
-                  onTap: () => addCalendarReminders(context, ref),
-                ),
-              if (platform.deviceSetupHelp) const _ExactAlarmRow(),
-              if (platform.localNotifications)
-                SettingRow(
-                  title: 'ทดสอบแจ้งเตือน',
-                  value: 'อีก 1 นาที',
-                  onTap: () async {
-                    await ref
-                        .read(notificationServiceProvider)
-                        .showTestNotification();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'ตั้งการแจ้งเตือนทดสอบแล้ว รออีก 1 นาที',
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              if (platform.deviceSetupHelp)
-                SettingRow(
-                  title: 'ปิดการประหยัดแบตให้ Glow',
-                  onTap: () => showBatteryOptimizationSheet(context),
-                ),
-              const _SectionHeader('ท่าก่อนนอน'),
-              SwitchListTile(
-                title: const Text('ท่าก่อนนอน'),
-                subtitle: const Text('ปิดแล้วการ์ดกิจกรรมและเควสท่าจะหายไป'),
-                value: settings.routineEnabled,
-                onChanged: repo.updateRoutineEnabled,
-              ),
-              const Divider(),
-              SettingRow(
-                title: 'ท่าที่ซ่อนไว้',
-                value: '${hiddenPoseSet(settings).length} ท่า',
-                onTap: () => showHiddenPosesSheet(context),
-              ),
-              const _SectionHeader('ตารางเย็น'),
-              EveningSettingsRows(settings: settings),
-              if (showAi) const _SectionHeader('ผู้ช่วย AI'),
-              if (showAi)
-                SettingRow(
-                  title: 'ผู้ช่วย AI',
-                  value: ref.watch(aiSettingsProvider).value?.enabled == true
-                      ? 'เปิด'
-                      : 'ปิด',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
-                  ),
-                ),
-              const _SectionHeader('ลักษณะที่ปรากฏ'),
-              SettingRow(
                 title: 'โหมดสี',
-                value: _themeLabels[settings.themeMode]!,
-                onTap: () async {
-                  final mode = await showChoiceSheet<AppThemeMode>(
-                    context,
-                    title: 'โหมดสี',
-                    selected: settings.themeMode,
-                    choices: _themeLabels,
+                selected: settings.themeMode,
+                choices: _themeLabels,
+              );
+              if (mode != null) await repo.updateThemeMode(mode);
+            },
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            leading: const Icon(Icons.tune),
+            title: const Text('ตั้งค่าขั้นสูง'),
+            subtitle: const Text(
+              'การนอนแบบละเอียด ตารางเย็น ผู้ช่วย AI สำรองข้อมูล และอื่น ๆ',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _open(context, const AdvancedSettingsScreen()),
+          ),
+          const _SectionHeader('เกี่ยวกับแอป'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'แอปนี้ไม่ใช่คำแนะนำทางการแพทย์ ถ้านอนไม่หลับหรือง่วงมากต่อเนื่อง'
+              'หลายสัปดาห์ ควรปรึกษาแพทย์',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 24),
+        ];
+      },
+    );
+  }
+}
+
+class NotificationSettingsScreen extends ConsumerWidget {
+  const NotificationSettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final platform = ref.watch(platformCapabilitiesProvider);
+    return _SettingsPage(
+      title: platform.calendarReminders ? 'เตือนในปฏิทิน' : 'การแจ้งเตือน',
+      rows: (context, settings) {
+        final repo = ref.read(settingsRepositoryProvider);
+        return [
+          SwitchListTile(
+            title: const Text('เตือนวางมือถือ'),
+            value: settings.notifyPutPhoneDown,
+            onChanged: (v) => repo.updateNotificationToggles(putPhoneDown: v),
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('เตือนถึงเวลานอน'),
+            value: settings.notifyBedtime,
+            onChanged: (v) => repo.updateNotificationToggles(bedtime: v),
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('เตือนคืนแดงข้างหน้า'),
+            value: settings.notifyBusyNight,
+            onChanged: (v) => repo.updateNotificationToggles(busyNight: v),
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('เตือนเช็กอิน'),
+            value: settings.notifyCheckIn,
+            onChanged: (v) => repo.updateNotificationToggles(checkIn: v),
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('เตือนเดดไลน์'),
+            subtitle: const Text('เย็นก่อนวันส่ง ไม่เลยเวลาเข้านอน'),
+            value: settings.notifyDeadline,
+            onChanged: (v) => repo.updateTaskReminders(deadline: v),
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('เตือนก่อนคาบเรียน'),
+            subtitle: const Text('ไม่ปลุกตอนนอน'),
+            value: settings.notifyBeforeClass,
+            onChanged: (v) => repo.updateTaskReminders(beforeClass: v),
+          ),
+          if (settings.notifyBeforeClass)
+            SettingRow(
+              title: 'เตือนก่อนคาบกี่นาที',
+              value: '${settings.beforeClassMinutes} นาที',
+              onTap: () async {
+                final minutes = await showChoiceSheet<int>(
+                  context,
+                  title: 'เตือนก่อนคาบ',
+                  selected: settings.beforeClassMinutes,
+                  choices: {for (final m in beforeClassChoices) m: '$m นาที'},
+                );
+                if (minutes != null) {
+                  await repo.updateTaskReminders(beforeClassMinutes: minutes);
+                }
+              },
+            ),
+          const Divider(),
+          if (platform.calendarReminders)
+            SettingRow(
+              title: 'เพิ่มเตือนลงปฏิทิน (7 วัน)',
+              onTap: () => addCalendarReminders(context, ref),
+            ),
+          if (platform.deviceSetupHelp) const _ExactAlarmRow(),
+          if (platform.localNotifications)
+            SettingRow(
+              title: 'ทดสอบแจ้งเตือน',
+              value: 'อีก 1 นาที',
+              onTap: () async {
+                await ref
+                    .read(notificationServiceProvider)
+                    .showTestNotification();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('ตั้งการแจ้งเตือนทดสอบแล้ว รออีก 1 นาที'),
+                    ),
                   );
-                  if (mode != null) await repo.updateThemeMode(mode);
+                }
+              },
+            ),
+          if (platform.deviceSetupHelp)
+            SettingRow(
+              title: 'ปิดการประหยัดแบตให้ Glow',
+              onTap: () => showBatteryOptimizationSheet(context),
+            ),
+          const SizedBox(height: 24),
+        ];
+      },
+    );
+  }
+}
+
+class AdvancedSettingsScreen extends ConsumerWidget {
+  const AdvancedSettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final platform = ref.watch(platformCapabilitiesProvider);
+    final birthDate = ref.watch(cardProfileStreamProvider).value?.birthDate;
+    // Nothing about AI shows to someone whose birth date is under 18.
+    final showAi =
+        platform.aiAssistant &&
+        switch (ref.watch(aiAgeProvider).value) {
+          null || AiAgeState.hidden => false,
+          _ => true,
+        };
+    final aiOn = ref.watch(aiSettingsProvider).value?.enabled == true;
+    return _SettingsPage(
+      title: 'ตั้งค่าขั้นสูง',
+      rows: (context, settings) {
+        final repo = ref.read(settingsRepositoryProvider);
+        final isAdult = birthDate == null
+            ? settings.ageGroup == AgeGroup.adult
+            : isAdultOn(birthDate, DateTime.now());
+        return [
+          const _SectionHeader('การนอน'),
+          SettingRow(
+            title: 'ช่วงอายุ',
+            value:
+                (isAdult ? '18 ปีขึ้นไป' : 'ต่ำกว่า 18 ปี') +
+                (birthDate == null ? '' : ' (จากวันเกิด)'),
+            onTap: () async {
+              // A birth date decides the age; change it there.
+              if (birthDate != null) {
+                await showCardDetailsSheet(context);
+                return;
+              }
+              final group = await showChoiceSheet<AgeGroup>(
+                context,
+                title: 'ช่วงอายุ (เป้าชั่วโมงจะกลับเป็นค่าแนะนำ)',
+                selected: settings.ageGroup,
+                choices: const {
+                  AgeGroup.under18: 'ต่ำกว่า 18 ปี',
+                  AgeGroup.adult: '18 ปีขึ้นไป',
                 },
+              );
+              if (group != null && group != settings.ageGroup) {
+                await repo.applyAgeGroupDefaults(group);
+              }
+            },
+          ),
+          _durationRow(
+            context,
+            title: 'เป้าต่ำสุด',
+            minutes: settings.targetMinMinutes,
+            step: 15,
+            min: 4 * 60,
+            max: settings.targetMaxMinutes,
+            onSave: (v) => repo.updateTargetHours(minMinutes: v),
+          ),
+          _durationRow(
+            context,
+            title: 'เป้าสูงสุด',
+            minutes: settings.targetMaxMinutes,
+            step: 15,
+            min: settings.targetMinMinutes,
+            max: 12 * 60,
+            onSave: (v) => repo.updateTargetHours(maxMinutes: v),
+          ),
+          SettingRow(
+            title: 'เรียนเช้าสุด (ตอนยังไม่มีตาราง)',
+            value: settings.earliestClassMinutes == null
+                ? 'ไม่ได้ใส่'
+                : formatTimeOfDay(_timeOf(settings.earliestClassMinutes!)),
+            onTap: () async {
+              final picked = await showTimeWheel(
+                context,
+                title: 'เรียนเช้าสุดกี่โมง',
+                initial: _timeOf(settings.earliestClassMinutes ?? 8 * 60),
+              );
+              if (picked != null) {
+                await repo.updateEarliestClass(
+                  picked.hour * 60 + picked.minute,
+                );
+              }
+            },
+          ),
+          SettingRow(
+            title: 'เวลาเดินทางแยกรายวัน',
+            value: switch (parseTravelOverrides(settings.travelOverrides)
+                .length) {
+              0 => 'ไม่มี',
+              final n => '$n วัน',
+            },
+            onTap: () => showTravelByDaySheet(context),
+          ),
+          SettingRow(
+            title: 'เวลาตื่นวันว่าง',
+            value: formatTimeOfDay(
+              TimeOfDay(
+                hour: settings.freeDayWakeMinutes ~/ 60,
+                minute: settings.freeDayWakeMinutes % 60,
               ),
-              SettingRow(
-                title: 'ปฏิทินเริ่มสัปดาห์วัน',
-                value: _weekStartLabels[settings.calendarFirstWeekday] ?? '',
-                onTap: () async {
-                  final day = await showChoiceSheet<int>(
-                    context,
-                    title: 'ปฏิทินเริ่มสัปดาห์วัน (เควสยังเริ่มวันจันทร์)',
-                    selected: settings.calendarFirstWeekday,
-                    choices: _weekStartLabels,
-                  );
-                  if (day != null) await repo.updateCalendarFirstWeekday(day);
-                },
-              ),
-              const _SectionHeader('ข้อมูล'),
-              ListTile(
-                title: const Text('สำรองข้อมูลเป็นไฟล์'),
-                trailing: const Icon(Icons.upload_file_outlined),
-                onTap: () async {
-                  final backups = ref.read(backupServiceProvider);
-                  var includePhoto = false;
-                  if (await ref.read(cardRepositoryProvider).photo() != null) {
-                    if (!context.mounted) return;
-                    final answer = await _askAboutPhoto(context);
-                    if (answer == null) return;
-                    includePhoto = answer;
-                  }
-                  final ok = await backups.exportToFile(
-                    includePhoto: includePhoto,
-                  );
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          ok ? 'สำรองข้อมูลแล้ว' : 'ยกเลิกการสำรองข้อมูล',
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
-              const Divider(),
-              ListTile(
-                title: const Text('นำเข้าข้อมูลจากไฟล์สำรอง'),
-                trailing: const Icon(Icons.download_outlined),
-                onTap: () async {
-                  final confirmed = await _confirm(
-                    context,
-                    title: 'นำเข้าข้อมูล',
-                    message: 'ข้อมูลปัจจุบันทั้งหมดจะถูกแทนที่ด้วยไฟล์ที่เลือก ต้องการดำเนินการต่อไหม',
-                  );
-                  if (!confirmed || !context.mounted) return;
-                  String message;
-                  try {
-                    final ok = await ref
-                        .read(backupServiceProvider)
-                        .importFromFile();
-                    message = ok ? 'นำเข้าข้อมูลแล้ว' : 'ยกเลิกการนำเข้า';
-                  } catch (_) {
-                    message = 'อ่านไฟล์นี้ไม่ได้ ข้อมูลเดิมยังอยู่ครบ';
-                  }
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(message)));
-                  }
-                },
-              ),
-              const Divider(),
-              ListTile(
-                title: Text(
-                  'ลบข้อมูลทั้งหมด',
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            onTap: () async {
+              final picked = await showTimeWheel(
+                context,
+                title: 'เวลาตื่นวันว่าง',
+                initial: TimeOfDay(
+                  hour: settings.freeDayWakeMinutes ~/ 60,
+                  minute: settings.freeDayWakeMinutes % 60,
                 ),
-                trailing: Icon(
-                  Icons.delete_forever_outlined,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                onTap: () async {
-                  final confirmed = await _confirm(
-                    context,
-                    title: 'ลบข้อมูลทั้งหมด',
-                    message: 'ข้อมูลทุกอย่างในแอปจะถูกลบและไม่สามารถกู้คืนได้ ต้องการดำเนินการต่อไหม',
-                  );
-                  if (!confirmed || !context.mounted) return;
-                  final notifications = ref.read(notificationServiceProvider);
-                  final backup = ref.read(backupServiceProvider);
-                  final apiKeys = ref.read(apiKeyStoreProvider);
-                  // Back to the first screen, which becomes onboarding again.
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                  await backup.deleteEverything(apiKeys);
-                  await notifications.cancelAll();
-                },
+              );
+              if (picked != null) {
+                await repo.updateFreeDayWakeMinutes(
+                  picked.hour * 60 + picked.minute,
+                );
+              }
+            },
+          ),
+          const _SectionHeader('ท่าก่อนนอน'),
+          SwitchListTile(
+            title: const Text('ท่าก่อนนอน'),
+            subtitle: const Text('ปิดแล้วการ์ดกิจกรรมและเควสท่าจะหายไป'),
+            value: settings.routineEnabled,
+            onChanged: repo.updateRoutineEnabled,
+          ),
+          const Divider(),
+          SettingRow(
+            title: 'ท่าที่ซ่อนไว้',
+            value: '${hiddenPoseSet(settings).length} ท่า',
+            onTap: () => showHiddenPosesSheet(context),
+          ),
+          const _SectionHeader('ตารางเย็น'),
+          EveningSettingsRows(settings: settings),
+          if (showAi) const _SectionHeader('ผู้ช่วย AI'),
+          if (showAi)
+            SettingRow(
+              title: 'ผู้ช่วย AI',
+              value: aiOn ? 'เปิด' : 'ปิด',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
               ),
-              const _SectionHeader('เกี่ยวกับแอป'),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'แอปนี้ไม่ใช่คำแนะนำทางการแพทย์ ถ้านอนไม่หลับหรือง่วงมากต่อเนื่อง'
-                  'หลายสัปดาห์ ควรปรึกษาแพทย์',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              if (kDebugMode) ...[
-                const _SectionHeader('Debug'),
-                ListTile(
-                  title: const Text('แสดงปุ่มเดโม'),
-                  onTap: () {
-                    ref.read(demoButtonVisibleProvider.notifier).state = true;
-                    Navigator.of(context).pop();
-                  },
-                ),
-                ListTile(
-                  title: const Text('Theme gallery'),
-                  trailing: const Icon(Icons.palette_outlined),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ThemeGalleryScreen(),
+            ),
+          const _SectionHeader('ปฏิทิน'),
+          SettingRow(
+            title: 'ปฏิทินเริ่มสัปดาห์วัน',
+            value: _weekStartLabels[settings.calendarFirstWeekday] ?? '',
+            onTap: () async {
+              final day = await showChoiceSheet<int>(
+                context,
+                title: 'ปฏิทินเริ่มสัปดาห์วัน (เควสยังเริ่มวันจันทร์)',
+                selected: settings.calendarFirstWeekday,
+                choices: _weekStartLabels,
+              );
+              if (day != null) await repo.updateCalendarFirstWeekday(day);
+            },
+          ),
+          const _SectionHeader('ข้อมูล'),
+          ListTile(
+            title: const Text('สำรองข้อมูลเป็นไฟล์'),
+            trailing: const Icon(Icons.upload_file_outlined),
+            onTap: () async {
+              final backups = ref.read(backupServiceProvider);
+              var includePhoto = false;
+              if (await ref.read(cardRepositoryProvider).photo() != null) {
+                if (!context.mounted) return;
+                final answer = await _askAboutPhoto(context);
+                if (answer == null) return;
+                includePhoto = answer;
+              }
+              final ok = await backups.exportToFile(includePhoto: includePhoto);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ok ? 'สำรองข้อมูลแล้ว' : 'ยกเลิกการสำรองข้อมูล',
                     ),
                   ),
-                ),
-                ListTile(
-                  title: const Text('สร้างข้อมูลตัวอย่าง 60 คืน'),
-                  subtitle: const Text('สำหรับทดสอบ heatmap เท่านั้น'),
-                  trailing: const Icon(Icons.dataset_outlined),
-                  onTap: () async {
-                    await ref
-                        .read(debugSampleDataServiceProvider)
-                        .generateSampleNights(ref.read(clockProvider)());
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('สร้างข้อมูลตัวอย่างแล้ว'),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-              const SizedBox(height: 24),
-            ],
-          );
-        },
-      ),
+                );
+              }
+            },
+          ),
+          const Divider(),
+          ListTile(
+            title: const Text('นำเข้าข้อมูลจากไฟล์สำรอง'),
+            trailing: const Icon(Icons.download_outlined),
+            onTap: () async {
+              final confirmed = await _confirm(
+                context,
+                title: 'นำเข้าข้อมูล',
+                message: 'ข้อมูลปัจจุบันทั้งหมดจะถูกแทนที่ด้วยไฟล์ที่เลือก ต้องการดำเนินการต่อไหม',
+              );
+              if (!confirmed || !context.mounted) return;
+              String message;
+              try {
+                final ok = await ref
+                    .read(backupServiceProvider)
+                    .importFromFile();
+                message = ok ? 'นำเข้าข้อมูลแล้ว' : 'ยกเลิกการนำเข้า';
+              } catch (_) {
+                message = 'อ่านไฟล์นี้ไม่ได้ ข้อมูลเดิมยังอยู่ครบ';
+              }
+              if (context.mounted) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(message)));
+              }
+            },
+          ),
+          const Divider(),
+          ListTile(
+            title: Text(
+              'ลบข้อมูลทั้งหมด',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            trailing: Icon(
+              Icons.delete_forever_outlined,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            onTap: () async {
+              final confirmed = await _confirm(
+                context,
+                title: 'ลบข้อมูลทั้งหมด',
+                message: 'ข้อมูลทุกอย่างในแอปจะถูกลบและไม่สามารถกู้คืนได้ ต้องการดำเนินการต่อไหม',
+              );
+              if (!confirmed || !context.mounted) return;
+              final notifications = ref.read(notificationServiceProvider);
+              final backup = ref.read(backupServiceProvider);
+              final apiKeys = ref.read(apiKeyStoreProvider);
+              // Back to the first screen, which becomes onboarding again.
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              await backup.deleteEverything(apiKeys);
+              await notifications.cancelAll();
+            },
+          ),
+          if (kDebugMode) ...[
+            const _SectionHeader('Debug'),
+            ListTile(
+              title: const Text('แสดงปุ่มเดโม'),
+              onTap: () {
+                ref.read(demoButtonVisibleProvider.notifier).state = true;
+                Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
+              title: const Text('Theme gallery'),
+              trailing: const Icon(Icons.palette_outlined),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ThemeGalleryScreen()),
+              ),
+            ),
+            ListTile(
+              title: const Text('สร้างข้อมูลตัวอย่าง 60 คืน'),
+              subtitle: const Text('สำหรับทดสอบ heatmap เท่านั้น'),
+              trailing: const Icon(Icons.dataset_outlined),
+              onTap: () async {
+                await ref
+                    .read(debugSampleDataServiceProvider)
+                    .generateSampleNights(ref.read(clockProvider)());
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('สร้างข้อมูลตัวอย่างแล้ว')),
+                  );
+                }
+              },
+            ),
+          ],
+          const SizedBox(height: 24),
+        ];
+      },
     );
   }
+}
 
-  Future<bool> _confirm(
-    BuildContext context, {
-    required String title,
-    required String message,
-  }) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('ยกเลิก'),
+void _open(BuildContext context, Widget screen) =>
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+
+/// A settings list that waits for the saved values.
+class _SettingsPage extends ConsumerWidget {
+  final String title;
+  final List<Widget> Function(BuildContext context, SettingsRow settings) rows;
+
+  const _SettingsPage({required this.title, required this.rows});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: ref
+          .watch(settingsStreamProvider)
+          .when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('เกิดข้อผิดพลาด: $e')),
+            data: (settings) => ListView(children: rows(context, settings)),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('ยืนยัน'),
-          ),
-        ],
-      ),
     );
-    return result ?? false;
   }
+}
+
+Future<bool> _confirm(
+  BuildContext context, {
+  required String title,
+  required String message,
+}) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('ยกเลิก'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('ยืนยัน'),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
 }
 
 TimeOfDay _timeOf(int minutes) =>
@@ -502,7 +552,10 @@ Future<bool?> _askAboutPhoto(BuildContext context) => showDialog<bool>(
   ),
 );
 
-const _weekStartLabels = {DateTime.sunday: 'อาทิตย์', DateTime.monday: 'จันทร์'};
+const _weekStartLabels = {
+  DateTime.sunday: 'อาทิตย์',
+  DateTime.monday: 'จันทร์',
+};
 
 const _themeLabels = {
   AppThemeMode.system: 'ตามระบบ',
