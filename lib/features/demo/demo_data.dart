@@ -185,6 +185,26 @@ Future<void> _addRewards(AppDatabase db, DateTime today) async {
           coins: Value(EconomyConfig.blankets.first.priceCoins),
         ),
       );
+  // A card that already looks like someone's.
+  await db
+      .into(db.cardProfiles)
+      .insert(
+        const CardProfilesCompanion(
+          id: Value(0),
+          displayName: Value('น้องมายด์'),
+          school: Value('โรงเรียนตัวอย่างวิทยา'),
+          classYear: Value('ม.5'),
+          stickerIds: Value('sticker_star'),
+        ),
+      );
+  await db
+      .into(db.ownedItems)
+      .insert(
+        OwnedItemsCompanion.insert(
+          itemId: 'sticker_star',
+          acquiredAt: _day(today, -12),
+        ),
+      );
   for (var level = 1; level <= 2; level++) {
     await db
         .into(db.ownedItems)

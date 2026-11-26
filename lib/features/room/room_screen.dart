@@ -1,20 +1,23 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/card_config.dart';
 import '../../core/economy_config.dart';
 import '../../core/fire.dart';
-import '../../data/database.dart';
 import '../../data/shop_repository.dart';
 import '../../data/wallet_repository.dart';
 import '../../providers.dart';
+import '../../services/app_clock.dart';
 import '../../theme/tokens.dart';
-import '../../theme/widgets/bed_character.dart';
+import '../../theme/widgets/card_art.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
+import '../../theme/widgets/glow_card.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/stat_tile.dart';
+import '../card/card_details_sheet.dart';
+import '../card/my_card.dart';
 import '../shared/settings_button.dart';
 import 'blanket_color.dart';
-import '../../services/app_clock.dart';
 
 final _ownedItemsStreamProvider = StreamProvider.autoDispose<Set<String>>((
   ref,
@@ -22,328 +25,307 @@ final _ownedItemsStreamProvider = StreamProvider.autoDispose<Set<String>>((
   return ref.watch(walletRepositoryProvider).watchOwnedItemIds();
 });
 
-final _latestCheckInProvider = FutureProvider.autoDispose<CheckInRow?>((ref) {
-  ref.watch(nightHistoryChangesProvider);
-  return ref.watch(checkInRepositoryProvider).latestCheckIn();
-});
+/// Every card color, the starting one first. These are the former blanket
+/// colors, under the same ids.
+List<BlanketConfig> get _allColors => [
+  const BlanketConfig(defaultBlanketId, defaultBlanketColor, 0),
+  ...EconomyConfig.blankets,
+  ...EconomyConfig.fireLevelRewardBlankets.values,
+  EconomyConfig.examPeriodRewardBlanket,
+];
 
-/// Bed character + stats + shop, per CLAUDE.md section 9 ("จัดคล้ายหน้า
-/// โปรไฟล์").
-class RoomScreen extends ConsumerWidget {
+const _decorSections = [
+  ('โลโก้', cardLogos),
+  ('กรอบ', cardFrames),
+  ('สติกเกอร์ (ติดได้ $maxCardStickers ชิ้น)', cardStickers),
+];
+
+/// Where the student card is dressed up: what's owned, and the shop.
+class RoomScreen extends ConsumerStatefulWidget {
   const RoomScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final fireAsync = ref.watch(fireStateStreamProvider);
-    final walletAsync = ref.watch(walletStreamProvider);
-    final latestCheckInAsync = ref.watch(_latestCheckInProvider);
+  ConsumerState<RoomScreen> createState() => _RoomScreenState();
+}
+
+class _RoomScreenState extends ConsumerState<RoomScreen> {
+  bool _shop = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final fire = ref.watch(fireStateStreamProvider).value;
+    final wallet = ref.watch(walletStreamProvider).value;
+    final profile = ref.watch(cardProfileStreamProvider).value;
+    final owned = ref.watch(_ownedItemsStreamProvider).value ?? const {};
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ห้อง'),
+        title: const Text('บัตร'),
         actions: const [SettingsButton()],
       ),
-      body: fireAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('เกิดข้อผิดพลาด: $e')),
-        data: (fire) {
-          final wallet = walletAsync.value;
-          final latestCheckIn = latestCheckInAsync.value;
-          final isFluffy =
-              latestCheckIn == null ||
-              latestCheckIn.result == CheckInResultDb.enough ||
-              latestCheckIn.result == CheckInResultDb.over;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: ListView(
+        padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+        children: [
+          MyStudentCard(onTap: () => showCardDetailsSheet(context)),
+          TextButton.icon(
+            onPressed: () => showCardDetailsSheet(context),
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            label: const Text('แก้ชื่อ โรงเรียน และอวตาร'),
+          ),
+          const SizedBox(height: GlowSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(GlowSpacing.pageMargin),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: ClipOval(
-                        child: ColoredBox(
-                          color: Theme.of(context).colorScheme.surface,
-                          child: BedCharacter(
-                            blanketColor: blanketColorOf(
-                              wallet?.equippedBlanketId,
-                            ),
-                            isFluffy: isFluffy,
-                            lampOpacity:
-                                0.3 + 0.7 * (fire.level / maxFireLevel),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: GlowSpacing.lg),
-                    Expanded(
-                      // Scaled as one block so the three stay the same size.
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          children: [
-                            for (final (value, label) in [
-                              (fireLevelNames[fire.level], 'ระดับไฟ'),
-                              ('${wallet?.coins ?? 0}', 'เหรียญ'),
-                              ('${fire.longestStreak}', 'สตรีคยาวสุด'),
-                            ])
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: GlowSpacing.sm,
-                                ),
-                                child: StatTile(value: value, label: label),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              StatTile(value: '${wallet?.coins ?? 0}', label: 'เหรียญ'),
+              StatTile(
+                value: '${fire?.shields ?? 0}/$maxShields',
+                label: 'โล่',
               ),
-              Expanded(
-                child: DefaultTabController(
-                  length: 2,
-                  child: Column(
-                    children: [
-                      const TabBar(
-                        tabs: [
-                          Tab(
-                            icon: Icon(
-                              Icons.checkroom_outlined,
-                              semanticLabel: 'สีผ้าห่มของฉัน',
-                            ),
-                          ),
-                          Tab(
-                            icon: Icon(
-                              Icons.storefront_outlined,
-                              semanticLabel: 'ร้านค้า',
-                            ),
-                          ),
-                        ],
-                      ),
-                      Expanded(
-                        child: TabBarView(
-                          children: [
-                            _MyBlanketsGrid(
-                              equippedId: wallet?.equippedBlanketId,
-                            ),
-                            const _ShopGrid(),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              StatTile(
+                value: '${fire?.longestStreak ?? 0}',
+                label: 'สตรีคยาวสุด',
               ),
             ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _MyBlanketsGrid extends ConsumerWidget {
-  final String? equippedId;
-  const _MyBlanketsGrid({required this.equippedId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ownedAsync = ref.watch(_ownedItemsStreamProvider);
-    return ownedAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('เกิดข้อผิดพลาด: $e')),
-      data: (owned) {
-        final allBlankets = [
-          ...EconomyConfig.blankets,
-          ...EconomyConfig.fireLevelRewardBlankets.values,
-          EconomyConfig.examPeriodRewardBlanket,
-        ];
-        // The starting blanket is always available, so there's a way back.
-        final ownedBlankets = [
-          const BlanketConfig(defaultBlanketId, defaultBlanketColor, 0),
-          ...allBlankets.where((b) => owned.contains(b.id)),
-        ];
-        return GridView.builder(
-          padding: const EdgeInsets.all(1),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 1,
-            crossAxisSpacing: 1,
           ),
-          itemCount: ownedBlankets.length,
-          itemBuilder: (context, i) {
-            final blanket = ownedBlankets[i];
-            return _BlanketCell(
-              color: Color(blanket.colorValue),
-              isEquipped: blanket.id == equippedId,
-              onTap: () =>
-                  ref.read(walletRepositoryProvider).equipBlanket(blanket.id),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _ShopGrid extends ConsumerWidget {
-  const _ShopGrid();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ownedAsync = ref.watch(_ownedItemsStreamProvider);
-    return ownedAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('เกิดข้อผิดพลาด: $e')),
-      data: (owned) {
-        final purchasable = EconomyConfig.blankets
-            .where((b) => !owned.contains(b.id))
-            .toList();
-        return GridView.builder(
-          padding: const EdgeInsets.all(1),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 1,
-            crossAxisSpacing: 1,
+          const SizedBox(height: GlowSpacing.xl),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('ของฉัน')),
+              ButtonSegment(value: true, label: Text('ร้านค้า')),
+            ],
+            selected: {_shop},
+            onSelectionChanged: (v) => setState(() => _shop = v.single),
           ),
-          itemCount: purchasable.length + 1,
-          itemBuilder: (context, i) {
-            if (i == 0) return const _ShieldShopCell();
-            final blanket = purchasable[i - 1];
-            return _BlanketCell(
-              color: Color(blanket.colorValue),
-              priceCoins: blanket.priceCoins,
-              onTap: () async {
-                final shop = ref.read(shopRepositoryProvider);
-                if (!await _confirmPurchase(
-                  context,
-                  'ผ้าห่มสีนี้',
-                  blanket.priceCoins,
-                )) {
-                  return;
-                }
-                final result = await shop.buyBlanket(
-                  blanket,
-                  ref.read(clockProvider)(),
-                );
-                if (context.mounted) _showPurchaseSnackBar(context, result);
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _ShieldShopCell extends ConsumerWidget {
-  const _ShieldShopCell();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      onTap: () async {
-        final shop = ref.read(shopRepositoryProvider);
-        if (!await _confirmPurchase(
-          context,
-          'โล่ 1 อัน',
-          EconomyConfig.shieldPriceCoins,
-        )) {
-          return;
-        }
-        final result = await shop.buyShield(ref.read(clockProvider)());
-        if (context.mounted) _showPurchaseSnackBar(context, result);
-      },
-      child: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: Stack(
-          children: [
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.shield_outlined, size: 32),
-                  Text(
-                    'โล่ มี ${ref.watch(fireStateStreamProvider).value?.shields ?? 0}/$maxShields',
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              right: 4,
-              bottom: 4,
-              child: Text(
-                '${EconomyConfig.shieldPriceCoins}',
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ),
+          if (_shop) ...[
+            const SizedBox(height: GlowSpacing.lg),
+            _ShieldRow(onBuy: _buyShield),
           ],
+          ..._colorSection(wallet?.equippedBlanketId, owned),
+          for (final (title, items) in _decorSections)
+            ..._decorSection(
+              title,
+              items,
+              owned,
+              inUse: {
+                profile?.logoId ?? defaultLogoId,
+                profile?.frameId ?? defaultFrameId,
+                ...parseStickerIds(profile?.stickerIds ?? ''),
+              },
+              cardColor: blanketColorOf(wallet?.equippedBlanketId),
+            ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _section(String title, List<Widget> tiles) => [
+    const SizedBox(height: GlowSpacing.xl),
+    Text(title, style: Theme.of(context).textTheme.titleMedium),
+    const SizedBox(height: GlowSpacing.sm),
+    if (tiles.isEmpty)
+      Text('มีครบแล้ว', style: Theme.of(context).textTheme.bodyMedium)
+    else
+      GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 3,
+        mainAxisSpacing: GlowSpacing.sm,
+        crossAxisSpacing: GlowSpacing.sm,
+        children: tiles,
+      ),
+  ];
+
+  List<Widget> _colorSection(String? equippedId, Set<String> owned) {
+    bool has(BlanketConfig c) =>
+        c.id == defaultBlanketId || owned.contains(c.id);
+    // Reward colors have no price and never appear in the shop.
+    final colors = _shop
+        ? EconomyConfig.blankets.where((c) => !has(c)).toList()
+        : _allColors.where(has).toList();
+    return _section('สีบัตร', [
+      for (final (i, color) in colors.indexed)
+        _ItemTile(
+          label: 'สีบัตรแบบที่ ${i + 1}',
+          fill: Color(color.colorValue),
+          inUse: !_shop && color.id == (equippedId ?? defaultBlanketId),
+          price: _shop ? color.priceCoins : null,
+          onTap: () => _shop
+              ? _buy(
+                  'สีบัตรนี้',
+                  color.priceCoins,
+                  (shop, now) => shop.buyBlanket(color, now),
+                )
+              : ref.read(walletRepositoryProvider).equipBlanket(color.id),
         ),
+    ]);
+  }
+
+  List<Widget> _decorSection(
+    String title,
+    List<CardDecor> items,
+    Set<String> owned, {
+    required Set<String> inUse,
+    required Color cardColor,
+  }) {
+    bool has(CardDecor d) => d.isFree || owned.contains(d.id);
+    return _section(title, [
+      for (final decor in items.where((d) => _shop ? !has(d) : has(d)))
+        _ItemTile(
+          label: decor.name,
+          inUse: !_shop && inUse.contains(decor.id),
+          price: _shop ? decor.priceCoins : null,
+          onTap: () => _shop
+              ? _buy(
+                  decor.name,
+                  decor.priceCoins,
+                  (shop, now) => shop.buyDecor(decor, now),
+                )
+              : ref.read(cardRepositoryProvider).use(decor),
+          child: switch (decor.kind) {
+            CardDecorKind.logo => CardLogo(decor.id, size: 40),
+            CardDecorKind.sticker => CardSticker(decor.id, size: 44),
+            CardDecorKind.frame => SizedBox(
+              width: 72,
+              height: 46,
+              child: ColoredBox(
+                color: cardColor,
+                child: CustomPaint(
+                  painter: CardFramePainter(decor.id, GlowBaseColors.ink),
+                ),
+              ),
+            ),
+          },
+        ),
+    ]);
+  }
+
+  Future<void> _buy(
+    String name,
+    int price,
+    Future<PurchaseResult> Function(ShopRepository, DateTime) purchase,
+  ) async {
+    final shop = ref.read(shopRepositoryProvider);
+    final now = ref.read(clockProvider)();
+    if (!await _confirmPurchase(context, name, price)) return;
+    final result = await purchase(shop, now);
+    if (mounted) _showPurchaseSnackBar(context, result);
+  }
+
+  Future<void> _buyShield() => _buy(
+    'โล่ 1 อัน',
+    EconomyConfig.shieldPriceCoins,
+    (shop, now) => shop.buyShield(now),
+  );
+}
+
+class _ShieldRow extends StatelessWidget {
+  final VoidCallback onBuy;
+
+  const _ShieldRow({required this.onBuy});
+
+  @override
+  Widget build(BuildContext context) {
+    return GlowCard(
+      onTap: onBuy,
+      child: Row(
+        children: [
+          const Icon(Icons.shield_outlined),
+          const SizedBox(width: GlowSpacing.md),
+          Expanded(
+            child: Text(
+              'โล่ กันไฟลด 1 คืน',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ),
+          Text(
+            '${EconomyConfig.shieldPriceCoins} เหรียญ',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
 }
 
-class _BlanketCell extends StatelessWidget {
-  final Color color;
-  final bool isEquipped;
-  final int? priceCoins;
+class _ItemTile extends StatelessWidget {
+  /// Read out by screen readers.
+  final String label;
+  final Color? fill;
+  final Widget? child;
+  final bool inUse;
+  final int? price;
   final VoidCallback onTap;
 
-  const _BlanketCell({
-    required this.color,
-    this.isEquipped = false,
-    this.priceCoins,
+  const _ItemTile({
+    required this.label,
+    this.fill,
+    this.child,
+    required this.inUse,
+    required this.price,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        color: color,
-        child: Stack(
-          children: [
-            if (isEquipped)
-              Positioned(
-                top: 4,
-                left: 4,
-                child: CircleAvatar(
-                  radius: 11,
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  child: Icon(
-                    Icons.check,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    size: 16,
+    final theme = Theme.of(context);
+    return Semantics(
+      label: [
+        label,
+        if (price != null) '$price เหรียญ',
+        if (inUse) 'ใช้อยู่',
+      ].join(' '),
+      button: true,
+      selected: inUse,
+      excludeSemantics: true,
+      child: Material(
+        color: fill ?? theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GlowRadius.button),
+          side: BorderSide(
+            color: theme.colorScheme.outline,
+            width: inUse ? GlowStroke.focus * 1.5 : GlowStroke.outline,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Stack(
+            children: [
+              if (child != null) Center(child: child),
+              if (inUse)
+                Positioned(
+                  top: GlowSpacing.xs,
+                  right: GlowSpacing.xs,
+                  child: CircleAvatar(
+                    radius: 10,
+                    backgroundColor: theme.colorScheme.onSurface,
+                    child: Icon(
+                      Icons.check,
+                      color: theme.colorScheme.surface,
+                      size: 14,
+                    ),
                   ),
                 ),
-              ),
-            if (priceCoins != null)
-              Positioned(
-                right: 4,
-                bottom: 4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: GlowSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(GlowRadius.pill),
-                  ),
-                  child: Text(
-                    '$priceCoins เหรียญ',
-                    style: Theme.of(context).textTheme.labelSmall,
+              if (price != null)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: GlowSpacing.xs),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: GlowSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(GlowRadius.pill),
+                    ),
+                    child: Text(
+                      '$price เหรียญ',
+                      style: theme.textTheme.labelSmall,
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

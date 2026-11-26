@@ -21,23 +21,27 @@ import '../../data/night_planning_repository.dart';
 import '../../data/settings_repository.dart';
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
+import '../../theme/glow_colors.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
+import '../../theme/widgets/glow_card.dart';
+import '../../theme/widgets/glow_fold.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/night_ring.dart';
 import '../../theme/widgets/warning_bar.dart';
+import '../card/my_card.dart';
 import '../evening/evening_card.dart';
 import '../evening/evening_screen.dart';
 import '../routine/activity_card.dart';
 import '../routine/routine_screen.dart';
 import '../settings/setting_row.dart';
+import '../share/share_screen.dart';
 import '../shared/settings_button.dart';
 import '../stats/heatmap.dart';
 import '../stats/night_detail_sheet.dart';
 import '../web/web_reminder_bars.dart';
 import 'check_in_card.dart';
 import 'check_in_result_screen.dart';
-import 'fire_badge.dart';
 import '../../services/app_clock.dart';
 import '../../services/home_widget_service.dart';
 
@@ -289,16 +293,6 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     final hasSchedule = ref.watch(_hasAnyScheduleProvider);
     final planAsync = ref.watch(tonightPlanProvider);
 
-    final plan = hasSchedule ? planAsync.value : null;
-    // An unanswered check-in stays open until 14:00 the next day; it must not
-    // hide tonight's button once the evening comes round again. While the
-    // card is about this same night, it replaces the button.
-    final showBedArea =
-        plan != null &&
-        (plan.pendingCheckIn == null ||
-            (plan.pendingCheckIn!.wakeDate != plan.wakeDate &&
-                (plan.inBedAt != null || _canPressInBed(plan))));
-
     return Scaffold(
       appBar: AppBar(
         // The one place that uses the wordmark font (THEME.md).
@@ -306,51 +300,63 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
           'Glow',
           style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w800),
         ),
-        actions: const [SettingsButton()],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(tonightPlanProvider),
-              child: ListView(
-                padding: const EdgeInsets.all(GlowSpacing.pageMargin),
-                children: [
-                  if (_notificationsOk == false)
-                    const WarningBar(
-                      severity: WarningBarSeverity.red,
-                      message:
-                          'สิทธิ์แจ้งเตือนถูกปิดอยู่ แจ้งเตือนจะไม่ทำงาน '
-                          'เปิดได้ในตั้งค่าเครื่อง',
-                    ),
-                  if (!hasSchedule) ...[
-                    const _EmptyScheduleCard(),
-                    const SizedBox(height: GlowSpacing.lg),
-                    const FireBadge(),
-                  ] else
-                    planAsync.when(
-                      loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 48),
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                      error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
-                      data: _buildPlan,
-                    ),
-                  if (hasSchedule &&
-                      ref
-                          .watch(platformCapabilitiesProvider)
-                          .calendarReminders) ...[
-                    const SizedBox(height: GlowSpacing.lg),
-                    const WebReminderBars(),
-                  ],
-                ],
-              ),
-            ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share),
+            tooltip: 'แชร์บัตร',
+            onPressed: _shareCard,
           ),
-          if (showBedArea) _buildBedArea(plan),
+          const SettingsButton(),
         ],
       ),
+      body: RefreshIndicator(
+        onRefresh: () async => ref.invalidate(tonightPlanProvider),
+        child: ListView(
+          padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+          children: [
+            if (_notificationsOk == false) ...[
+              const WarningBar(
+                severity: WarningBarSeverity.red,
+                message:
+                    'สิทธิ์แจ้งเตือนถูกปิดอยู่ แจ้งเตือนจะไม่ทำงาน '
+                    'เปิดได้ในตั้งค่าเครื่อง',
+              ),
+              const SizedBox(height: GlowSpacing.md),
+            ],
+            // The centre of the home screen. Tapping it opens dressing up.
+            MyStudentCard(
+              onTap: () =>
+                  ref.read(selectedTabIndexProvider.notifier).state = 3,
+            ),
+            const SizedBox(height: GlowSpacing.lg),
+            if (!hasSchedule)
+              const _EmptyScheduleCard()
+            else
+              planAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 48),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
+                data: _buildPlan,
+              ),
+            if (hasSchedule &&
+                ref.watch(platformCapabilitiesProvider).calendarReminders) ...[
+              const SizedBox(height: GlowSpacing.lg),
+              const WebReminderBars(),
+            ],
+          ],
+        ),
+      ),
     );
+  }
+
+  void _shareCard() {
+    final monday = mondayOfWeek(
+      resolveTonightWakeDate(ref.read(clockProvider)()),
+    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => ShareScreen(monday: monday)));
   }
 
   bool _canPressInBed(TonightPlanData plan) => canPressInBed(
@@ -366,8 +372,9 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         .isBefore(bedPressWindowEnd(plan.draft.wakeTime));
   }
 
-  /// The main button, pinned above the tab bar.
-  Widget _buildBedArea(TonightPlanData plan) {
+  /// "เข้านอนแล้ว". It is the screen's main button, except while a check-in
+  /// card above it holds that place.
+  Widget _buildBedButton(TonightPlanData plan, {required bool isMain}) {
     final textTheme = Theme.of(context).textTheme;
     final pressedAt = plan.inBedAt;
     final canPress = _canPressInBed(plan);
@@ -377,53 +384,56 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     final opensAt = bedPressWindowStart(
       NightPlanningRepository.notifyTimeOf(plan.draft),
     );
+    final label = pressedAt == null
+        ? 'เข้านอนแล้ว'
+        : 'เข้านอนแล้ว · ${_formatTime(pressedAt)}';
+    final onPressed = pressedAt == null && canPress
+        ? () => _goToBed(plan)
+        : null;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        GlowSpacing.pageMargin,
-        GlowSpacing.sm,
-        GlowSpacing.pageMargin,
-        GlowSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (pressedAt == null && !canPress)
-            Text(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (isMain)
+          GlowPrimaryButton(label: label, onPressed: onPressed)
+        else
+          OutlinedButton(onPressed: onPressed, child: Text(label)),
+        if (pressedAt == null && !canPress)
+          Padding(
+            padding: const EdgeInsets.only(top: GlowSpacing.xs),
+            child: Text(
               'ปุ่มเข้านอนกดได้ตั้งแต่ ${_formatTime(opensAt)}',
               textAlign: TextAlign.center,
               style: textTheme.labelSmall,
             ),
-          GlowPrimaryButton(
-            label: pressedAt == null
-                ? 'เข้านอนแล้ว'
-                : 'เข้านอนแล้ว · ${_formatTime(pressedAt)}',
-            onPressed: pressedAt == null && canPress
-                ? () => _goToBed(plan)
-                : null,
           ),
-          if (canUndo)
-            TextButton(
-              onPressed: () => _undoInBed(plan),
-              child: const Text('ยังไม่นอน'),
-            ),
-        ],
-      ),
+        if (canUndo)
+          TextButton(
+            onPressed: () => _undoInBed(plan),
+            child: const Text('ยังไม่นอน'),
+          ),
+      ],
     );
   }
 
+  /// Below the card: tonight's bedtime, one line of why, and the button.
+  /// Everything else is folded away.
   Widget _buildPlan(TonightPlanData plan) {
     if (_pickedFor != plan.wakeDate) {
       _pickedFor = plan.wakeDate;
       _picked = null;
     }
     final pending = plan.pendingCheckIn;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _WeekRings(cells: plan.weekCells, tonight: plan.wakeDate),
-        const SizedBox(height: GlowSpacing.xl),
-        if (pending != null)
+    if (pending != null) {
+      // An unanswered check-in stays open until 14:00 the next day; it must
+      // not hide tonight's button once the evening comes round again. While
+      // the card is about this same night, it replaces the button.
+      final showBedButton =
+          pending.wakeDate != plan.wakeDate &&
+          (plan.inBedAt != null || _canPressInBed(plan));
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           CheckInCard(
             key: ValueKey(pending.wakeDate),
             pending: pending,
@@ -441,29 +451,44 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                 ),
               );
             },
-          )
-        else ...[
-          if (_asksIfStillUp(plan)) ...[
-            _StillUpBar(
-              onMove: () => _goToBed(plan),
-              onDismiss: () => setState(() => _cameBack = false),
-            ),
-            const SizedBox(height: GlowSpacing.md),
-          ],
-          _PlanContent(
-            plan: plan,
-            onShortenPrep: plan.adjustablePrepMinutes == null
-                ? null
-                : () => _shortenPrep(plan),
-            onOpenEvening: plan.eveningEnabled
-                ? () => _openEvening(plan)
-                : null,
           ),
+          if (showBedButton) ...[
+            const SizedBox(height: GlowSpacing.lg),
+            _buildBedButton(plan, isMain: false),
+          ],
           const SizedBox(height: GlowSpacing.lg),
-          if (plan.inBedAt == null &&
-              plan.routineEnabled &&
-              !ref.read(clockProvider)().isBefore(plan.activityCardFrom))
-            ActivityCard(
+          _weekFold(plan),
+        ],
+      );
+    }
+
+    final showRoutine =
+        plan.inBedAt == null &&
+        plan.routineEnabled &&
+        !ref.read(clockProvider)().isBefore(plan.activityCardFrom);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_asksIfStillUp(plan)) ...[
+          _StillUpBar(
+            onMove: () => _goToBed(plan),
+            onDismiss: () => setState(() => _cameBack = false),
+          ),
+          const SizedBox(height: GlowSpacing.md),
+        ],
+        _TonightTime(plan: plan),
+        const SizedBox(height: GlowSpacing.md),
+        _buildBedButton(plan, isMain: true),
+        const SizedBox(height: GlowSpacing.xl),
+        ..._notices(plan),
+        if (showRoutine) ...[
+          GlowFold(
+            icon: Icons.self_improvement,
+            title: 'ท่าก่อนนอน',
+            summary: plan.routineDone
+                ? 'ทำแล้ว'
+                : 'ประมาณ ${_routineMinutes(plan)} นาที',
+            child: ActivityCard(
               key: ValueKey(plan.wakeDate),
               selected: _picked ?? plan.activities,
               confirmed: plan.activitiesConfirmed,
@@ -474,6 +499,77 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
               onChanged: (value) => setState(() => _picked = value),
               onStart: () => _startRoutine(plan),
             ),
+          ),
+          const SizedBox(height: GlowSpacing.md),
+        ],
+        if (plan.eveningEnabled && plan.inBedAt == null) ...[
+          GlowFold(
+            icon: Icons.checklist,
+            title: 'ตารางเย็นนี้',
+            child: EveningCard(onOpen: () => _openEvening(plan)),
+          ),
+          const SizedBox(height: GlowSpacing.md),
+        ],
+        _weekFold(plan),
+      ],
+    );
+  }
+
+  /// Warnings that shouldn't be folded away: a busy evening, a night the
+  /// schedule cuts short, and an exam coming up.
+  List<Widget> _notices(TonightPlanData plan) => [
+    if (plan.load.level == EveningLoadLevel.yellow) ...[
+      WarningBar(
+        severity: WarningBarSeverity.yellow,
+        message:
+            'เย็นนี้แน่น ทำงานให้เสร็จก่อน '
+            '${_formatTime(plan.load.notifyTime)}',
+        onTap: plan.eveningEnabled ? () => _openEvening(plan) : null,
+      ),
+      const SizedBox(height: GlowSpacing.md),
+    ],
+    if (plan.load.level == EveningLoadLevel.red) ...[
+      const WarningBar(
+        severity: WarningBarSeverity.red,
+        message:
+            'คืนนั้นนอนครบไม่ได้ตามตาราง ลองย้ายกิจกรรม, '
+            'ลดเวลาเตรียมตัววันนั้น, หรือเข้านอนเร็วขึ้นคืนก่อนหน้า',
+      ),
+      if (plan.adjustablePrepMinutes != null)
+        TextButton(
+          onPressed: () => _shortenPrep(plan),
+          child: const Text('ลดเวลาเตรียมตัวพรุ่งนี้'),
+        ),
+      const SizedBox(height: GlowSpacing.md),
+    ],
+    if (plan.examCountdown != null) ...[
+      _ExamCountdownBanner(plan.examCountdown!),
+      const SizedBox(height: GlowSpacing.md),
+    ],
+  ];
+
+  /// The week's nights, tonight's quests, and "วันนี้หมดแรง".
+  Widget _weekFold(TonightPlanData plan) {
+    final textTheme = Theme.of(context).textTheme;
+    final shields = ref.watch(fireStateStreamProvider).value?.shields ?? 0;
+    return GlowFold(
+      icon: Icons.emoji_events_outlined,
+      title: 'สัปดาห์นี้และเควส',
+      summary: 'ผ่าน ${plan.weeklyPassCount}/$weeklyQuestTarget คืน',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _WeekRings(cells: plan.weekCells, tonight: plan.wakeDate),
+          const SizedBox(height: GlowSpacing.lg),
+          Text(_modeLine(plan), style: textTheme.bodyLarge),
+          Text(
+            _questLine(plan.mode, routine: plan.routineEnabled),
+            style: textTheme.bodyMedium,
+          ),
+          const SizedBox(height: GlowSpacing.sm),
+          _QuestProgressDots(count: plan.weeklyPassCount),
+          if (shields > 0)
+            Text('มีโล่ $shields อัน', style: textTheme.bodyMedium),
           if (plan.canChangeLowEnergy && plan.inBedAt == null)
             TextButton(
               onPressed: () => _toggleLowEnergy(plan),
@@ -481,12 +577,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                 plan.lowEnergy ? 'ยกเลิก "วันนี้หมดแรง"' : 'วันนี้หมดแรง',
               ),
             ),
-          if (plan.eveningEnabled && plan.inBedAt == null) ...[
-            const SizedBox(height: GlowSpacing.lg),
-            EveningCard(onOpen: () => _openEvening(plan)),
-          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -614,12 +706,9 @@ class _StillUpBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    return GlowCard(
+      pastel: GlowPastel.lilac,
       padding: const EdgeInsets.all(GlowSpacing.md),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.primary),
-        borderRadius: BorderRadius.circular(GlowRadius.card),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -686,41 +775,30 @@ class _EmptyScheduleCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const Text(
-              'ยังไม่มีตารางเรียน ใส่ตารางก่อนเพื่อให้ Glow แนะนำเวลานอนได้',
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () =>
-                  ref.read(selectedTabIndexProvider.notifier).state = 1,
-              child: const Text('ไปตั้งตาราง'),
-            ),
-          ],
-        ),
+    return GlowCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'ยังไม่มีตารางเรียน ใส่ตารางก่อนเพื่อให้ Glow แนะนำเวลานอนได้',
+          ),
+          const SizedBox(height: GlowSpacing.md),
+          FilledButton(
+            onPressed: () =>
+                ref.read(selectedTabIndexProvider.notifier).state = 1,
+            child: const Text('ไปตั้งตาราง'),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _PlanContent extends StatelessWidget {
+/// Tonight's bedtime, large, with one line saying where it comes from.
+class _TonightTime extends StatelessWidget {
   final TonightPlanData plan;
 
-  /// Tapping the busy-evening bar opens the evening plan.
-  final VoidCallback? onOpenEvening;
-
-  /// "ลดเวลาเตรียมตัววันนั้น" on a red night.
-  final VoidCallback? onShortenPrep;
-
-  const _PlanContent({
-    required this.plan,
-    this.onOpenEvening,
-    this.onShortenPrep,
-  });
+  const _TonightTime({required this.plan});
 
   @override
   Widget build(BuildContext context) {
@@ -735,55 +813,14 @@ class _PlanContent extends StatelessWidget {
           }} ${_formatTime(first.start)}';
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (plan.examCountdown != null) ...[
-          _ExamCountdownBanner(plan.examCountdown!),
-          const SizedBox(height: GlowSpacing.md),
-        ],
         Text('เข้านอนคืนนี้', style: textTheme.bodyMedium),
-        const SizedBox(height: GlowSpacing.xs),
         Text(_formatTime(plan.draft.bedtime), style: textTheme.displayLarge),
-        const SizedBox(height: GlowSpacing.xs),
         Text(
           'ตื่น ${_formatTime(plan.draft.wakeTime)} · $firstLabel',
           style: textTheme.bodyMedium,
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: GlowSpacing.xl),
-        if (plan.load.level == EveningLoadLevel.yellow)
-          InkWell(
-            onTap: onOpenEvening,
-            child: WarningBar(
-              severity: WarningBarSeverity.yellow,
-              message:
-                  'เย็นนี้แน่น ทำงานให้เสร็จก่อน '
-                  '${_formatTime(plan.load.notifyTime)}'
-                  '${onOpenEvening == null ? '' : ' · แตะเพื่อจัดตารางเย็น'}',
-            ),
-          ),
-        if (plan.load.level == EveningLoadLevel.red) ...[
-          const WarningBar(
-            severity: WarningBarSeverity.red,
-            message:
-                'คืนนั้นนอนครบไม่ได้ตามตาราง ลองย้ายกิจกรรม, '
-                'ลดเวลาเตรียมตัววันนั้น, หรือเข้านอนเร็วขึ้นคืนก่อนหน้า',
-          ),
-          if (onShortenPrep != null)
-            TextButton(
-              onPressed: onShortenPrep,
-              child: const Text('ลดเวลาเตรียมตัวพรุ่งนี้'),
-            ),
-        ],
-        const SizedBox(height: GlowSpacing.lg),
-        const FireBadge(),
-        const SizedBox(height: GlowSpacing.md),
-        Text(_modeLine(plan), style: textTheme.bodyLarge),
-        Text(
-          _questLine(plan.mode, routine: plan.routineEnabled),
-          style: textTheme.bodyMedium,
-        ),
-        const SizedBox(height: GlowSpacing.sm),
-        _QuestProgressDots(count: plan.weeklyPassCount),
       ],
     );
   }
@@ -852,16 +889,13 @@ class _ExamCountdownBanner extends StatelessWidget {
     final label = days == 0 ? 'วันนี้' : 'อีก $days วัน';
     final title = countdown.exam.title;
     final name = title.startsWith('สอบ') ? title : 'สอบ $title';
-    return Container(
+    return GlowCard(
+      pastel: GlowPastel.sky,
       padding: const EdgeInsets.all(GlowSpacing.md),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.primary),
-        borderRadius: BorderRadius.circular(GlowRadius.card),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.school_outlined, color: theme.colorScheme.primary),
+          const Icon(Icons.school_outlined),
           const SizedBox(width: GlowSpacing.md),
           Expanded(
             child: Column(
@@ -870,7 +904,7 @@ class _ExamCountdownBanner extends StatelessWidget {
                 Text('$name $label', style: theme.textTheme.bodyLarge),
                 Text(
                   'นอนให้พอช่วยให้จำสิ่งที่อ่านได้ดีขึ้น ไม่ควรโต้รุ่ง',
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyLarge,
                 ),
               ],
             ),

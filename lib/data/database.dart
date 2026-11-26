@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../core/card_config.dart';
 import '../core/ai_config.dart';
 
 part 'database.g.dart';
@@ -241,6 +242,27 @@ class Wallets extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Single row (id 0): what the student card says and wears. Added in schema
+/// 16. Everything stays on the phone.
+@DataClassName('CardProfileRow')
+class CardProfiles extends Table {
+  IntColumn get id => integer().withDefault(const Constant(0))();
+  TextColumn get displayName => text().withDefault(const Constant(''))();
+  TextColumn get school => text().withDefault(const Constant(''))();
+  TextColumn get classYear => text().withDefault(const Constant(''))();
+  TextColumn get avatarId =>
+      text().withDefault(const Constant(defaultAvatarId))();
+  TextColumn get logoId => text().withDefault(const Constant(defaultLogoId))();
+  TextColumn get frameId =>
+      text().withDefault(const Constant(defaultFrameId))();
+
+  /// Comma-separated sticker ids, see core/card_config.dart.
+  TextColumn get stickerIds => text().withDefault(const Constant(''))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// One row per shop/reward item the player owns (section 9 blankets, plus
 /// the non-sellable fire-level and exam-period reward blankets).
 class OwnedItems extends Table {
@@ -397,6 +419,7 @@ class CalendarReminderStates extends Table {
     EveningTasks,
     AiSettings,
     CalendarReminderStates,
+    CardProfiles,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -415,7 +438,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -525,6 +548,11 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 15) {
         await m.createTable(calendarReminderStates);
+      }
+      if (from < 16) {
+        // Only adds a table: coins, owned colors and the equipped color are
+        // left exactly as they were.
+        await m.createTable(cardProfiles);
       }
     },
   );

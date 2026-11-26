@@ -4,13 +4,28 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/card_config.dart';
+import '../../data/database.dart';
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../services/image_share.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_primary_button.dart';
-import '../room/blanket_color.dart';
+import '../card/my_card.dart';
 import 'share_card.dart';
+
+/// The face for the week being shared: rested if at least half the nights
+/// checked in were complete.
+AvatarMood weekMood(List<HeatmapCell> week) {
+  final checkedIn = week.where((c) => c.checkIn != null).toList();
+  if (checkedIn.isEmpty) return AvatarMood.calm;
+  final complete = checkedIn
+      .where((c) => c.checkIn!.result == CheckInResultDb.enough)
+      .length;
+  return complete * 2 >= checkedIn.length
+      ? AvatarMood.rested
+      : AvatarMood.sleepy;
+}
 
 /// Preview of the week card, then the system share sheet. The picture is made
 /// on the phone; nothing is uploaded by Glow.
@@ -27,6 +42,7 @@ class ShareScreen extends ConsumerStatefulWidget {
 class _ShareScreenState extends ConsumerState<ShareScreen> {
   final _cardKey = GlobalKey();
   bool _showTimes = false;
+  bool _showDetails = false;
   bool _sharing = false;
 
   late final Future<List<HeatmapCell>> _week = ref
@@ -62,12 +78,13 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final fireLevel = ref.watch(fireStateStreamProvider).value?.level ?? 0;
-    final blanket = ref.watch(walletStreamProvider).value?.equippedBlanketId;
+    final fire = ref.watch(fireStateStreamProvider).value;
+    final color = ref.watch(walletStreamProvider).value?.equippedBlanketId;
+    final profile = ref.watch(cardProfileStreamProvider).value;
     final fallAsleep =
         ref.watch(settingsStreamProvider).value?.fallAsleepMinutes ?? 15;
     return Scaffold(
-      appBar: AppBar(title: const Text('แชร์สัปดาห์')),
+      appBar: AppBar(title: const Text('แชร์บัตร')),
       body: FutureBuilder<List<HeatmapCell>>(
         future: _week,
         builder: (context, snapshot) {
@@ -92,8 +109,14 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                         key: _cardKey,
                         child: ShareCard(
                           week: week,
-                          fireLevel: fireLevel,
-                          blanketColor: blanketColorOf(blanket),
+                          studentCard: studentCardFrom(
+                            profile: profile,
+                            equippedColorId: color,
+                            fireLevel: fire?.level ?? 0,
+                            firePoints: fire?.points ?? 0,
+                            mood: weekMood(week),
+                            showDetails: _showDetails,
+                          ),
                           showTimes: _showTimes,
                           fallAsleepMinutes: fallAsleep,
                         ),
@@ -101,6 +124,11 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                     ),
                   ),
                 ),
+              ),
+              SwitchListTile(
+                title: const Text('แสดงชื่อและโรงเรียน'),
+                value: _showDetails,
+                onChanged: (v) => setState(() => _showDetails = v),
               ),
               SwitchListTile(
                 title: const Text('แสดงเวลา'),

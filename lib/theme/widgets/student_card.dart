@@ -1,0 +1,213 @@
+import 'package:material_ui/material_ui.dart';
+
+import '../../core/card_config.dart';
+import '../../core/fire.dart';
+import '../tokens.dart';
+import 'card_art.dart';
+
+/// The size the card is laid out at; it scales to the space it gets.
+const Size studentCardSize = Size(320, 200);
+
+/// Black or white, whichever reads better on [background].
+Color cardTextColor(Color background) {
+  final luminance = background.computeLuminance();
+  final onWhiteText = 1.05 / (luminance + 0.05);
+  final onBlackText = (luminance + 0.05) / 0.05;
+  return onBlackText >= onWhiteText
+      ? GlowCardArtColors.black
+      : GlowCardArtColors.white;
+}
+
+/// Glow's student card, the face of the home screen: who it belongs to, the
+/// decorations bought with coins, the fire as stamps, and an avatar that
+/// looks rested or sleepy after the latest night.
+///
+/// Purely visual: everything it shows is passed in.
+class StudentCard extends StatelessWidget {
+  final Color color;
+  final String name;
+  final String school;
+  final String classYear;
+  final String avatarId;
+  final String logoId;
+  final String frameId;
+  final List<String> stickerIds;
+  final AvatarMood mood;
+  final int fireLevel;
+  final int firePoints;
+  final VoidCallback? onTap;
+
+  const StudentCard({
+    super.key,
+    required this.color,
+    this.name = '',
+    this.school = '',
+    this.classYear = '',
+    this.avatarId = defaultAvatarId,
+    this.logoId = defaultLogoId,
+    this.frameId = defaultFrameId,
+    this.stickerIds = const [],
+    this.mood = AvatarMood.calm,
+    required this.fireLevel,
+    required this.firePoints,
+    this.onTap,
+  });
+
+  static const _stickerSpots = [
+    (right: 14.0, top: 46.0, turn: 0.18),
+    (right: 52.0, top: 72.0, turn: -0.14),
+    (right: 14.0, top: 96.0, turn: 0.06),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = cardTextColor(color);
+    final level = fireLevel.clamp(0, maxFireLevel);
+    final moodWords = switch (mood) {
+      AvatarMood.calm => '',
+      AvatarMood.rested => ' อวตารดูสดชื่น',
+      AvatarMood.sleepy => ' อวตารดูง่วงนิดหน่อย',
+    };
+    TextStyle text(double size, {bool bold = false}) => TextStyle(
+      fontFamily: 'NotoSansThai',
+      fontFamilyFallback: const ['Nunito'],
+      fontSize: size,
+      height: 1.4,
+      fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+      color: ink,
+    );
+    Widget line(String value, TextStyle style) =>
+        Text(value, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
+
+    final shownName = name.isEmpty ? 'บัตรของฉัน' : name;
+    // Room on the right so stickers don't cover the words.
+    final stickerRoom = switch (stickerIds.length) {
+      0 => 0.0,
+      1 => 38.0,
+      _ => 76.0,
+    };
+
+    final face = Stack(
+      children: [
+        Positioned.fill(
+          child: CustomPaint(painter: CardFramePainter(frameId, ink)),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(GlowSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  CardLogo(logoId),
+                  const SizedBox(width: GlowSpacing.sm),
+                  Text(
+                    'Glow',
+                    style: text(
+                      GlowFontSize.body,
+                      bold: true,
+                    ).copyWith(fontFamily: 'Nunito'),
+                  ),
+                  const Spacer(),
+                  Text('บัตรนักเรียน', style: text(GlowFontSize.tiny)),
+                  const SizedBox(width: GlowSpacing.sm),
+                ],
+              ),
+              Row(
+                children: [
+                  CardAvatar(avatarId, mood: mood),
+                  const SizedBox(width: GlowSpacing.md),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: stickerRoom),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          line(shownName, text(GlowFontSize.body, bold: true)),
+                          if (school.isNotEmpty)
+                            line(school, text(GlowFontSize.tiny)),
+                          if (classYear.isNotEmpty)
+                            line(classYear, text(GlowFontSize.tiny)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  for (var i = 0; i < maxFireLevel; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(right: GlowSpacing.xs),
+                      child: Transform.rotate(
+                        // A stamp is never pressed perfectly straight.
+                        angle: i.isEven ? -0.12 : 0.1,
+                        child: CustomPaint(
+                          size: const Size.square(28),
+                          painter: FireStampPainter(
+                            stamped: i < level,
+                            empty: ink,
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: GlowSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      '${fireLevelNames[level]}\n$firePoints แต้ม',
+                      style: text(GlowFontSize.tiny, bold: true),
+                      textAlign: TextAlign.end,
+                      maxLines: 2,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        for (var i = 0; i < stickerIds.length && i < maxCardStickers; i++)
+          Positioned(
+            right: _stickerSpots[i].right,
+            top: _stickerSpots[i].top,
+            child: Transform.rotate(
+              angle: _stickerSpots[i].turn,
+              child: CardSticker(stickerIds[i]),
+            ),
+          ),
+      ],
+    );
+
+    return Semantics(
+      label:
+          'บัตรนักเรียน $shownName ไฟ ${fireLevelNames[level]} '
+          '$firePoints แต้ม$moodWords',
+      button: onTap != null,
+      excludeSemantics: true,
+      child: AspectRatio(
+        aspectRatio: studentCardSize.aspectRatio,
+        child: FittedBox(
+          child: SizedBox.fromSize(
+            size: studentCardSize,
+            // The card is a picture: the phone's text size scales it as a
+            // whole through the space it gets, not line by line.
+            child: MediaQuery.withNoTextScaling(
+              child: Material(
+                color: color,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(GlowRadius.card),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                    width: GlowStroke.outline * 1.5,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(onTap: onTap, child: face),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -33,7 +33,6 @@ class EveningCard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('ตารางเย็นนี้', style: textTheme.titleLarge),
         if (view.tasks.isEmpty)
           Text('ยังไม่มีงานคืนนี้', style: textTheme.bodyMedium)
         else ...[

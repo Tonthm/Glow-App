@@ -44,7 +44,7 @@ class _ActivityCardState extends State<ActivityCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('วันนี้ทำอะไรมาบ้าง', style: textTheme.titleLarge),
+        Text('วันนี้ทำอะไรมาบ้าง', style: textTheme.titleMedium),
         const SizedBox(height: GlowSpacing.sm),
         if (showChips) ...[
           Wrap(

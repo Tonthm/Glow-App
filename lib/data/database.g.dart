@@ -8613,6 +8613,497 @@ class CalendarReminderStatesCompanion
   }
 }
 
+class $CardProfilesTable extends CardProfiles
+    with TableInfo<$CardProfilesTable, CardProfileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CardProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _schoolMeta = const VerificationMeta('school');
+  @override
+  late final GeneratedColumn<String> school = GeneratedColumn<String>(
+    'school',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _classYearMeta = const VerificationMeta(
+    'classYear',
+  );
+  @override
+  late final GeneratedColumn<String> classYear = GeneratedColumn<String>(
+    'class_year',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _avatarIdMeta = const VerificationMeta(
+    'avatarId',
+  );
+  @override
+  late final GeneratedColumn<String> avatarId = GeneratedColumn<String>(
+    'avatar_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(defaultAvatarId),
+  );
+  static const VerificationMeta _logoIdMeta = const VerificationMeta('logoId');
+  @override
+  late final GeneratedColumn<String> logoId = GeneratedColumn<String>(
+    'logo_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(defaultLogoId),
+  );
+  static const VerificationMeta _frameIdMeta = const VerificationMeta(
+    'frameId',
+  );
+  @override
+  late final GeneratedColumn<String> frameId = GeneratedColumn<String>(
+    'frame_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(defaultFrameId),
+  );
+  static const VerificationMeta _stickerIdsMeta = const VerificationMeta(
+    'stickerIds',
+  );
+  @override
+  late final GeneratedColumn<String> stickerIds = GeneratedColumn<String>(
+    'sticker_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    displayName,
+    school,
+    classYear,
+    avatarId,
+    logoId,
+    frameId,
+    stickerIds,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'card_profiles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CardProfileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('school')) {
+      context.handle(
+        _schoolMeta,
+        school.isAcceptableOrUnknown(data['school']!, _schoolMeta),
+      );
+    }
+    if (data.containsKey('class_year')) {
+      context.handle(
+        _classYearMeta,
+        classYear.isAcceptableOrUnknown(data['class_year']!, _classYearMeta),
+      );
+    }
+    if (data.containsKey('avatar_id')) {
+      context.handle(
+        _avatarIdMeta,
+        avatarId.isAcceptableOrUnknown(data['avatar_id']!, _avatarIdMeta),
+      );
+    }
+    if (data.containsKey('logo_id')) {
+      context.handle(
+        _logoIdMeta,
+        logoId.isAcceptableOrUnknown(data['logo_id']!, _logoIdMeta),
+      );
+    }
+    if (data.containsKey('frame_id')) {
+      context.handle(
+        _frameIdMeta,
+        frameId.isAcceptableOrUnknown(data['frame_id']!, _frameIdMeta),
+      );
+    }
+    if (data.containsKey('sticker_ids')) {
+      context.handle(
+        _stickerIdsMeta,
+        stickerIds.isAcceptableOrUnknown(data['sticker_ids']!, _stickerIdsMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CardProfileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CardProfileRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      school: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}school'],
+      )!,
+      classYear: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}class_year'],
+      )!,
+      avatarId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_id'],
+      )!,
+      logoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}logo_id'],
+      )!,
+      frameId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}frame_id'],
+      )!,
+      stickerIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sticker_ids'],
+      )!,
+    );
+  }
+
+  @override
+  $CardProfilesTable createAlias(String alias) {
+    return $CardProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
+  final int id;
+  final String displayName;
+  final String school;
+  final String classYear;
+  final String avatarId;
+  final String logoId;
+  final String frameId;
+
+  /// Comma-separated sticker ids, see core/card_config.dart.
+  final String stickerIds;
+  const CardProfileRow({
+    required this.id,
+    required this.displayName,
+    required this.school,
+    required this.classYear,
+    required this.avatarId,
+    required this.logoId,
+    required this.frameId,
+    required this.stickerIds,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['display_name'] = Variable<String>(displayName);
+    map['school'] = Variable<String>(school);
+    map['class_year'] = Variable<String>(classYear);
+    map['avatar_id'] = Variable<String>(avatarId);
+    map['logo_id'] = Variable<String>(logoId);
+    map['frame_id'] = Variable<String>(frameId);
+    map['sticker_ids'] = Variable<String>(stickerIds);
+    return map;
+  }
+
+  CardProfilesCompanion toCompanion(bool nullToAbsent) {
+    return CardProfilesCompanion(
+      id: Value(id),
+      displayName: Value(displayName),
+      school: Value(school),
+      classYear: Value(classYear),
+      avatarId: Value(avatarId),
+      logoId: Value(logoId),
+      frameId: Value(frameId),
+      stickerIds: Value(stickerIds),
+    );
+  }
+
+  factory CardProfileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CardProfileRow(
+      id: serializer.fromJson<int>(json['id']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      school: serializer.fromJson<String>(json['school']),
+      classYear: serializer.fromJson<String>(json['classYear']),
+      avatarId: serializer.fromJson<String>(json['avatarId']),
+      logoId: serializer.fromJson<String>(json['logoId']),
+      frameId: serializer.fromJson<String>(json['frameId']),
+      stickerIds: serializer.fromJson<String>(json['stickerIds']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'displayName': serializer.toJson<String>(displayName),
+      'school': serializer.toJson<String>(school),
+      'classYear': serializer.toJson<String>(classYear),
+      'avatarId': serializer.toJson<String>(avatarId),
+      'logoId': serializer.toJson<String>(logoId),
+      'frameId': serializer.toJson<String>(frameId),
+      'stickerIds': serializer.toJson<String>(stickerIds),
+    };
+  }
+
+  CardProfileRow copyWith({
+    int? id,
+    String? displayName,
+    String? school,
+    String? classYear,
+    String? avatarId,
+    String? logoId,
+    String? frameId,
+    String? stickerIds,
+  }) => CardProfileRow(
+    id: id ?? this.id,
+    displayName: displayName ?? this.displayName,
+    school: school ?? this.school,
+    classYear: classYear ?? this.classYear,
+    avatarId: avatarId ?? this.avatarId,
+    logoId: logoId ?? this.logoId,
+    frameId: frameId ?? this.frameId,
+    stickerIds: stickerIds ?? this.stickerIds,
+  );
+  CardProfileRow copyWithCompanion(CardProfilesCompanion data) {
+    return CardProfileRow(
+      id: data.id.present ? data.id.value : this.id,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      school: data.school.present ? data.school.value : this.school,
+      classYear: data.classYear.present ? data.classYear.value : this.classYear,
+      avatarId: data.avatarId.present ? data.avatarId.value : this.avatarId,
+      logoId: data.logoId.present ? data.logoId.value : this.logoId,
+      frameId: data.frameId.present ? data.frameId.value : this.frameId,
+      stickerIds: data.stickerIds.present
+          ? data.stickerIds.value
+          : this.stickerIds,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CardProfileRow(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('school: $school, ')
+          ..write('classYear: $classYear, ')
+          ..write('avatarId: $avatarId, ')
+          ..write('logoId: $logoId, ')
+          ..write('frameId: $frameId, ')
+          ..write('stickerIds: $stickerIds')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    displayName,
+    school,
+    classYear,
+    avatarId,
+    logoId,
+    frameId,
+    stickerIds,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CardProfileRow &&
+          other.id == this.id &&
+          other.displayName == this.displayName &&
+          other.school == this.school &&
+          other.classYear == this.classYear &&
+          other.avatarId == this.avatarId &&
+          other.logoId == this.logoId &&
+          other.frameId == this.frameId &&
+          other.stickerIds == this.stickerIds);
+}
+
+class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
+  final Value<int> id;
+  final Value<String> displayName;
+  final Value<String> school;
+  final Value<String> classYear;
+  final Value<String> avatarId;
+  final Value<String> logoId;
+  final Value<String> frameId;
+  final Value<String> stickerIds;
+  const CardProfilesCompanion({
+    this.id = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.school = const Value.absent(),
+    this.classYear = const Value.absent(),
+    this.avatarId = const Value.absent(),
+    this.logoId = const Value.absent(),
+    this.frameId = const Value.absent(),
+    this.stickerIds = const Value.absent(),
+  });
+  CardProfilesCompanion.insert({
+    this.id = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.school = const Value.absent(),
+    this.classYear = const Value.absent(),
+    this.avatarId = const Value.absent(),
+    this.logoId = const Value.absent(),
+    this.frameId = const Value.absent(),
+    this.stickerIds = const Value.absent(),
+  });
+  static Insertable<CardProfileRow> custom({
+    Expression<int>? id,
+    Expression<String>? displayName,
+    Expression<String>? school,
+    Expression<String>? classYear,
+    Expression<String>? avatarId,
+    Expression<String>? logoId,
+    Expression<String>? frameId,
+    Expression<String>? stickerIds,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (displayName != null) 'display_name': displayName,
+      if (school != null) 'school': school,
+      if (classYear != null) 'class_year': classYear,
+      if (avatarId != null) 'avatar_id': avatarId,
+      if (logoId != null) 'logo_id': logoId,
+      if (frameId != null) 'frame_id': frameId,
+      if (stickerIds != null) 'sticker_ids': stickerIds,
+    });
+  }
+
+  CardProfilesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? displayName,
+    Value<String>? school,
+    Value<String>? classYear,
+    Value<String>? avatarId,
+    Value<String>? logoId,
+    Value<String>? frameId,
+    Value<String>? stickerIds,
+  }) {
+    return CardProfilesCompanion(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      school: school ?? this.school,
+      classYear: classYear ?? this.classYear,
+      avatarId: avatarId ?? this.avatarId,
+      logoId: logoId ?? this.logoId,
+      frameId: frameId ?? this.frameId,
+      stickerIds: stickerIds ?? this.stickerIds,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (school.present) {
+      map['school'] = Variable<String>(school.value);
+    }
+    if (classYear.present) {
+      map['class_year'] = Variable<String>(classYear.value);
+    }
+    if (avatarId.present) {
+      map['avatar_id'] = Variable<String>(avatarId.value);
+    }
+    if (logoId.present) {
+      map['logo_id'] = Variable<String>(logoId.value);
+    }
+    if (frameId.present) {
+      map['frame_id'] = Variable<String>(frameId.value);
+    }
+    if (stickerIds.present) {
+      map['sticker_ids'] = Variable<String>(stickerIds.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CardProfilesCompanion(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('school: $school, ')
+          ..write('classYear: $classYear, ')
+          ..write('avatarId: $avatarId, ')
+          ..write('logoId: $logoId, ')
+          ..write('frameId: $frameId, ')
+          ..write('stickerIds: $stickerIds')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -8635,6 +9126,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AiSettingsTable aiSettings = $AiSettingsTable(this);
   late final $CalendarReminderStatesTable calendarReminderStates =
       $CalendarReminderStatesTable(this);
+  late final $CardProfilesTable cardProfiles = $CardProfilesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8655,6 +9147,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     eveningTasks,
     aiSettings,
     calendarReminderStates,
+    cardProfiles,
   ];
 }
 
@@ -12986,6 +13479,270 @@ typedef $$CalendarReminderStatesTableProcessedTableManager =
       CalendarReminderRow,
       PrefetchHooks Function()
     >;
+typedef $$CardProfilesTableCreateCompanionBuilder =
+    CardProfilesCompanion Function({
+      Value<int> id,
+      Value<String> displayName,
+      Value<String> school,
+      Value<String> classYear,
+      Value<String> avatarId,
+      Value<String> logoId,
+      Value<String> frameId,
+      Value<String> stickerIds,
+    });
+typedef $$CardProfilesTableUpdateCompanionBuilder =
+    CardProfilesCompanion Function({
+      Value<int> id,
+      Value<String> displayName,
+      Value<String> school,
+      Value<String> classYear,
+      Value<String> avatarId,
+      Value<String> logoId,
+      Value<String> frameId,
+      Value<String> stickerIds,
+    });
+
+class $$CardProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $CardProfilesTable> {
+  $$CardProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get school => $composableBuilder(
+    column: $table.school,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get classYear => $composableBuilder(
+    column: $table.classYear,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarId => $composableBuilder(
+    column: $table.avatarId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get logoId => $composableBuilder(
+    column: $table.logoId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get frameId => $composableBuilder(
+    column: $table.frameId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stickerIds => $composableBuilder(
+    column: $table.stickerIds,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CardProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CardProfilesTable> {
+  $$CardProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get school => $composableBuilder(
+    column: $table.school,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get classYear => $composableBuilder(
+    column: $table.classYear,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarId => $composableBuilder(
+    column: $table.avatarId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get logoId => $composableBuilder(
+    column: $table.logoId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get frameId => $composableBuilder(
+    column: $table.frameId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stickerIds => $composableBuilder(
+    column: $table.stickerIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CardProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CardProfilesTable> {
+  $$CardProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get school =>
+      $composableBuilder(column: $table.school, builder: (column) => column);
+
+  GeneratedColumn<String> get classYear =>
+      $composableBuilder(column: $table.classYear, builder: (column) => column);
+
+  GeneratedColumn<String> get avatarId =>
+      $composableBuilder(column: $table.avatarId, builder: (column) => column);
+
+  GeneratedColumn<String> get logoId =>
+      $composableBuilder(column: $table.logoId, builder: (column) => column);
+
+  GeneratedColumn<String> get frameId =>
+      $composableBuilder(column: $table.frameId, builder: (column) => column);
+
+  GeneratedColumn<String> get stickerIds => $composableBuilder(
+    column: $table.stickerIds,
+    builder: (column) => column,
+  );
+}
+
+class $$CardProfilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CardProfilesTable,
+          CardProfileRow,
+          $$CardProfilesTableFilterComposer,
+          $$CardProfilesTableOrderingComposer,
+          $$CardProfilesTableAnnotationComposer,
+          $$CardProfilesTableCreateCompanionBuilder,
+          $$CardProfilesTableUpdateCompanionBuilder,
+          (
+            CardProfileRow,
+            BaseReferences<_$AppDatabase, $CardProfilesTable, CardProfileRow>,
+          ),
+          CardProfileRow,
+          PrefetchHooks Function()
+        > {
+  $$CardProfilesTableTableManager(_$AppDatabase db, $CardProfilesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CardProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CardProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CardProfilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<String> school = const Value.absent(),
+                Value<String> classYear = const Value.absent(),
+                Value<String> avatarId = const Value.absent(),
+                Value<String> logoId = const Value.absent(),
+                Value<String> frameId = const Value.absent(),
+                Value<String> stickerIds = const Value.absent(),
+              }) => CardProfilesCompanion(
+                id: id,
+                displayName: displayName,
+                school: school,
+                classYear: classYear,
+                avatarId: avatarId,
+                logoId: logoId,
+                frameId: frameId,
+                stickerIds: stickerIds,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<String> school = const Value.absent(),
+                Value<String> classYear = const Value.absent(),
+                Value<String> avatarId = const Value.absent(),
+                Value<String> logoId = const Value.absent(),
+                Value<String> frameId = const Value.absent(),
+                Value<String> stickerIds = const Value.absent(),
+              }) => CardProfilesCompanion.insert(
+                id: id,
+                displayName: displayName,
+                school: school,
+                classYear: classYear,
+                avatarId: avatarId,
+                logoId: logoId,
+                frameId: frameId,
+                stickerIds: stickerIds,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CardProfilesTable, CardProfileRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $CardProfilesTable,
+                    CardProfileRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CardProfilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CardProfilesTable,
+      CardProfileRow,
+      $$CardProfilesTableFilterComposer,
+      $$CardProfilesTableOrderingComposer,
+      $$CardProfilesTableAnnotationComposer,
+      $$CardProfilesTableCreateCompanionBuilder,
+      $$CardProfilesTableUpdateCompanionBuilder,
+      (
+        CardProfileRow,
+        BaseReferences<_$AppDatabase, $CardProfilesTable, CardProfileRow>,
+      ),
+      CardProfileRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -13023,4 +13780,6 @@ class $AppDatabaseManager {
         _db,
         _db.calendarReminderStates,
       );
+  $$CardProfilesTableTableManager get cardProfiles =>
+      $$CardProfilesTableTableManager(_db, _db.cardProfiles);
 }

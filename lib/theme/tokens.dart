@@ -95,6 +95,18 @@ class GlowPastelColors {
   static const skyDark = Color(0xFF213A53);
 }
 
+/// Colors of the drawings on the student card. The card looks the same in
+/// light and dark mode, like a real one.
+class GlowCardArtColors {
+  static const white = Color(0xFFFFFFFF);
+  static const black = Color(0xFF000000);
+  static const butter = Color(0xFFFFE27A);
+  static const peach = Color(0xFFFFC49B);
+  static const pink = Color(0xFFFF9EBB);
+  static const lilac = Color(0xFFBDB4FF);
+  static const sky = Color(0xFFAFD8FF);
+}
+
 /// Sleep-result colors per THEME.md section "สีผลการนอน" — used in heatmap,
 /// the week-night rings, and check-in results. Intentionally two-directional
 /// (more isn't better): orange/yellow/green/blue, never red, so it never

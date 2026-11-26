@@ -15,7 +15,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 6;
+  static const _version = 7;
 
   Future<Map<String, dynamic>> buildSnapshot() async {
     Future<List<Map<String, dynamic>>>
@@ -35,6 +35,7 @@ class BackupService {
       'fireStates': await dump(db.fireStates),
       'wallets': await dump(db.wallets),
       'ownedItems': await dump(db.ownedItems),
+      'cardProfiles': await dump(db.cardProfiles),
       'weeklyQuestProgresses': await dump(db.weeklyQuestProgresses),
       'examPeriodClaims': await dump(db.examPeriodClaims),
       'dayActivities': await dump(db.dayActivities),
@@ -171,6 +172,11 @@ class BackupService {
         'ownedItems',
         db.ownedItems,
         (j) => OwnedItem.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'cardProfiles',
+        db.cardProfiles,
+        (j) => CardProfileRow.fromJson(j).toCompanion(false),
       );
       await load(
         'weeklyQuestProgresses',

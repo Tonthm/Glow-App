@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show TableUpdateQuery;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import 'data/card_repository.dart';
 import 'data/check_in_repository.dart';
 import 'data/database.dart';
 import 'data/evening_repository.dart';
@@ -109,6 +110,17 @@ final taskTitlesProvider = FutureProvider.autoDispose<List<String>>((
   final db = ref.watch(databaseProvider);
   final rows = await db.select(db.eveningTasks).get();
   return <String>{for (final row in rows.reversed) row.title}.toList();
+});
+
+final cardRepositoryProvider = Provider<CardRepository>((ref) {
+  return CardRepository(
+    ref.watch(databaseProvider),
+    ref.watch(walletRepositoryProvider),
+  );
+});
+
+final cardProfileStreamProvider = StreamProvider<CardProfileRow>((ref) {
+  return ref.watch(cardRepositoryProvider).watch();
 });
 
 final shopRepositoryProvider = Provider<ShopRepository>((ref) {

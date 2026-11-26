@@ -39,7 +39,11 @@ const _tabSpecs = [
     filled: Icons.bar_chart,
     label: 'สถิติ',
   ),
-  _TabSpec(outlined: Icons.bed_outlined, filled: Icons.bed, label: 'ห้อง'),
+  _TabSpec(
+    outlined: Icons.badge_outlined,
+    filled: Icons.badge,
+    label: 'บัตรของฉัน',
+  ),
 ];
 
 /// Bottom nav with the 4 tabs from CLAUDE.md section 1 (icons only, per

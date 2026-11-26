@@ -1,3 +1,4 @@
+import '../core/card_config.dart';
 import '../core/economy_config.dart';
 import 'fire_repository.dart';
 import 'wallet_repository.dart';
@@ -19,23 +20,33 @@ class ShopRepository {
   ShopRepository(this.walletRepo, this.fireRepo);
 
   Future<PurchaseResult> buyBlanket(BlanketConfig blanket, DateTime now) {
-    return walletRepo.db.transaction(() => _buyBlanket(blanket, now));
+    return walletRepo.db.transaction(
+      () => _buyItem(blanket.id, blanket.priceCoins, now),
+    );
+  }
+
+  Future<PurchaseResult> buyDecor(CardDecor decor, DateTime now) async {
+    if (decor.isFree) return PurchaseResult.alreadyOwned;
+    return walletRepo.db.transaction(
+      () => _buyItem(decor.id, decor.priceCoins, now),
+    );
   }
 
   Future<PurchaseResult> buyShield(DateTime now) {
     return walletRepo.db.transaction(() => _buyShield(now));
   }
 
-  Future<PurchaseResult> _buyBlanket(
-    BlanketConfig blanket,
+  Future<PurchaseResult> _buyItem(
+    String itemId,
+    int priceCoins,
     DateTime now,
   ) async {
-    if (await walletRepo.owns(blanket.id)) return PurchaseResult.alreadyOwned;
+    if (await walletRepo.owns(itemId)) return PurchaseResult.alreadyOwned;
     final wallet = await walletRepo.get();
-    if (wallet.coins < blanket.priceCoins) return PurchaseResult.notEnoughCoins;
+    if (wallet.coins < priceCoins) return PurchaseResult.notEnoughCoins;
 
-    await walletRepo.addCoins(-blanket.priceCoins);
-    await walletRepo.grantItem(blanket.id, now);
+    await walletRepo.addCoins(-priceCoins);
+    await walletRepo.grantItem(itemId, now);
     return PurchaseResult.success;
   }
 

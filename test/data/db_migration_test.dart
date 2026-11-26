@@ -4,8 +4,10 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
-/// What schema 14 added. Must run before evening_tasks is dropped.
+/// What schema 14 added, and the newer tables on top of it. Must run before
+/// evening_tasks is dropped.
 const _rewindFrom14 = [
+  'DROP TABLE card_profiles',
   'DROP TABLE calendar_reminder_states',
   'ALTER TABLE evening_tasks DROP COLUMN ai_estimate_minutes',
   'ALTER TABLE evening_tasks DROP COLUMN parent_id',
@@ -139,6 +141,35 @@ void main() {
       await db.close();
     },
   );
+
+  test('a version 15 database keeps everything bought in the shop', () async {
+    await prepare([
+      'INSERT INTO wallets (id, coins, equipped_blanket_id)'
+          " VALUES (0, 137, 'blanket_navy')",
+      'INSERT INTO owned_items (item_id, acquired_at)'
+          " VALUES ('blanket_navy', 1795000000)",
+      'INSERT INTO owned_items (item_id, acquired_at)'
+          " VALUES ('blanket_spark', 1795000100)",
+      'INSERT INTO fire_states (id, points, level, shields)'
+          ' VALUES (0, 9, 3, 2)',
+      'DROP TABLE card_profiles',
+      'PRAGMA user_version = 15',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    final wallet = await db.select(db.wallets).getSingle();
+    expect(wallet.coins, 137);
+    expect(wallet.equippedBlanketId, 'blanket_navy');
+    final owned = await db.select(db.ownedItems).get();
+    expect(owned.map((o) => o.itemId).toSet(), {
+      'blanket_navy',
+      'blanket_spark',
+    });
+    final fire = await db.select(db.fireStates).getSingle();
+    expect((fire.points, fire.level, fire.shields), (9, 3, 2));
+    expect(await db.select(db.cardProfiles).get(), isEmpty);
+    await db.close();
+  });
 
   test('repairs a database left half-migrated at version 10', () async {
     // Everything already added, but the version never moved on.

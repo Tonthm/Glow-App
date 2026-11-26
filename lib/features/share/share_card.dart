@@ -1,13 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/check_in.dart';
-import '../../core/fire.dart';
 import '../../data/database.dart';
 import '../../data/stats_repository.dart';
 import '../../theme/glow_colors.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/arrow_span.dart';
-import '../../theme/widgets/bed_character.dart';
 import '../stats/heatmap.dart';
 
 /// The card's layout size; rendered at 3x it is 1080 x 1920.
@@ -26,21 +24,22 @@ String _clock(DateTime t) =>
     '${t.hour.toString().padLeft(2, '0')}:'
     '${t.minute.toString().padLeft(2, '0')}';
 
-/// One week as a picture to share (CLAUDE.md section 15). It carries no name
-/// or other personal details, and no clock times unless the user turns them
-/// on.
+/// One week as a picture to share (CLAUDE.md section 15). It carries no
+/// name or other personal details, and no clock times, unless the user turns
+/// them on.
 class ShareCard extends StatelessWidget {
   final List<HeatmapCell> week;
-  final int fireLevel;
-  final Color blanketColor;
+
+  /// The user's student card, already built with or without their details.
+  /// It shows the fire level.
+  final Widget studentCard;
   final bool showTimes;
   final int fallAsleepMinutes;
 
   const ShareCard({
     super.key,
     required this.week,
-    required this.fireLevel,
-    required this.blanketColor,
+    required this.studentCard,
     required this.showTimes,
     required this.fallAsleepMinutes,
   });
@@ -83,31 +82,8 @@ class ShareCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(
-                width: 180,
-                height: 150,
-                child: BedCharacter(
-                  blanketColor: blanketColor,
-                  isFluffy: complete * 2 >= checkedIn.length,
-                  lampOpacity: 0.3 + 0.7 * (fireLevel / maxFireLevel),
-                ),
-              ),
-              Column(
-                children: [
-                  Text('คืนที่ครบ $complete/7', style: textTheme.headlineLarge),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.local_fire_department, color: colors.lampGlow),
-                      const SizedBox(width: GlowSpacing.xs),
-                      Text(
-                        fireLevelNames[fireLevel],
-                        style: textTheme.titleLarge,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              studentCard,
+              Text('คืนที่ครบ $complete/7', style: textTheme.titleLarge),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
