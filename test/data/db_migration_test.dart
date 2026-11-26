@@ -119,22 +119,25 @@ void main() {
     await db.close();
   });
 
-  test('a version 13 database keeps its tasks and starts with AI off', () async {
-    await prepare([
-      'INSERT INTO evening_tasks (title, minutes, kind, plan_date)'
-          " VALUES ('เลข', 30, 0, 1795392000)",
-      ..._rewindFrom14,
-      'PRAGMA user_version = 13',
-    ]);
+  test(
+    'a version 13 database keeps its tasks and starts with AI off',
+    () async {
+      await prepare([
+        'INSERT INTO evening_tasks (title, minutes, kind, plan_date)'
+            " VALUES ('เลข', 30, 0, 1795392000)",
+        ..._rewindFrom14,
+        'PRAGMA user_version = 13',
+      ]);
 
-    final db = AppDatabase.forTesting(NativeDatabase(file));
-    final task = await db.select(db.eveningTasks).getSingle();
-    expect(task.title, 'เลข');
-    expect(task.aiEstimateMinutes, isNull);
-    expect(task.parentId, isNull);
-    expect(await db.select(db.aiSettings).get(), isEmpty);
-    await db.close();
-  });
+      final db = AppDatabase.forTesting(NativeDatabase(file));
+      final task = await db.select(db.eveningTasks).getSingle();
+      expect(task.title, 'เลข');
+      expect(task.aiEstimateMinutes, isNull);
+      expect(task.parentId, isNull);
+      expect(await db.select(db.aiSettings).get(), isEmpty);
+      await db.close();
+    },
+  );
 
   test('repairs a database left half-migrated at version 10', () async {
     // Everything already added, but the version never moved on.

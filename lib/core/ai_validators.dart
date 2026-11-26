@@ -212,9 +212,7 @@ List<AiPart>? parseAiSplit(
 }) {
   final root = _decode(response, {'parts'});
   final list = root?['parts'];
-  if (list is! List ||
-      list.length < aiMinParts ||
-      list.length > aiMaxParts) {
+  if (list is! List || list.length < aiMinParts || list.length > aiMaxParts) {
     return null;
   }
 

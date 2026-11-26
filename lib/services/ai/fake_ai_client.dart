@@ -37,9 +37,7 @@ class FakeAiClient implements AiClient {
         'reason': 'งานลักษณะนี้มักใช้ประมาณคาบเดียว',
       },
       AiTask.split => {'parts': _parts(input)},
-      AiTask.explain => {
-        'summary': (input['facts'] as List).take(2).join(' '),
-      },
+      AiTask.explain => {'summary': (input['facts'] as List).take(2).join(' ')},
       AiTask.connectionTest => {'ok': true},
     });
   }

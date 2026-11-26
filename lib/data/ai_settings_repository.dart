@@ -15,25 +15,21 @@ class AiSettingsRepository {
           const AiSettingsCompanion(id: Value(0)),
           mode: InsertMode.insertOrIgnore,
         );
-    return (db.select(
-      db.aiSettings,
-    )..where((t) => t.id.equals(0))).getSingle();
+    return (db.select(db.aiSettings)..where((t) => t.id.equals(0))).getSingle();
   }
 
   Stream<AiSettingsRow> watch() async* {
     await get();
-    yield* (db.select(
-      db.aiSettings,
-    )..where((t) => t.id.equals(0))).watchSingleOrNull().asyncMap(
-      (row) async => row ?? await get(),
-    );
+    yield* (db.select(db.aiSettings)..where((t) => t.id.equals(0)))
+        .watchSingleOrNull()
+        .asyncMap((row) async => row ?? await get());
   }
 
   Future<void> update(AiSettingsCompanion change) async {
     await get();
-    await (db.update(db.aiSettings)..where((t) => t.id.equals(0))).write(
-      change,
-    );
+    await (db.update(
+      db.aiSettings,
+    )..where((t) => t.id.equals(0))).write(change);
   }
 
   /// Calls made on [now]'s day.

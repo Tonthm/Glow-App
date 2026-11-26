@@ -27,11 +27,7 @@ Map<String, Object?> taskJson({
 List<AiParsedTask>? tasks(
   List<Object> items, {
   String source = 'ส่งรายงานชีวะศุกร์',
-}) => parseAiTasks(
-  jsonEncode({'tasks': items}),
-  source: source,
-  today: today,
-);
+}) => parseAiTasks(jsonEncode({'tasks': items}), source: source, today: today);
 
 String partsJson(List<int> minutes) => jsonEncode({
   'parts': [
@@ -64,14 +60,16 @@ void main() {
     });
 
     test('rejects broken JSON', () {
-      expect(
-        parseAiTasks('{"tasks": [', source: 'x', today: today),
-        isNull,
-      );
+      expect(parseAiTasks('{"tasks": [', source: 'x', today: today), isNull);
     });
 
     test('rejects extra or missing fields', () {
-      expect(tasks([{...taskJson(), 'bedtime': '01:00'}]), isNull);
+      expect(
+        tasks([
+          {...taskJson(), 'bedtime': '01:00'},
+        ]),
+        isNull,
+      );
       expect(tasks([taskJson()..remove('due')]), isNull);
     });
 
@@ -97,7 +95,9 @@ void main() {
         isNull,
       );
       expect(
-        tasks([{...taskJson(), 'sleepAt': '02:00'}], source: source),
+        tasks([
+          {...taskJson(), 'sleepAt': '02:00'},
+        ], source: source),
         isNull,
       );
     });
@@ -106,10 +106,7 @@ void main() {
   group('estimate', () {
     test('accepts and rounds to 5 minutes', () {
       final result = parseAiEstimate(estimateJson(43, 31, 58))!;
-      expect(
-        (result.minutes, result.low, result.high),
-        (45, 30, 60),
-      );
+      expect((result.minutes, result.low, result.high), (45, 30, 60));
     });
 
     test('rejects out-of-range values', () {
@@ -160,10 +157,7 @@ void main() {
   });
 
   group('explanation guard', () {
-    const facts = [
-      'งาน "เลข 2 หน้า" ยังเกินเวลาอยู่ 40 นาที',
-      'พรุ่งนี้มีสอบ',
-    ];
+    const facts = ['งาน "เลข 2 หน้า" ยังเกินเวลาอยู่ 40 นาที', 'พรุ่งนี้มีสอบ'];
 
     test('allows only numbers from the facts', () {
       expect(isSafeExplanation('เลข 2 หน้า เกินอยู่ 40 นาที', facts), isTrue);

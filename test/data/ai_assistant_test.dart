@@ -50,9 +50,7 @@ void main() {
 
   test('is off by default and calls nothing', () async {
     final client = FakeAiClient();
-    final result = await assistant(
-      client,
-    ).parseTasks('เลข', today: today);
+    final result = await assistant(client).parseTasks('เลข', today: today);
     expect(result.failure, AiFailure.notReady);
     expect(client.requests, isEmpty);
   });

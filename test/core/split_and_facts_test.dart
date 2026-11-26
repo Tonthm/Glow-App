@@ -43,10 +43,7 @@ void main() {
       )!;
       expect(result.last.date, day(25));
       expect(result.last.part.minutes, lessThanOrEqualTo(30));
-      expect(
-        result.take(2).every((p) => p.date.isBefore(day(25))),
-        isTrue,
-      );
+      expect(result.take(2).every((p) => p.date.isBefore(day(25))), isTrue);
     });
 
     test('keeps long parts off the night before an exam', () {
@@ -72,7 +69,12 @@ void main() {
 
   group('facts', () {
     const tasks = [
-      PlannerTask(id: 1, title: 'เลข', minutes: 30, kind: EveningTaskKind.other),
+      PlannerTask(
+        id: 1,
+        title: 'เลข',
+        minutes: 30,
+        kind: EveningTaskKind.other,
+      ),
     ];
 
     test('overflow and exam facts come first and pass the guard', () {

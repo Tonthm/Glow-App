@@ -7,6 +7,8 @@ import '../../data/database.dart';
 import '../../data/settings_repository.dart';
 import '../../providers.dart';
 import '../../services/app_clock.dart';
+import '../ai/ai_providers.dart';
+import '../ai/ai_settings_screen.dart';
 import '../demo/demo_button.dart';
 import '../../theme/theme_gallery_screen.dart';
 import '../shared/minutes_stepper.dart';
@@ -185,6 +187,16 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _SectionHeader('ตารางเย็น'),
               EveningSettingsRows(settings: settings),
+              const _SectionHeader('ผู้ช่วย AI'),
+              SettingRow(
+                title: 'ผู้ช่วย AI',
+                value: ref.watch(aiSettingsProvider).value?.enabled == true
+                    ? 'เปิด'
+                    : 'ปิด',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
+                ),
+              ),
               const _SectionHeader('ลักษณะที่ปรากฏ'),
               SettingRow(
                 title: 'โหมดสี',
@@ -263,9 +275,10 @@ class SettingsScreen extends ConsumerWidget {
                   if (!confirmed || !context.mounted) return;
                   final notifications = ref.read(notificationServiceProvider);
                   final backup = ref.read(backupServiceProvider);
+                  final apiKeys = ref.read(apiKeyStoreProvider);
                   // Back to the first screen, which becomes onboarding again.
                   Navigator.of(context).popUntil((route) => route.isFirst);
-                  await backup.deleteAllData();
+                  await backup.deleteEverything(apiKeys);
                   await notifications.cancelAll();
                 },
               ),

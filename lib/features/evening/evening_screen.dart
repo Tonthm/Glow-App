@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/evening_facts.dart';
 import '../../core/evening_planner.dart';
 import '../../data/database.dart';
 import '../../data/evening_repository.dart';
@@ -13,6 +14,9 @@ import '../../theme/widgets/empty_state.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/warning_bar.dart';
+import '../ai/ai_providers.dart';
+import '../ai/ai_split_sheet.dart';
+import '../ai/why_card.dart';
 import 'evening_providers.dart';
 import 'task_form_sheet.dart';
 
@@ -185,6 +189,7 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
           ),
         for (final block in plan.blocks) _buildBlock(context, view, block),
         _buildLine(context, view.notifyTime, 'วางมือถือ'),
+        if (view.tasks.isNotEmpty) _buildWhy(view),
         if (view.tasks.isNotEmpty) ...[
           const Divider(height: GlowSpacing.xxl),
           Text('งานคืนนี้', style: textTheme.titleLarge),
@@ -213,6 +218,23 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildWhy(EveningView view) {
+    final facts = buildEveningFacts(
+      plan: view.plan,
+      tasks: view.plannerTasks,
+      eveningDate: view.eveningDate,
+      redNight: view.redNight,
+      examTomorrow: view.examTomorrow,
+      carriedCount: view.tasks.where((t) => t.carried).length,
+    );
+    if (facts.isEmpty) return const SizedBox.shrink();
+    return WhyCard(
+      // A changed plan drops the old explanation.
+      key: ValueKey(facts.map((f) => f.sentence).join('|')),
+      facts: facts,
     );
   }
 
@@ -383,16 +405,22 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
     EveningView view,
     EveningTask task,
   ) async {
+    final canSplit =
+        task.parentId == null &&
+        task.minutes - task.doneMinutes > splitOverMinutes &&
+        (ref.read(aiReadyProvider).value ?? false);
     final choice = await showGlowBottomSheet<String>(
       context: context,
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(task.title, style: Theme.of(context).textTheme.titleLarge),
-          for (final (id, label) in const [
+          for (final (id, label) in [
             ('edit', 'แก้'),
+            if (canSplit) ('split', 'แบ่งงานให้'),
             ('postpone', 'เลื่อนไปพรุ่งนี้'),
             ('remove', 'เอาออก'),
+            if (task.parentId != null) ('removeAll', 'เอาออกทั้งงาน (ทุกช่วง)'),
           ])
             ListTile(
               title: Text(label),
@@ -401,6 +429,7 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
         ],
       ),
     );
+    // The sheet may have outlived this screen.
     if (choice == null || !context.mounted) return;
     switch (choice) {
       case 'edit':
@@ -409,6 +438,19 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
         await _repo.postpone(task.id);
       case 'remove':
         await _repo.removeTask(task.id);
+      case 'removeAll':
+        await _repo.removeTask(task.parentId!);
+      case 'split':
+        // Once the phone should be down, the parts start tomorrow.
+        final late = !ref.read(clockProvider)().isBefore(view.notifyTime);
+        final from = view.eveningDate;
+        await showAiSplit(
+          context,
+          task: task,
+          firstEvening: late
+              ? DateTime(from.year, from.month, from.day + 1)
+              : from,
+        );
     }
     _reload();
   }

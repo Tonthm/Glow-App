@@ -115,9 +115,7 @@ List<EveningFact> buildEveningFacts({
     facts.add(const EveningFact(EveningFactKind.allFit));
   }
   if (carriedCount > 0) {
-    facts.add(
-      EveningFact(EveningFactKind.carriedOver, count: carriedCount),
-    );
+    facts.add(EveningFact(EveningFactKind.carriedOver, count: carriedCount));
   }
   if (worked > 0) {
     facts.add(EveningFact(EveningFactKind.totalWork, minutes: worked));

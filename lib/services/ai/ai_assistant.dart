@@ -82,8 +82,7 @@ class AiAssistant {
       today: today,
       due: due,
     ),
-    (answer) =>
-        parseAiSplit(answer, source: title, totalMinutes: totalMinutes),
+    (answer) => parseAiSplit(answer, source: title, totalMinutes: totalMinutes),
   );
 
   Future<AiResult<String>> explain(List<String> facts) {

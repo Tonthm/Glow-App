@@ -11,6 +11,7 @@ import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
+import '../ai/ai_providers.dart';
 import 'demo_data.dart';
 
 final demoButtonVisibleProvider = StateProvider<bool>((ref) => true);
@@ -73,6 +74,16 @@ class DemoButton extends ConsumerWidget {
             item('ไปเวลาเข้านอน', () => _jumpToPlan(ref, notify: false)),
             item('ไปพรุ่งนี้เช้าเวลาตื่น', () => _jumpToWake(ref)),
             item('ไปวันตารางแน่น', () => _jumpToRedNight(ref)),
+            item(
+              ref.read(aiDemoModeProvider) ? 'ปิด AI จำลอง' : 'ใช้ AI จำลอง',
+              () async {
+                final demo = ref.read(aiDemoModeProvider.notifier);
+                demo.state = !demo.state;
+                return demo.state
+                    ? 'ใช้ AI จำลองแล้ว ไม่ต้องใช้ key'
+                    : 'ปิด AI จำลองแล้ว';
+              },
+            ),
             item('กลับเวลาจริง', () async {
               await clock.reset();
               return null;
