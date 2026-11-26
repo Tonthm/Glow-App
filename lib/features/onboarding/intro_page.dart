@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../theme/tokens.dart';
+import '../../theme/widgets/glow_logo.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 
 /// The very first screen: what makes Glow different, readable in five
@@ -34,14 +35,7 @@ class IntroPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          'Glow',
-                          textAlign: TextAlign.center,
-                          style: textTheme.displayLarge?.copyWith(
-                            fontFamily: 'Nunito',
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                        const GlowLogo(size: 112),
                         const SizedBox(height: GlowSpacing.lg),
                         Text(
                           headline,
