@@ -1,0 +1,57 @@
+# Builds the Android app on GitHub's servers, for a computer that can't.
+# The APK is under the run's "Artifacts" on the Actions tab.
+name: Build APK
+
+on:
+  push:
+    branches: [ai-web]
+    # Notes alone don't need a new build.
+    paths-ignore: ['**.md']
+  # The "Run workflow" button appears once this file is on the default branch.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      # The app is made for Thai students; test in their time zone.
+      TZ: Asia/Bangkok
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # The version used to write the code.
+          flutter-version: '3.50.1'
+          cache: true
+
+      - run: flutter pub get
+
+      - run: flutter analyze
+
+      - run: flutter test
+
+      # Signed with a debug key (see android/app/build.gradle.kts): fine for
+      # testing, not for release to others.
+      - run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glow-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
