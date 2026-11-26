@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../core/day_overrides.dart';
+import '../core/first_class.dart';
 import '../core/night_date.dart';
 import '../core/quests.dart' show QuestMode;
 import '../core/quests.dart' as quests;
@@ -30,7 +31,7 @@ class NightPlanningRepository {
     final monday = mondayOfWeek(anyDateInWeek);
     final settingsRow = await settingsRepo.get();
     final settings = toSleepSettings(settingsRow);
-    final weekly = toCoreWeeklyEntries(await scheduleRepo.getWeeklyItems());
+    final weekly = await _wakeEntries(settingsRow);
     final oneTime = toCoreOneTimeEntries(await scheduleRepo.getOneTimeItems());
 
     final travel = parseTravelOverrides(settingsRow.travelOverrides);
@@ -64,6 +65,15 @@ class NightPlanningRepository {
     return smoothWeekNightPlans(drafts);
   }
 
+  /// Weekly items for working out wake times, where the earliest class time
+  /// given at the start stands in for an empty timetable. The evening
+  /// planner and busy-night check see only what was really entered.
+  Future<List<WeeklyEntry>> _wakeEntries(SettingsRow settings) async =>
+      withEarliestClass(
+        toCoreWeeklyEntries(await scheduleRepo.getWeeklyItems()),
+        settings.earliestClassMinutes,
+      );
+
   Future<NightPlanDraft> computeDraftForWakeDate(DateTime wakeDate) async {
     final week = await computeWeekDrafts(wakeDate);
     final target = _dateOnly(wakeDate);
@@ -89,7 +99,7 @@ class NightPlanningRepository {
     final settingsRow = await settingsRepo.get();
     final entries = resolveScheduleForDate(
       date: wakeDate,
-      weeklyEntries: toCoreWeeklyEntries(await scheduleRepo.getWeeklyItems()),
+      weeklyEntries: await _wakeEntries(settingsRow),
       oneTimeEntries: toCoreOneTimeEntries(
         await scheduleRepo.getOneTimeItems(),
       ),

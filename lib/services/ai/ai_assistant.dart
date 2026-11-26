@@ -18,8 +18,13 @@ class AiResult<T> {
 /// Gemini's terms require users to be 18 or older, and don't allow apps likely
 /// to be used by anyone younger (read 26 Nov 2026).
 const String aiUnderAgeMessage =
-    'ผู้ช่วย AI ใช้ได้เมื่อตั้งช่วงอายุเป็น 18 ปีขึ้นไป ตามเงื่อนไขของ '
+    'ผู้ช่วย AI ใช้ได้เมื่ออายุ 18 ปีขึ้นไป ตามเงื่อนไขของ '
     '$aiProviderName ฟีเจอร์อื่นใช้ได้ตามปกติ';
+
+/// Shown when the age rests only on the choice in settings.
+const String aiAgeUnconfirmedMessage =
+    'ยังไม่ได้กรอกวันเกิด เปิดได้เฉพาะผู้ที่อายุ 18 ปีขึ้นไป '
+    'ตามเงื่อนไขของ $aiProviderName ถ้าอายุยังไม่ถึง อย่าเปิด';
 
 /// A gentle line for when AI can't be used.
 String aiFailureMessage(AiFailure failure) => switch (failure) {
@@ -56,7 +61,7 @@ class AiAssistant {
 
   Future<bool> isReady() async {
     if (demo) return true;
-    if (await settings.isUnder18()) return false;
+    if (!(await settings.ageState(realNow())).mayUse) return false;
     final row = await settings.get();
     if (!row.enabled || row.consentVersion != aiConsentVersion) return false;
     return (await keys.read())?.isNotEmpty ?? false;
@@ -122,7 +127,7 @@ class AiAssistant {
     var apiKey = 'demo';
     var model = aiDefaultModel;
     if (!demo) {
-      if (await settings.isUnder18()) {
+      if (!(await settings.ageState(realNow())).mayUse) {
         return const AiResult.failed(AiFailure.underAge);
       }
       final row = await settings.get();

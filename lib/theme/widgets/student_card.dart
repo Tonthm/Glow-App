@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/card_config.dart';
@@ -35,6 +37,12 @@ class StudentCard extends StatelessWidget {
   final AvatarMood mood;
   final int fireLevel;
   final int firePoints;
+  /// The user's picture, shown instead of the avatar.
+  final Uint8List? photo;
+
+  /// Shows an empty line for each detail not filled in yet, on the user's own
+  /// card. A shared picture leaves them out.
+  final bool showBlanks;
   final VoidCallback? onTap;
 
   const StudentCard({
@@ -50,6 +58,8 @@ class StudentCard extends StatelessWidget {
     this.mood = AvatarMood.calm,
     required this.fireLevel,
     required this.firePoints,
+    this.photo,
+    this.showBlanks = false,
     this.onTap,
   });
 
@@ -63,7 +73,7 @@ class StudentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ink = cardTextColor(color);
     final level = fireLevel.clamp(0, maxFireLevel);
-    final moodWords = switch (mood) {
+    final moodWords = switch (photo == null ? mood : AvatarMood.calm) {
       AvatarMood.calm => '',
       AvatarMood.rested => ' อวตารดูสดชื่น',
       AvatarMood.sleepy => ' อวตารดูง่วงนิดหน่อย',
@@ -79,7 +89,11 @@ class StudentCard extends StatelessWidget {
     Widget line(String value, TextStyle style) =>
         Text(value, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
 
-    final shownName = name.isEmpty ? 'บัตรของฉัน' : name;
+    final shownName = name.isNotEmpty
+        ? name
+        : showBlanks
+        ? 'ชื่อ ........'
+        : 'บัตรของฉัน';
     // Room on the right so stickers don't cover the words.
     final stickerRoom = switch (stickerIds.length) {
       0 => 0.0,
@@ -116,7 +130,26 @@ class StudentCard extends StatelessWidget {
               ),
               Row(
                 children: [
-                  CardAvatar(avatarId, mood: mood),
+                  if (photo == null)
+                    CardAvatar(avatarId, mood: mood)
+                  else
+                    Container(
+                      width: 60,
+                      height: 75,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(GlowRadius.button),
+                      ),
+                      foregroundDecoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(GlowRadius.button),
+                        border: Border.all(color: ink),
+                      ),
+                      child: Image.memory(
+                        photo!,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                      ),
+                    ),
                   const SizedBox(width: GlowSpacing.md),
                   Expanded(
                     child: Padding(
@@ -125,10 +158,18 @@ class StudentCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           line(shownName, text(GlowFontSize.body, bold: true)),
-                          if (school.isNotEmpty)
-                            line(school, text(GlowFontSize.tiny)),
-                          if (classYear.isNotEmpty)
-                            line(classYear, text(GlowFontSize.tiny)),
+                          if (school.isNotEmpty || showBlanks)
+                            line(
+                              school.isEmpty ? 'โรงเรียน ........' : school,
+                              text(GlowFontSize.tiny),
+                            ),
+                          if (classYear.isNotEmpty || showBlanks)
+                            line(
+                              classYear.isEmpty
+                                  ? 'ชั้นปี ........'
+                                  : classYear,
+                              text(GlowFontSize.tiny),
+                            ),
                         ],
                       ),
                     ),

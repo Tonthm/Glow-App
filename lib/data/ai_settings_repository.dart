@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../core/birth_date.dart';
 import 'database.dart';
 
 /// The AI assistant's settings (CLAUDE.md section 12). The key is not here.
@@ -38,13 +39,20 @@ class AiSettingsRepository {
     )..where((t) => t.id.equals(0))).write(change);
   }
 
-  /// True unless the user chose "18 ปีขึ้นไป". No choice yet counts as under
-  /// 18, the stored default.
-  Future<bool> isUnder18() async {
-    final row = await (db.select(
+  /// From the birth date if there is one, else the chosen age group. No
+  /// choice yet counts as under 18, the stored default. [now] is real time.
+  Future<AiAgeState> ageState(DateTime now) async {
+    final settings = await (db.select(
       db.settings,
     )..where((t) => t.id.equals(0))).getSingleOrNull();
-    return row?.ageGroup != AgeGroup.adult;
+    final profile = await (db.select(
+      db.cardProfiles,
+    )..where((t) => t.id.equals(0))).getSingleOrNull();
+    return aiAgeState(
+      birthDate: profile?.birthDate,
+      choseAdult: settings?.ageGroup == AgeGroup.adult,
+      now: now,
+    );
   }
 
   /// Calls made on [now]'s day.

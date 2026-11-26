@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
+
 import 'capabilities_io.dart'
     if (dart.library.js_interop) 'capabilities_web.dart';
 
@@ -64,6 +67,13 @@ class PlatformCapabilities {
     keyInBrowserStorage: true,
     aiAssistant: true,
   );
+
+  /// Whether a "take a photo" button really opens a camera. A computer's
+  /// browser would only open the file chooser again.
+  bool get takePhoto =>
+      !webApp ||
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 
   /// The platform this build is for.
   static const PlatformCapabilities current = currentCapabilities;

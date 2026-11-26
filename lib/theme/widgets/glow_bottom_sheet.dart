@@ -40,11 +40,14 @@ class GlowBottomSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: GlowSpacing.lg),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: GlowSpacing.pageMargin,
+            // Bounded, so a long form can scroll instead of overflowing.
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: GlowSpacing.pageMargin,
+                ),
+                child: child,
               ),
-              child: child,
             ),
             const SizedBox(height: GlowSpacing.lg),
           ],

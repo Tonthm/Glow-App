@@ -4,9 +4,16 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
+/// What schema 17 added.
+const _rewindFrom17 = [
+  'DROP TABLE card_photos',
+  'ALTER TABLE settings DROP COLUMN earliest_class_minutes',
+];
+
 /// What schema 14 added, and the newer tables on top of it. Must run before
 /// evening_tasks is dropped.
 const _rewindFrom14 = [
+  ..._rewindFrom17,
   'DROP TABLE card_profiles',
   'DROP TABLE calendar_reminder_states',
   'ALTER TABLE evening_tasks DROP COLUMN ai_estimate_minutes',
@@ -152,6 +159,7 @@ void main() {
           " VALUES ('blanket_spark', 1795000100)",
       'INSERT INTO fire_states (id, points, level, shields)'
           ' VALUES (0, 9, 3, 2)',
+      ..._rewindFrom17,
       'DROP TABLE card_profiles',
       'PRAGMA user_version = 15',
     ]);
@@ -168,6 +176,45 @@ void main() {
     final fire = await db.select(db.fireStates).getSingle();
     expect((fire.points, fire.level, fire.shields), (9, 3, 2));
     expect(await db.select(db.cardProfiles).get(), isEmpty);
+    await db.close();
+  });
+
+  test('a version 16 database, as published on the web, keeps it all', () async {
+    await prepare([
+      'INSERT INTO settings (id, onboarding_completed, target_min_minutes)'
+          ' VALUES (0, 1, 495)',
+      'INSERT INTO weekly_items (title, day_of_week, start_minutes,'
+          " end_minutes, type) VALUES ('ฟิสิกส์', 1, 480, 540, 0)",
+      'INSERT INTO one_time_items (title, date, type)'
+          " VALUES ('สอบเคมี', 1796000000, 0)",
+      'INSERT INTO wallets (id, coins, equipped_blanket_id)'
+          " VALUES (0, 88, 'blanket_navy')",
+      'INSERT INTO owned_items (item_id, acquired_at)'
+          " VALUES ('sticker_zzz', 1795000000)",
+      'INSERT INTO fire_states (id, points, level, shields)'
+          ' VALUES (0, 15, 4, 1)',
+      'INSERT INTO card_profiles (id, display_name, school, sticker_ids)'
+          " VALUES (0, 'มายด์', 'โรงเรียน', 'sticker_zzz')",
+      ..._rewindFrom17,
+      'ALTER TABLE card_profiles DROP COLUMN birth_date',
+      'PRAGMA user_version = 16',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    final settings = await db.select(db.settings).getSingle();
+    expect(settings.onboardingCompleted, isTrue);
+    expect(settings.targetMinMinutes, 495);
+    expect(settings.earliestClassMinutes, isNull);
+    expect((await db.select(db.weeklyItems).getSingle()).title, 'ฟิสิกส์');
+    expect((await db.select(db.oneTimeItems).getSingle()).title, 'สอบเคมี');
+    expect((await db.select(db.wallets).getSingle()).coins, 88);
+    expect((await db.select(db.ownedItems).getSingle()).itemId, 'sticker_zzz');
+    final fire = await db.select(db.fireStates).getSingle();
+    expect((fire.points, fire.level, fire.shields), (15, 4, 1));
+    final card = await db.select(db.cardProfiles).getSingle();
+    expect((card.displayName, card.stickerIds), ('มายด์', 'sticker_zzz'));
+    expect(card.birthDate, isNull);
+    expect(await db.select(db.cardPhotos).get(), isEmpty);
     await db.close();
   });
 

@@ -1,15 +1,10 @@
 import 'package:drift/drift.dart';
 
+import '../core/birth_date.dart';
 import '../core/day_overrides.dart';
 import '../core/evening_planner.dart';
 import '../core/sleep_calculator.dart';
 import 'database.dart';
-
-/// Default target hours per CLAUDE.md section 3.
-const _under18TargetMin = 8 * 60;
-const _under18TargetMax = 10 * 60;
-const _adultTargetMin = 7 * 60;
-const _adultTargetMax = 9 * 60;
 
 class SettingsRepository {
   final AppDatabase db;
@@ -45,12 +40,12 @@ class SettingsRepository {
 
   Future<void> applyAgeGroupDefaults(AgeGroup group) async {
     await ensureRowExists();
-    final isAdult = group == AgeGroup.adult;
+    final target = defaultSleepTarget(isAdult: group == AgeGroup.adult);
     await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
       SettingsCompanion(
         ageGroup: Value(group),
-        targetMinMinutes: Value(isAdult ? _adultTargetMin : _under18TargetMin),
-        targetMaxMinutes: Value(isAdult ? _adultTargetMax : _under18TargetMax),
+        targetMinMinutes: Value(target.min),
+        targetMaxMinutes: Value(target.max),
       ),
     );
   }
@@ -81,6 +76,13 @@ class SettingsRepository {
             ? const Value.absent()
             : Value(travelMinutes),
       ),
+    );
+  }
+
+  Future<void> updateEarliestClass(int? minutes) async {
+    await ensureRowExists();
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      SettingsCompanion(earliestClassMinutes: Value(minutes)),
     );
   }
 

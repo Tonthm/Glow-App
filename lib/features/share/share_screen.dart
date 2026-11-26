@@ -43,6 +43,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   final _cardKey = GlobalKey();
   bool _showTimes = false;
   bool _showDetails = false;
+  bool _showPhoto = false;
   bool _sharing = false;
 
   late final Future<List<HeatmapCell>> _week = ref
@@ -81,6 +82,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     final fire = ref.watch(fireStateStreamProvider).value;
     final color = ref.watch(walletStreamProvider).value?.equippedBlanketId;
     final profile = ref.watch(cardProfileStreamProvider).value;
+    final photo = ref.watch(cardPhotoProvider).value;
     final fallAsleep =
         ref.watch(settingsStreamProvider).value?.fallAsleepMinutes ?? 15;
     return Scaffold(
@@ -116,6 +118,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                             firePoints: fire?.points ?? 0,
                             mood: weekMood(week),
                             showDetails: _showDetails,
+                            photo: _showPhoto ? photo : null,
                           ),
                           showTimes: _showTimes,
                           fallAsleepMinutes: fallAsleep,
@@ -130,6 +133,12 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                 value: _showDetails,
                 onChanged: (v) => setState(() => _showDetails = v),
               ),
+              if (photo != null)
+                SwitchListTile(
+                  title: const Text('ใส่รูปถ่าย'),
+                  value: _showPhoto,
+                  onChanged: (v) => setState(() => _showPhoto = v),
+                ),
               SwitchListTile(
                 title: const Text('แสดงเวลา'),
                 value: _showTimes,

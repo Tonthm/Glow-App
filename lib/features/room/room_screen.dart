@@ -70,7 +70,7 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
           TextButton.icon(
             onPressed: () => showCardDetailsSheet(context),
             icon: const Icon(Icons.edit_outlined, size: 20),
-            label: const Text('แก้ชื่อ โรงเรียน และอวตาร'),
+            label: const Text('แก้โปรไฟล์ รูป และอวตาร'),
           ),
           const SizedBox(height: GlowSpacing.sm),
           Row(

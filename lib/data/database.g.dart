@@ -110,6 +110,16 @@ class $SettingsTable extends Settings
     requiredDuringInsert: false,
     defaultValue: const Constant(450),
   );
+  static const VerificationMeta _earliestClassMinutesMeta =
+      const VerificationMeta('earliestClassMinutes');
+  @override
+  late final GeneratedColumn<int> earliestClassMinutes = GeneratedColumn<int>(
+    'earliest_class_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _latestWakeMinutesMeta = const VerificationMeta(
     'latestWakeMinutes',
   );
@@ -426,6 +436,7 @@ class $SettingsTable extends Settings
     bufferBeforeMinutes,
     fallAsleepMinutes,
     freeDayWakeMinutes,
+    earliestClassMinutes,
     latestWakeMinutes,
     latestBedtimeMinutes,
     termStart,
@@ -526,6 +537,15 @@ class $SettingsTable extends Settings
         freeDayWakeMinutes.isAcceptableOrUnknown(
           data['free_day_wake_minutes']!,
           _freeDayWakeMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('earliest_class_minutes')) {
+      context.handle(
+        _earliestClassMinutesMeta,
+        earliestClassMinutes.isAcceptableOrUnknown(
+          data['earliest_class_minutes']!,
+          _earliestClassMinutesMeta,
         ),
       );
     }
@@ -777,6 +797,10 @@ class $SettingsTable extends Settings
         DriftSqlType.int,
         data['${effectivePrefix}free_day_wake_minutes'],
       )!,
+      earliestClassMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}earliest_class_minutes'],
+      ),
       latestWakeMinutes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}latest_wake_minutes'],
@@ -899,6 +923,10 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   final int bufferBeforeMinutes;
   final int fallAsleepMinutes;
   final int freeDayWakeMinutes;
+
+  /// The earliest class time given at the start, used only while the
+  /// timetable has no classes (core/first_class). Added in schema 17.
+  final int? earliestClassMinutes;
   final int latestWakeMinutes;
   final int latestBedtimeMinutes;
   final DateTime? termStart;
@@ -943,6 +971,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.bufferBeforeMinutes,
     required this.fallAsleepMinutes,
     required this.freeDayWakeMinutes,
+    this.earliestClassMinutes,
     required this.latestWakeMinutes,
     required this.latestBedtimeMinutes,
     this.termStart,
@@ -984,6 +1013,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     map['buffer_before_minutes'] = Variable<int>(bufferBeforeMinutes);
     map['fall_asleep_minutes'] = Variable<int>(fallAsleepMinutes);
     map['free_day_wake_minutes'] = Variable<int>(freeDayWakeMinutes);
+    if (!nullToAbsent || earliestClassMinutes != null) {
+      map['earliest_class_minutes'] = Variable<int>(earliestClassMinutes);
+    }
     map['latest_wake_minutes'] = Variable<int>(latestWakeMinutes);
     map['latest_bedtime_minutes'] = Variable<int>(latestBedtimeMinutes);
     if (!nullToAbsent || termStart != null) {
@@ -1034,6 +1066,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       bufferBeforeMinutes: Value(bufferBeforeMinutes),
       fallAsleepMinutes: Value(fallAsleepMinutes),
       freeDayWakeMinutes: Value(freeDayWakeMinutes),
+      earliestClassMinutes: earliestClassMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(earliestClassMinutes),
       latestWakeMinutes: Value(latestWakeMinutes),
       latestBedtimeMinutes: Value(latestBedtimeMinutes),
       termStart: termStart == null && nullToAbsent
@@ -1088,6 +1123,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       ),
       fallAsleepMinutes: serializer.fromJson<int>(json['fallAsleepMinutes']),
       freeDayWakeMinutes: serializer.fromJson<int>(json['freeDayWakeMinutes']),
+      earliestClassMinutes: serializer.fromJson<int?>(
+        json['earliestClassMinutes'],
+      ),
       latestWakeMinutes: serializer.fromJson<int>(json['latestWakeMinutes']),
       latestBedtimeMinutes: serializer.fromJson<int>(
         json['latestBedtimeMinutes'],
@@ -1139,6 +1177,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       'bufferBeforeMinutes': serializer.toJson<int>(bufferBeforeMinutes),
       'fallAsleepMinutes': serializer.toJson<int>(fallAsleepMinutes),
       'freeDayWakeMinutes': serializer.toJson<int>(freeDayWakeMinutes),
+      'earliestClassMinutes': serializer.toJson<int?>(earliestClassMinutes),
       'latestWakeMinutes': serializer.toJson<int>(latestWakeMinutes),
       'latestBedtimeMinutes': serializer.toJson<int>(latestBedtimeMinutes),
       'termStart': serializer.toJson<DateTime?>(termStart),
@@ -1180,6 +1219,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     int? bufferBeforeMinutes,
     int? fallAsleepMinutes,
     int? freeDayWakeMinutes,
+    Value<int?> earliestClassMinutes = const Value.absent(),
     int? latestWakeMinutes,
     int? latestBedtimeMinutes,
     Value<DateTime?> termStart = const Value.absent(),
@@ -1214,6 +1254,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bufferBeforeMinutes: bufferBeforeMinutes ?? this.bufferBeforeMinutes,
     fallAsleepMinutes: fallAsleepMinutes ?? this.fallAsleepMinutes,
     freeDayWakeMinutes: freeDayWakeMinutes ?? this.freeDayWakeMinutes,
+    earliestClassMinutes: earliestClassMinutes.present
+        ? earliestClassMinutes.value
+        : this.earliestClassMinutes,
     latestWakeMinutes: latestWakeMinutes ?? this.latestWakeMinutes,
     latestBedtimeMinutes: latestBedtimeMinutes ?? this.latestBedtimeMinutes,
     termStart: termStart.present ? termStart.value : this.termStart,
@@ -1265,6 +1308,9 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       freeDayWakeMinutes: data.freeDayWakeMinutes.present
           ? data.freeDayWakeMinutes.value
           : this.freeDayWakeMinutes,
+      earliestClassMinutes: data.earliestClassMinutes.present
+          ? data.earliestClassMinutes.value
+          : this.earliestClassMinutes,
       latestWakeMinutes: data.latestWakeMinutes.present
           ? data.latestWakeMinutes.value
           : this.latestWakeMinutes,
@@ -1346,6 +1392,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('bufferBeforeMinutes: $bufferBeforeMinutes, ')
           ..write('fallAsleepMinutes: $fallAsleepMinutes, ')
           ..write('freeDayWakeMinutes: $freeDayWakeMinutes, ')
+          ..write('earliestClassMinutes: $earliestClassMinutes, ')
           ..write('latestWakeMinutes: $latestWakeMinutes, ')
           ..write('latestBedtimeMinutes: $latestBedtimeMinutes, ')
           ..write('termStart: $termStart, ')
@@ -1385,6 +1432,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bufferBeforeMinutes,
     fallAsleepMinutes,
     freeDayWakeMinutes,
+    earliestClassMinutes,
     latestWakeMinutes,
     latestBedtimeMinutes,
     termStart,
@@ -1423,6 +1471,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.bufferBeforeMinutes == this.bufferBeforeMinutes &&
           other.fallAsleepMinutes == this.fallAsleepMinutes &&
           other.freeDayWakeMinutes == this.freeDayWakeMinutes &&
+          other.earliestClassMinutes == this.earliestClassMinutes &&
           other.latestWakeMinutes == this.latestWakeMinutes &&
           other.latestBedtimeMinutes == this.latestBedtimeMinutes &&
           other.termStart == this.termStart &&
@@ -1459,6 +1508,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<int> bufferBeforeMinutes;
   final Value<int> fallAsleepMinutes;
   final Value<int> freeDayWakeMinutes;
+  final Value<int?> earliestClassMinutes;
   final Value<int> latestWakeMinutes;
   final Value<int> latestBedtimeMinutes;
   final Value<DateTime?> termStart;
@@ -1493,6 +1543,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.bufferBeforeMinutes = const Value.absent(),
     this.fallAsleepMinutes = const Value.absent(),
     this.freeDayWakeMinutes = const Value.absent(),
+    this.earliestClassMinutes = const Value.absent(),
     this.latestWakeMinutes = const Value.absent(),
     this.latestBedtimeMinutes = const Value.absent(),
     this.termStart = const Value.absent(),
@@ -1528,6 +1579,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.bufferBeforeMinutes = const Value.absent(),
     this.fallAsleepMinutes = const Value.absent(),
     this.freeDayWakeMinutes = const Value.absent(),
+    this.earliestClassMinutes = const Value.absent(),
     this.latestWakeMinutes = const Value.absent(),
     this.latestBedtimeMinutes = const Value.absent(),
     this.termStart = const Value.absent(),
@@ -1563,6 +1615,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<int>? bufferBeforeMinutes,
     Expression<int>? fallAsleepMinutes,
     Expression<int>? freeDayWakeMinutes,
+    Expression<int>? earliestClassMinutes,
     Expression<int>? latestWakeMinutes,
     Expression<int>? latestBedtimeMinutes,
     Expression<DateTime>? termStart,
@@ -1601,6 +1654,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       if (fallAsleepMinutes != null) 'fall_asleep_minutes': fallAsleepMinutes,
       if (freeDayWakeMinutes != null)
         'free_day_wake_minutes': freeDayWakeMinutes,
+      if (earliestClassMinutes != null)
+        'earliest_class_minutes': earliestClassMinutes,
       if (latestWakeMinutes != null) 'latest_wake_minutes': latestWakeMinutes,
       if (latestBedtimeMinutes != null)
         'latest_bedtime_minutes': latestBedtimeMinutes,
@@ -1644,6 +1699,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<int>? bufferBeforeMinutes,
     Value<int>? fallAsleepMinutes,
     Value<int>? freeDayWakeMinutes,
+    Value<int?>? earliestClassMinutes,
     Value<int>? latestWakeMinutes,
     Value<int>? latestBedtimeMinutes,
     Value<DateTime?>? termStart,
@@ -1679,6 +1735,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       bufferBeforeMinutes: bufferBeforeMinutes ?? this.bufferBeforeMinutes,
       fallAsleepMinutes: fallAsleepMinutes ?? this.fallAsleepMinutes,
       freeDayWakeMinutes: freeDayWakeMinutes ?? this.freeDayWakeMinutes,
+      earliestClassMinutes: earliestClassMinutes ?? this.earliestClassMinutes,
       latestWakeMinutes: latestWakeMinutes ?? this.latestWakeMinutes,
       latestBedtimeMinutes: latestBedtimeMinutes ?? this.latestBedtimeMinutes,
       termStart: termStart ?? this.termStart,
@@ -1738,6 +1795,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     }
     if (freeDayWakeMinutes.present) {
       map['free_day_wake_minutes'] = Variable<int>(freeDayWakeMinutes.value);
+    }
+    if (earliestClassMinutes.present) {
+      map['earliest_class_minutes'] = Variable<int>(earliestClassMinutes.value);
     }
     if (latestWakeMinutes.present) {
       map['latest_wake_minutes'] = Variable<int>(latestWakeMinutes.value);
@@ -1830,6 +1890,7 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('bufferBeforeMinutes: $bufferBeforeMinutes, ')
           ..write('fallAsleepMinutes: $fallAsleepMinutes, ')
           ..write('freeDayWakeMinutes: $freeDayWakeMinutes, ')
+          ..write('earliestClassMinutes: $earliestClassMinutes, ')
           ..write('latestWakeMinutes: $latestWakeMinutes, ')
           ..write('latestBedtimeMinutes: $latestBedtimeMinutes, ')
           ..write('termStart: $termStart, ')
@@ -8709,6 +8770,17 @@ class $CardProfilesTable extends CardProfiles
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _birthDateMeta = const VerificationMeta(
+    'birthDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> birthDate = GeneratedColumn<DateTime>(
+    'birth_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -8719,6 +8791,7 @@ class $CardProfilesTable extends CardProfiles
     logoId,
     frameId,
     stickerIds,
+    birthDate,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -8780,6 +8853,12 @@ class $CardProfilesTable extends CardProfiles
         stickerIds.isAcceptableOrUnknown(data['sticker_ids']!, _stickerIdsMeta),
       );
     }
+    if (data.containsKey('birth_date')) {
+      context.handle(
+        _birthDateMeta,
+        birthDate.isAcceptableOrUnknown(data['birth_date']!, _birthDateMeta),
+      );
+    }
     return context;
   }
 
@@ -8821,6 +8900,10 @@ class $CardProfilesTable extends CardProfiles
         DriftSqlType.string,
         data['${effectivePrefix}sticker_ids'],
       )!,
+      birthDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}birth_date'],
+      ),
     );
   }
 
@@ -8841,6 +8924,9 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
 
   /// Comma-separated sticker ids, see core/card_config.dart.
   final String stickerIds;
+
+  /// Optional. Added in schema 17.
+  final DateTime? birthDate;
   const CardProfileRow({
     required this.id,
     required this.displayName,
@@ -8850,6 +8936,7 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
     required this.logoId,
     required this.frameId,
     required this.stickerIds,
+    this.birthDate,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8862,6 +8949,9 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
     map['logo_id'] = Variable<String>(logoId);
     map['frame_id'] = Variable<String>(frameId);
     map['sticker_ids'] = Variable<String>(stickerIds);
+    if (!nullToAbsent || birthDate != null) {
+      map['birth_date'] = Variable<DateTime>(birthDate);
+    }
     return map;
   }
 
@@ -8875,6 +8965,9 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
       logoId: Value(logoId),
       frameId: Value(frameId),
       stickerIds: Value(stickerIds),
+      birthDate: birthDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthDate),
     );
   }
 
@@ -8892,6 +8985,7 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
       logoId: serializer.fromJson<String>(json['logoId']),
       frameId: serializer.fromJson<String>(json['frameId']),
       stickerIds: serializer.fromJson<String>(json['stickerIds']),
+      birthDate: serializer.fromJson<DateTime?>(json['birthDate']),
     );
   }
   @override
@@ -8906,6 +9000,7 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
       'logoId': serializer.toJson<String>(logoId),
       'frameId': serializer.toJson<String>(frameId),
       'stickerIds': serializer.toJson<String>(stickerIds),
+      'birthDate': serializer.toJson<DateTime?>(birthDate),
     };
   }
 
@@ -8918,6 +9013,7 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
     String? logoId,
     String? frameId,
     String? stickerIds,
+    Value<DateTime?> birthDate = const Value.absent(),
   }) => CardProfileRow(
     id: id ?? this.id,
     displayName: displayName ?? this.displayName,
@@ -8927,6 +9023,7 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
     logoId: logoId ?? this.logoId,
     frameId: frameId ?? this.frameId,
     stickerIds: stickerIds ?? this.stickerIds,
+    birthDate: birthDate.present ? birthDate.value : this.birthDate,
   );
   CardProfileRow copyWithCompanion(CardProfilesCompanion data) {
     return CardProfileRow(
@@ -8942,6 +9039,7 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
       stickerIds: data.stickerIds.present
           ? data.stickerIds.value
           : this.stickerIds,
+      birthDate: data.birthDate.present ? data.birthDate.value : this.birthDate,
     );
   }
 
@@ -8955,7 +9053,8 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
           ..write('avatarId: $avatarId, ')
           ..write('logoId: $logoId, ')
           ..write('frameId: $frameId, ')
-          ..write('stickerIds: $stickerIds')
+          ..write('stickerIds: $stickerIds, ')
+          ..write('birthDate: $birthDate')
           ..write(')'))
         .toString();
   }
@@ -8970,6 +9069,7 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
     logoId,
     frameId,
     stickerIds,
+    birthDate,
   );
   @override
   bool operator ==(Object other) =>
@@ -8982,7 +9082,8 @@ class CardProfileRow extends DataClass implements Insertable<CardProfileRow> {
           other.avatarId == this.avatarId &&
           other.logoId == this.logoId &&
           other.frameId == this.frameId &&
-          other.stickerIds == this.stickerIds);
+          other.stickerIds == this.stickerIds &&
+          other.birthDate == this.birthDate);
 }
 
 class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
@@ -8994,6 +9095,7 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
   final Value<String> logoId;
   final Value<String> frameId;
   final Value<String> stickerIds;
+  final Value<DateTime?> birthDate;
   const CardProfilesCompanion({
     this.id = const Value.absent(),
     this.displayName = const Value.absent(),
@@ -9003,6 +9105,7 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
     this.logoId = const Value.absent(),
     this.frameId = const Value.absent(),
     this.stickerIds = const Value.absent(),
+    this.birthDate = const Value.absent(),
   });
   CardProfilesCompanion.insert({
     this.id = const Value.absent(),
@@ -9013,6 +9116,7 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
     this.logoId = const Value.absent(),
     this.frameId = const Value.absent(),
     this.stickerIds = const Value.absent(),
+    this.birthDate = const Value.absent(),
   });
   static Insertable<CardProfileRow> custom({
     Expression<int>? id,
@@ -9023,6 +9127,7 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
     Expression<String>? logoId,
     Expression<String>? frameId,
     Expression<String>? stickerIds,
+    Expression<DateTime>? birthDate,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -9033,6 +9138,7 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
       if (logoId != null) 'logo_id': logoId,
       if (frameId != null) 'frame_id': frameId,
       if (stickerIds != null) 'sticker_ids': stickerIds,
+      if (birthDate != null) 'birth_date': birthDate,
     });
   }
 
@@ -9045,6 +9151,7 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
     Value<String>? logoId,
     Value<String>? frameId,
     Value<String>? stickerIds,
+    Value<DateTime?>? birthDate,
   }) {
     return CardProfilesCompanion(
       id: id ?? this.id,
@@ -9055,6 +9162,7 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
       logoId: logoId ?? this.logoId,
       frameId: frameId ?? this.frameId,
       stickerIds: stickerIds ?? this.stickerIds,
+      birthDate: birthDate ?? this.birthDate,
     );
   }
 
@@ -9085,6 +9193,9 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
     if (stickerIds.present) {
       map['sticker_ids'] = Variable<String>(stickerIds.value);
     }
+    if (birthDate.present) {
+      map['birth_date'] = Variable<DateTime>(birthDate.value);
+    }
     return map;
   }
 
@@ -9098,7 +9209,194 @@ class CardProfilesCompanion extends UpdateCompanion<CardProfileRow> {
           ..write('avatarId: $avatarId, ')
           ..write('logoId: $logoId, ')
           ..write('frameId: $frameId, ')
-          ..write('stickerIds: $stickerIds')
+          ..write('stickerIds: $stickerIds, ')
+          ..write('birthDate: $birthDate')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CardPhotosTable extends CardPhotos
+    with TableInfo<$CardPhotosTable, CardPhotoRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CardPhotosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _jpegMeta = const VerificationMeta('jpeg');
+  @override
+  late final GeneratedColumn<Uint8List> jpeg = GeneratedColumn<Uint8List>(
+    'jpeg',
+    aliasedName,
+    false,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, jpeg];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'card_photos';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CardPhotoRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('jpeg')) {
+      context.handle(
+        _jpegMeta,
+        jpeg.isAcceptableOrUnknown(data['jpeg']!, _jpegMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jpegMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CardPhotoRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CardPhotoRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      jpeg: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}jpeg'],
+      )!,
+    );
+  }
+
+  @override
+  $CardPhotosTable createAlias(String alias) {
+    return $CardPhotosTable(attachedDatabase, alias);
+  }
+}
+
+class CardPhotoRow extends DataClass implements Insertable<CardPhotoRow> {
+  final int id;
+  final Uint8List jpeg;
+  const CardPhotoRow({required this.id, required this.jpeg});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['jpeg'] = Variable<Uint8List>(jpeg);
+    return map;
+  }
+
+  CardPhotosCompanion toCompanion(bool nullToAbsent) {
+    return CardPhotosCompanion(id: Value(id), jpeg: Value(jpeg));
+  }
+
+  factory CardPhotoRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CardPhotoRow(
+      id: serializer.fromJson<int>(json['id']),
+      jpeg: serializer.fromJson<Uint8List>(json['jpeg']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'jpeg': serializer.toJson<Uint8List>(jpeg),
+    };
+  }
+
+  CardPhotoRow copyWith({int? id, Uint8List? jpeg}) =>
+      CardPhotoRow(id: id ?? this.id, jpeg: jpeg ?? this.jpeg);
+  CardPhotoRow copyWithCompanion(CardPhotosCompanion data) {
+    return CardPhotoRow(
+      id: data.id.present ? data.id.value : this.id,
+      jpeg: data.jpeg.present ? data.jpeg.value : this.jpeg,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CardPhotoRow(')
+          ..write('id: $id, ')
+          ..write('jpeg: $jpeg')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, $driftBlobEquality.hash(jpeg));
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CardPhotoRow &&
+          other.id == this.id &&
+          $driftBlobEquality.equals(other.jpeg, this.jpeg));
+}
+
+class CardPhotosCompanion extends UpdateCompanion<CardPhotoRow> {
+  final Value<int> id;
+  final Value<Uint8List> jpeg;
+  const CardPhotosCompanion({
+    this.id = const Value.absent(),
+    this.jpeg = const Value.absent(),
+  });
+  CardPhotosCompanion.insert({
+    this.id = const Value.absent(),
+    required Uint8List jpeg,
+  }) : jpeg = Value(jpeg);
+  static Insertable<CardPhotoRow> custom({
+    Expression<int>? id,
+    Expression<Uint8List>? jpeg,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (jpeg != null) 'jpeg': jpeg,
+    });
+  }
+
+  CardPhotosCompanion copyWith({Value<int>? id, Value<Uint8List>? jpeg}) {
+    return CardPhotosCompanion(id: id ?? this.id, jpeg: jpeg ?? this.jpeg);
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (jpeg.present) {
+      map['jpeg'] = Variable<Uint8List>(jpeg.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CardPhotosCompanion(')
+          ..write('id: $id, ')
+          ..write('jpeg: $jpeg')
           ..write(')'))
         .toString();
   }
@@ -9127,6 +9425,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CalendarReminderStatesTable calendarReminderStates =
       $CalendarReminderStatesTable(this);
   late final $CardProfilesTable cardProfiles = $CardProfilesTable(this);
+  late final $CardPhotosTable cardPhotos = $CardPhotosTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9148,6 +9447,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     aiSettings,
     calendarReminderStates,
     cardProfiles,
+    cardPhotos,
   ];
 }
 
@@ -9161,6 +9461,7 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<int> bufferBeforeMinutes,
   Value<int> fallAsleepMinutes,
   Value<int> freeDayWakeMinutes,
+  Value<int?> earliestClassMinutes,
   Value<int> latestWakeMinutes,
   Value<int> latestBedtimeMinutes,
   Value<DateTime?> termStart,
@@ -9196,6 +9497,7 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<int> bufferBeforeMinutes,
   Value<int> fallAsleepMinutes,
   Value<int> freeDayWakeMinutes,
+  Value<int?> earliestClassMinutes,
   Value<int> latestWakeMinutes,
   Value<int> latestBedtimeMinutes,
   Value<DateTime?> termStart,
@@ -9274,6 +9576,11 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<int> get freeDayWakeMinutes => $composableBuilder(
     column: $table.freeDayWakeMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get earliestClassMinutes => $composableBuilder(
+    column: $table.earliestClassMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9453,6 +9760,11 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get earliestClassMinutes => $composableBuilder(
+    column: $table.earliestClassMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get latestWakeMinutes => $composableBuilder(
     column: $table.latestWakeMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -9624,6 +9936,11 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get earliestClassMinutes => $composableBuilder(
+    column: $table.earliestClassMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get latestWakeMinutes => $composableBuilder(
     column: $table.latestWakeMinutes,
     builder: (column) => column,
@@ -9779,6 +10096,7 @@ class $$SettingsTableTableManager
                 Value<int> bufferBeforeMinutes = const Value.absent(),
                 Value<int> fallAsleepMinutes = const Value.absent(),
                 Value<int> freeDayWakeMinutes = const Value.absent(),
+                Value<int?> earliestClassMinutes = const Value.absent(),
                 Value<int> latestWakeMinutes = const Value.absent(),
                 Value<int> latestBedtimeMinutes = const Value.absent(),
                 Value<DateTime?> termStart = const Value.absent(),
@@ -9813,6 +10131,7 @@ class $$SettingsTableTableManager
                 bufferBeforeMinutes: bufferBeforeMinutes,
                 fallAsleepMinutes: fallAsleepMinutes,
                 freeDayWakeMinutes: freeDayWakeMinutes,
+                earliestClassMinutes: earliestClassMinutes,
                 latestWakeMinutes: latestWakeMinutes,
                 latestBedtimeMinutes: latestBedtimeMinutes,
                 termStart: termStart,
@@ -9849,6 +10168,7 @@ class $$SettingsTableTableManager
                 Value<int> bufferBeforeMinutes = const Value.absent(),
                 Value<int> fallAsleepMinutes = const Value.absent(),
                 Value<int> freeDayWakeMinutes = const Value.absent(),
+                Value<int?> earliestClassMinutes = const Value.absent(),
                 Value<int> latestWakeMinutes = const Value.absent(),
                 Value<int> latestBedtimeMinutes = const Value.absent(),
                 Value<DateTime?> termStart = const Value.absent(),
@@ -9883,6 +10203,7 @@ class $$SettingsTableTableManager
                 bufferBeforeMinutes: bufferBeforeMinutes,
                 fallAsleepMinutes: fallAsleepMinutes,
                 freeDayWakeMinutes: freeDayWakeMinutes,
+                earliestClassMinutes: earliestClassMinutes,
                 latestWakeMinutes: latestWakeMinutes,
                 latestBedtimeMinutes: latestBedtimeMinutes,
                 termStart: termStart,
@@ -13489,6 +13810,7 @@ typedef $$CardProfilesTableCreateCompanionBuilder =
       Value<String> logoId,
       Value<String> frameId,
       Value<String> stickerIds,
+      Value<DateTime?> birthDate,
     });
 typedef $$CardProfilesTableUpdateCompanionBuilder =
     CardProfilesCompanion Function({
@@ -13500,6 +13822,7 @@ typedef $$CardProfilesTableUpdateCompanionBuilder =
       Value<String> logoId,
       Value<String> frameId,
       Value<String> stickerIds,
+      Value<DateTime?> birthDate,
     });
 
 class $$CardProfilesTableFilterComposer
@@ -13548,6 +13871,11 @@ class $$CardProfilesTableFilterComposer
 
   ColumnFilters<String> get stickerIds => $composableBuilder(
     column: $table.stickerIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get birthDate => $composableBuilder(
+    column: $table.birthDate,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -13600,6 +13928,11 @@ class $$CardProfilesTableOrderingComposer
     column: $table.stickerIds,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get birthDate => $composableBuilder(
+    column: $table.birthDate,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CardProfilesTableAnnotationComposer
@@ -13638,6 +13971,9 @@ class $$CardProfilesTableAnnotationComposer
     column: $table.stickerIds,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get birthDate =>
+      $composableBuilder(column: $table.birthDate, builder: (column) => column);
 }
 
 class $$CardProfilesTableTableManager
@@ -13679,6 +14015,7 @@ class $$CardProfilesTableTableManager
                 Value<String> logoId = const Value.absent(),
                 Value<String> frameId = const Value.absent(),
                 Value<String> stickerIds = const Value.absent(),
+                Value<DateTime?> birthDate = const Value.absent(),
               }) => CardProfilesCompanion(
                 id: id,
                 displayName: displayName,
@@ -13688,6 +14025,7 @@ class $$CardProfilesTableTableManager
                 logoId: logoId,
                 frameId: frameId,
                 stickerIds: stickerIds,
+                birthDate: birthDate,
               ),
           createCompanionCallback:
               ({
@@ -13699,6 +14037,7 @@ class $$CardProfilesTableTableManager
                 Value<String> logoId = const Value.absent(),
                 Value<String> frameId = const Value.absent(),
                 Value<String> stickerIds = const Value.absent(),
+                Value<DateTime?> birthDate = const Value.absent(),
               }) => CardProfilesCompanion.insert(
                 id: id,
                 displayName: displayName,
@@ -13708,6 +14047,7 @@ class $$CardProfilesTableTableManager
                 logoId: logoId,
                 frameId: frameId,
                 stickerIds: stickerIds,
+                birthDate: birthDate,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -13741,6 +14081,142 @@ typedef $$CardProfilesTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $CardProfilesTable, CardProfileRow>,
       ),
       CardProfileRow,
+      PrefetchHooks Function()
+    >;
+typedef $$CardPhotosTableCreateCompanionBuilder = CardPhotosCompanion Function({
+  Value<int> id,
+  required Uint8List jpeg,
+});
+typedef $$CardPhotosTableUpdateCompanionBuilder = CardPhotosCompanion Function({
+  Value<int> id,
+  Value<Uint8List> jpeg,
+});
+
+class $$CardPhotosTableFilterComposer
+    extends Composer<_$AppDatabase, $CardPhotosTable> {
+  $$CardPhotosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get jpeg => $composableBuilder(
+    column: $table.jpeg,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CardPhotosTableOrderingComposer
+    extends Composer<_$AppDatabase, $CardPhotosTable> {
+  $$CardPhotosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get jpeg => $composableBuilder(
+    column: $table.jpeg,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CardPhotosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CardPhotosTable> {
+  $$CardPhotosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<Uint8List> get jpeg =>
+      $composableBuilder(column: $table.jpeg, builder: (column) => column);
+}
+
+class $$CardPhotosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CardPhotosTable,
+          CardPhotoRow,
+          $$CardPhotosTableFilterComposer,
+          $$CardPhotosTableOrderingComposer,
+          $$CardPhotosTableAnnotationComposer,
+          $$CardPhotosTableCreateCompanionBuilder,
+          $$CardPhotosTableUpdateCompanionBuilder,
+          (
+            CardPhotoRow,
+            BaseReferences<_$AppDatabase, $CardPhotosTable, CardPhotoRow>,
+          ),
+          CardPhotoRow,
+          PrefetchHooks Function()
+        > {
+  $$CardPhotosTableTableManager(_$AppDatabase db, $CardPhotosTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CardPhotosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CardPhotosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CardPhotosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<Uint8List> jpeg = const Value.absent(),
+          }) => CardPhotosCompanion(id: id, jpeg: jpeg),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required Uint8List jpeg,
+          }) => CardPhotosCompanion.insert(id: id, jpeg: jpeg),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CardPhotosTable, CardPhotoRow>(table),
+                  BaseReferences<_$AppDatabase, $CardPhotosTable, CardPhotoRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CardPhotosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CardPhotosTable,
+      CardPhotoRow,
+      $$CardPhotosTableFilterComposer,
+      $$CardPhotosTableOrderingComposer,
+      $$CardPhotosTableAnnotationComposer,
+      $$CardPhotosTableCreateCompanionBuilder,
+      $$CardPhotosTableUpdateCompanionBuilder,
+      (
+        CardPhotoRow,
+        BaseReferences<_$AppDatabase, $CardPhotosTable, CardPhotoRow>,
+      ),
+      CardPhotoRow,
       PrefetchHooks Function()
     >;
 
@@ -13782,4 +14258,6 @@ class $AppDatabaseManager {
       );
   $$CardProfilesTableTableManager get cardProfiles =>
       $$CardProfilesTableTableManager(_db, _db.cardProfiles);
+  $$CardPhotosTableTableManager get cardPhotos =>
+      $$CardPhotosTableTableManager(_db, _db.cardPhotos);
 }

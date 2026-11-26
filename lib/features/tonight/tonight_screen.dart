@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/first_class.dart';
 import '../../core/activity_guess.dart';
 import '../../core/bed_press.dart';
 import '../../core/economy_config.dart';
@@ -210,7 +211,12 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
 final _hasAnyScheduleProvider = Provider.autoDispose<bool>((ref) {
   final weekly = ref.watch(weeklyItemsStreamProvider).value ?? [];
   final oneTime = ref.watch(oneTimeItemsStreamProvider).value ?? [];
-  return weekly.isNotEmpty || oneTime.isNotEmpty;
+  // The earliest class time given at the start is enough to plan from.
+  final earliestClass = ref
+      .watch(settingsStreamProvider)
+      .value
+      ?.earliestClassMinutes;
+  return weekly.isNotEmpty || oneTime.isNotEmpty || earliestClass != null;
 });
 
 class TonightScreen extends ConsumerStatefulWidget {
@@ -806,6 +812,8 @@ class _TonightTime extends StatelessWidget {
     final first = plan.firstAppointment;
     final firstLabel = first == null
         ? 'วันว่าง'
+        : first.title == earliestClassTitle
+        ? 'เรียนเช้าสุดที่บอกไว้ ${_formatTime(first.start)}'
         : '${switch (first.kind) {
             ItemKind.exam => 'สอบ',
             ItemKind.classSession => 'เรียนคาบแรก',

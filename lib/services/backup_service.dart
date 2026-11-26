@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../core/card_photo.dart';
 import '../data/calendar_reminder_repository.dart';
 import '../data/database.dart';
 import 'ai/api_key_store.dart';
@@ -15,9 +16,12 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 7;
+  static const _version = 8;
 
-  Future<Map<String, dynamic>> buildSnapshot() async {
+  /// The card photo goes in only if [includePhoto] is asked for.
+  Future<Map<String, dynamic>> buildSnapshot({
+    bool includePhoto = false,
+  }) async {
     Future<List<Map<String, dynamic>>>
     dump<T extends Table, R extends DataClass>(TableInfo<T, R> table) async {
       final rows = await db.select(table).get();
@@ -25,8 +29,12 @@ class BackupService {
     }
 
     final settings = await db.select(db.settings).getSingleOrNull();
+    final photo = includePhoto
+        ? await db.select(db.cardPhotos).getSingleOrNull()
+        : null;
     return {
       'version': _version,
+      if (photo != null) 'cardPhoto': base64Encode(photo.jpeg),
       'settings': settings?.toJson(),
       'weeklyItems': await dump(db.weeklyItems),
       'oneTimeItems': await dump(db.oneTimeItems),
@@ -49,8 +57,8 @@ class BackupService {
   }
 
   /// Returns true if the user picked a destination and the file was saved.
-  Future<bool> exportToFile() async {
-    final snapshot = await buildSnapshot();
+  Future<bool> exportToFile({bool includePhoto = false}) async {
+    final snapshot = await buildSnapshot(includePhoto: includePhoto);
     final bytes = Uint8List.fromList(utf8.encode(jsonEncode(snapshot)));
     final stamp = DateTime.now().toIso8601String().replaceAll(':', '-');
     final saved = await saveFile(
@@ -85,8 +93,22 @@ class BackupService {
       throw const FormatException('ไฟล์นี้ไม่ใช่ไฟล์สำรองของ Glow ที่รองรับ');
     }
 
+    final importedPhoto = _photoIn(map);
+
     await db.transaction(() async {
+      // A file without a photo leaves the one on this phone alone.
+      final keptPhoto = importedPhoto == null
+          ? (await db.select(db.cardPhotos).getSingleOrNull())?.jpeg
+          : null;
       await deleteAllData();
+      final photo = importedPhoto ?? keptPhoto;
+      if (photo != null) {
+        await db
+            .into(db.cardPhotos)
+            .insert(
+              CardPhotosCompanion(id: const Value(0), jpeg: Value(photo)),
+            );
+      }
 
       Future<void> load<T extends Table, R extends DataClass>(
         String key,
@@ -216,6 +238,21 @@ class BackupService {
         (j) => CalendarReminderRow.fromJson(j).toCompanion(false),
       );
     });
+  }
+
+  /// The photo in a backup, or null. Anything but a small JPEG is refused.
+  static Uint8List? _photoIn(Map<String, dynamic> map) {
+    final value = map['cardPhoto'];
+    if (value == null) return null;
+    final bytes = value is String ? base64Decode(value) : null;
+    if (bytes == null ||
+        bytes.length < 3 ||
+        bytes.length > maxCardPhotoBytes ||
+        bytes[0] != 0xFF ||
+        bytes[1] != 0xD8) {
+      throw const FormatException('รูปในไฟล์สำรองไม่ถูกต้อง');
+    }
+    return bytes;
   }
 
   /// "ลบข้อมูลทั้งหมด": the database and the API key.

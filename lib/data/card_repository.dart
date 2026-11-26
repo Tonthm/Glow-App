@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
+import '../core/birth_date.dart';
 import '../core/card_config.dart';
+import '../core/card_photo.dart';
 import 'database.dart';
 import 'wallet_repository.dart';
 
@@ -59,6 +61,68 @@ class CardRepository {
       ),
     );
   }
+
+  /// Saves the birth date, or clears it. A date also sets the age group, and
+  /// moves the sleep target to the new age only if the user never changed it
+  /// themselves. Clearing leaves the age group as it was.
+  Future<void> setBirthDate(DateTime? birthDate, {required DateTime now}) {
+    return db.transaction(() async {
+      final before = (await get()).birthDate;
+      await _write(CardProfilesCompanion(birthDate: Value(birthDate)));
+      // Saving the same date again changes nothing, so a birthday passing
+      // never moves the target by itself.
+      if (birthDate == null || birthDate == before) return;
+
+      await db
+          .into(db.settings)
+          .insert(
+            const SettingsCompanion(id: Value(0)),
+            mode: InsertMode.insertOrIgnore,
+          );
+      final settings = await (db.select(
+        db.settings,
+      )..where((t) => t.id.equals(0))).getSingle();
+      final isAdult = isAdultOn(birthDate, now);
+      final target = targetAfterAgeChange(
+        current: (
+          min: settings.targetMinMinutes,
+          max: settings.targetMaxMinutes,
+        ),
+        wasAdult: settings.ageGroup == AgeGroup.adult,
+        isAdult: isAdult,
+      );
+      await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+        SettingsCompanion(
+          ageGroup: Value(isAdult ? AgeGroup.adult : AgeGroup.under18),
+          targetMinMinutes: Value(target.min),
+          targetMaxMinutes: Value(target.max),
+        ),
+      );
+    });
+  }
+
+  Stream<Uint8List?> watchPhoto() =>
+      (db.select(db.cardPhotos)..where((t) => t.id.equals(0)))
+          .watchSingleOrNull()
+          .map((row) => row?.jpeg);
+
+  Future<Uint8List?> photo() async => (await (db.select(
+    db.cardPhotos,
+  )..where((t) => t.id.equals(0))).getSingleOrNull())?.jpeg;
+
+  /// [jpeg] must already be cut and compressed (services/photo_processor).
+  Future<void> savePhoto(Uint8List jpeg) async {
+    if (jpeg.isEmpty || jpeg.length > maxCardPhotoBytes) {
+      throw ArgumentError.value(jpeg.length, 'jpeg', 'wrong size');
+    }
+    await db
+        .into(db.cardPhotos)
+        .insertOnConflictUpdate(
+          CardPhotosCompanion(id: const Value(0), jpeg: Value(jpeg)),
+        );
+  }
+
+  Future<void> removePhoto() => db.delete(db.cardPhotos).go();
 
   Future<bool> _has(CardDecor decor) async =>
       decor.isFree || await walletRepo.owns(decor.id);

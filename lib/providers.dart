@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:drift/drift.dart' show TableUpdateQuery;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -20,6 +22,7 @@ import 'services/calendar_import_service.dart';
 import 'services/debug_sample_data_service.dart';
 import 'services/notification_service.dart';
 import 'services/permissions_service.dart';
+import 'services/photo_picker.dart';
 import 'services/platform/platform_capabilities.dart';
 import 'services/screen_service.dart';
 import 'services/speech_service.dart';
@@ -123,6 +126,11 @@ final cardProfileStreamProvider = StreamProvider<CardProfileRow>((ref) {
   return ref.watch(cardRepositoryProvider).watch();
 });
 
+/// The photo on the card, or null.
+final cardPhotoProvider = StreamProvider<Uint8List?>((ref) {
+  return ref.watch(cardRepositoryProvider).watchPhoto();
+});
+
 final shopRepositoryProvider = Provider<ShopRepository>((ref) {
   return ShopRepository(
     ref.watch(walletRepositoryProvider),
@@ -178,6 +186,10 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 /// Overridable, so tests can show the web version's screens.
 final platformCapabilitiesProvider = Provider<PlatformCapabilities>((ref) {
   return PlatformCapabilities.current;
+});
+
+final photoPickerProvider = Provider<PhotoPicker>((ref) {
+  return DevicePhotoPicker();
 });
 
 final screenServiceProvider = Provider<ScreenService>((ref) {

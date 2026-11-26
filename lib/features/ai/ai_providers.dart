@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../core/birth_date.dart';
 import '../../data/ai_settings_repository.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
@@ -38,14 +39,22 @@ final aiAssistantProvider = Provider<AiAssistant>((ref) {
   );
 });
 
+/// Whether AI may be used at this age, or is even shown.
+final aiAgeProvider = FutureProvider<AiAgeState>((ref) {
+  ref.watch(settingsStreamProvider);
+  ref.watch(cardProfileStreamProvider);
+  return ref.watch(aiSettingsRepositoryProvider).ageState(DateTime.now());
+});
+
 /// Bumped when the stored key changes, since secure storage can't be watched.
 final aiKeyVersionProvider = StateProvider<int>((ref) => 0);
 
 /// Whether the AI parts of the screens should show.
 final aiReadyProvider = FutureProvider<bool>((ref) {
   ref.watch(aiSettingsProvider);
-  // The age group lives in the app's settings.
+  // The age comes from the app's settings and the birth date.
   ref.watch(settingsStreamProvider);
+  ref.watch(cardProfileStreamProvider);
   ref.watch(aiKeyVersionProvider);
   return ref.watch(aiAssistantProvider).isReady();
 });

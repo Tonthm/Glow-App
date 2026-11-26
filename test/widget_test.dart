@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:glow/data/database.dart';
-import 'package:glow/features/onboarding/intro_page.dart';
+import 'package:glow/features/onboarding/welcome_page.dart';
 import 'package:glow/main.dart';
 import 'package:glow/providers.dart';
 
@@ -25,11 +25,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The intro comes first, then the setup form.
-    expect(find.text(IntroPage.headline), findsOneWidget);
-    await tester.tap(find.text('เริ่มเลย'));
+    // The card first, then the two questions about sleep.
+    expect(find.text(WelcomePage.headline), findsOneWidget);
+    await tester.tap(find.text('ข้าม'));
     await tester.pumpAndSettle();
-    expect(find.text('ยินดีต้อนรับสู่ Glow'), findsOneWidget);
+    expect(find.text('เรียนเช้าสุดกี่โมง'), findsOneWidget);
+    expect(find.text('เวลาเดินทางไปเรียน'), findsOneWidget);
 
     await db.close();
     await tester.pump(const Duration(seconds: 1));

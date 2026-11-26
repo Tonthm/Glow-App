@@ -40,6 +40,9 @@ class Settings extends Table {
       integer().withDefault(const Constant(15))();
   IntColumn get freeDayWakeMinutes =>
       integer().withDefault(const Constant(450))();
+  /// The earliest class time given at the start, used only while the
+  /// timetable has no classes (core/first_class). Added in schema 17.
+  IntColumn get earliestClassMinutes => integer().nullable()();
   IntColumn get latestWakeMinutes =>
       integer().withDefault(const Constant(480))();
   IntColumn get latestBedtimeMinutes =>
@@ -259,6 +262,21 @@ class CardProfiles extends Table {
   /// Comma-separated sticker ids, see core/card_config.dart.
   TextColumn get stickerIds => text().withDefault(const Constant(''))();
 
+  /// Optional. Added in schema 17.
+  DateTimeColumn get birthDate => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Single row (id 0): the photo on the card, already cut and compressed.
+/// Kept apart from [CardProfiles] so reading the profile never loads it.
+/// Added in schema 17. It is never sent anywhere.
+@DataClassName('CardPhotoRow')
+class CardPhotos extends Table {
+  IntColumn get id => integer().withDefault(const Constant(0))();
+  BlobColumn get jpeg => blob()();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -420,6 +438,7 @@ class CalendarReminderStates extends Table {
     AiSettings,
     CalendarReminderStates,
     CardProfiles,
+    CardPhotos,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -438,7 +457,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -554,6 +573,14 @@ class AppDatabase extends _$AppDatabase {
         // left exactly as they were.
         await m.createTable(cardProfiles);
       }
+      if (from < 17) {
+        await _addColumnIfMissing(m, cardProfiles, cardProfiles.birthDate);
+        await _addColumnIfMissing(m, settings, settings.earliestClassMinutes);
+        await m.createTable(cardPhotos);
+      }
     },
+    // A removed photo or birth date is wiped from the file, not only
+    // forgotten.
+    beforeOpen: (_) => customStatement('PRAGMA secure_delete = ON'),
   );
 }

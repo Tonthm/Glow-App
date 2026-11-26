@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/birth_date.dart';
 import '../../core/day_overrides.dart';
 import '../../data/database.dart';
 import '../../data/settings_repository.dart';
@@ -9,6 +10,7 @@ import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../ai/ai_providers.dart';
 import '../ai/ai_settings_screen.dart';
+import '../card/card_details_sheet.dart';
 import '../web/web_reminder_bars.dart';
 import '../demo/demo_button.dart';
 import '../../theme/theme_gallery_screen.dart';
@@ -35,15 +37,38 @@ class SettingsScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('เกิดข้อผิดพลาด: $e')),
         data: (settings) {
           final repo = ref.read(settingsRepositoryProvider);
+          final birthDate = ref
+              .watch(cardProfileStreamProvider)
+              .value
+              ?.birthDate;
+          final isAdult = birthDate == null
+              ? settings.ageGroup == AgeGroup.adult
+              : isAdultOn(birthDate, DateTime.now());
+          // Nothing about AI shows to someone whose birth date is under 18.
+          final showAi =
+              platform.aiAssistant &&
+              switch (ref.watch(aiAgeProvider).value) {
+                null || AiAgeState.hidden => false,
+                _ => true,
+              };
           return ListView(
             children: [
+              SettingRow(
+                title: 'โปรไฟล์และบัตร',
+                onTap: () => showCardDetailsSheet(context),
+              ),
               const _SectionHeader('การนอน'),
               SettingRow(
                 title: 'ช่วงอายุ',
-                value: settings.ageGroup == AgeGroup.adult
-                    ? '18 ปีขึ้นไป'
-                    : 'ต่ำกว่า 18 ปี',
+                value:
+                    (isAdult ? '18 ปีขึ้นไป' : 'ต่ำกว่า 18 ปี') +
+                    (birthDate == null ? '' : ' (จากวันเกิด)'),
                 onTap: () async {
+                  // A birth date decides the age; change it there.
+                  if (birthDate != null) {
+                    await showCardDetailsSheet(context);
+                    return;
+                  }
                   final group = await showChoiceSheet<AgeGroup>(
                     context,
                     title: 'ช่วงอายุ (เป้าชั่วโมงจะกลับเป็นค่าแนะนำ)',
@@ -75,6 +100,26 @@ class SettingsScreen extends ConsumerWidget {
                 min: settings.targetMinMinutes,
                 max: 12 * 60,
                 onSave: (v) => repo.updateTargetHours(maxMinutes: v),
+              ),
+              SettingRow(
+                title: 'เรียนเช้าสุด (ตอนยังไม่มีตาราง)',
+                value: settings.earliestClassMinutes == null
+                    ? 'ไม่ได้ใส่'
+                    : formatTimeOfDay(
+                        _timeOf(settings.earliestClassMinutes!),
+                      ),
+                onTap: () async {
+                  final picked = await showTimeWheel(
+                    context,
+                    title: 'เรียนเช้าสุดกี่โมง',
+                    initial: _timeOf(settings.earliestClassMinutes ?? 8 * 60),
+                  );
+                  if (picked != null) {
+                    await repo.updateEarliestClass(
+                      picked.hour * 60 + picked.minute,
+                    );
+                  }
+                },
               ),
               _durationRow(
                 context,
@@ -200,8 +245,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _SectionHeader('ตารางเย็น'),
               EveningSettingsRows(settings: settings),
-              if (platform.aiAssistant) const _SectionHeader('ผู้ช่วย AI'),
-              if (platform.aiAssistant)
+              if (showAi) const _SectionHeader('ผู้ช่วย AI'),
+              if (showAi)
                 SettingRow(
                   title: 'ผู้ช่วย AI',
                   value: ref.watch(aiSettingsProvider).value?.enabled == true
@@ -230,9 +275,17 @@ class SettingsScreen extends ConsumerWidget {
                 title: const Text('สำรองข้อมูลเป็นไฟล์'),
                 trailing: const Icon(Icons.upload_file_outlined),
                 onTap: () async {
-                  final ok = await ref
-                      .read(backupServiceProvider)
-                      .exportToFile();
+                  final backups = ref.read(backupServiceProvider);
+                  var includePhoto = false;
+                  if (await ref.read(cardRepositoryProvider).photo() != null) {
+                    if (!context.mounted) return;
+                    final answer = await _askAboutPhoto(context);
+                    if (answer == null) return;
+                    includePhoto = answer;
+                  }
+                  final ok = await backups.exportToFile(
+                    includePhoto: includePhoto,
+                  );
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -374,6 +427,32 @@ class SettingsScreen extends ConsumerWidget {
     return result ?? false;
   }
 }
+
+TimeOfDay _timeOf(int minutes) =>
+    TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
+
+/// Whether the card photo goes into the backup file; null cancels. Leaving it
+/// out is the main choice.
+Future<bool?> _askAboutPhoto(BuildContext context) => showDialog<bool>(
+  context: context,
+  builder: (context) => AlertDialog(
+    title: const Text('รวมรูปถ่ายบนบัตรไหม'),
+    content: const Text(
+      'ถ้ารวม ใครได้ไฟล์สำรองไปจะเห็นรูปด้วย '
+      'ถ้าไม่รวม ตอนนำเข้ารูปที่มีอยู่ในเครื่องจะไม่ถูกลบ',
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(true),
+        child: const Text('รวมรูป'),
+      ),
+      FilledButton(
+        onPressed: () => Navigator.of(context).pop(false),
+        child: const Text('ไม่รวม'),
+      ),
+    ],
+  ),
+);
 
 const _themeLabels = {
   AppThemeMode.system: 'ตามระบบ',

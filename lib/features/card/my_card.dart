@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -27,6 +29,9 @@ StudentCard studentCardFrom({
   required int firePoints,
   required AvatarMood mood,
   bool showDetails = true,
+  // Left out unless a caller passes it, so a new use can't leak it.
+  Uint8List? photo,
+  bool showBlanks = false,
   VoidCallback? onTap,
 }) {
   return StudentCard(
@@ -41,6 +46,8 @@ StudentCard studentCardFrom({
     mood: mood,
     fireLevel: fireLevel,
     firePoints: firePoints,
+    photo: photo,
+    showBlanks: showBlanks,
     onTap: onTap,
   );
 }
@@ -60,6 +67,8 @@ class MyStudentCard extends ConsumerWidget {
       fireLevel: fire?.level ?? 0,
       firePoints: fire?.points ?? 0,
       mood: moodOfCheckIn(ref.watch(latestCheckInProvider).value),
+      photo: ref.watch(cardPhotoProvider).value,
+      showBlanks: true,
       onTap: onTap,
     );
   }

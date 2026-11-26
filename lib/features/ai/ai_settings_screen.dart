@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/ai_config.dart';
+import '../../core/birth_date.dart';
 import '../../data/ai_settings_repository.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
@@ -11,6 +12,7 @@ import '../../services/ai/ai_assistant.dart';
 import '../../services/ai/ai_client.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_primary_button.dart';
+import '../../theme/widgets/warning_bar.dart';
 import 'ai_consent_screen.dart';
 import 'ai_providers.dart';
 
@@ -106,8 +108,13 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     }
     final repo = ref.read(aiSettingsRepositoryProvider);
     final used = AiSettingsRepository.callsOn(row, DateTime.now());
-    final adult =
-        ref.watch(settingsStreamProvider).value?.ageGroup == AgeGroup.adult;
+    final age = ref.watch(aiAgeProvider).value;
+    if (age == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    // Reached only if the birth date changed while this screen was open.
+    if (age == AiAgeState.hidden) return Scaffold(appBar: AppBar());
+    final adult = age.mayUse;
 
     return Scaffold(
       appBar: AppBar(title: const Text('ผู้ช่วย AI')),
@@ -115,6 +122,11 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
         padding: const EdgeInsets.all(GlowSpacing.pageMargin),
         children: [
           if (!adult) Text(aiUnderAgeMessage, style: textTheme.bodyLarge),
+          if (age == AiAgeState.adultUnconfirmed)
+            const WarningBar(
+              message: aiAgeUnconfirmedMessage,
+              severity: WarningBarSeverity.yellow,
+            ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('เปิดผู้ช่วย AI'),
