@@ -6,6 +6,9 @@ import '../../data/database.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_fold.dart';
+import '../ai/ai_providers.dart';
+import '../ai/ai_settings_screen.dart';
+import '../ai/timetable_import_screen.dart';
 import '../calendar_import/calendar_import_screen.dart';
 import '../shared/settings_button.dart';
 import '../shared/subject_colors.dart';
@@ -267,11 +270,34 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       case AddMethod.voice:
         await Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const VoiceInputScreen()));
+      case AddMethod.photo:
+        await _importFromPicture(context);
       case AddMethod.calendar:
         await Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => const CalendarImportScreen()));
     }
+  }
+
+  Future<void> _importFromPicture(BuildContext context) async {
+    final ready = await ref.read(aiAssistantProvider).isReady();
+    if (!context.mounted) return;
+    if (!ready) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'เปิดผู้ช่วย AI และใส่ API key ก่อน ใช้ได้เมื่ออายุ 18 ปีขึ้นไป '
+            'ตามเงื่อนไขของ Google',
+          ),
+        ),
+      );
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            ready ? const TimetableImportScreen() : const AiSettingsScreen(),
+      ),
+    );
   }
 
   Future<void> _editTermDates(BuildContext context) async {

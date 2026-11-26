@@ -1,13 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/birth_date.dart';
 import '../../core/calendar_view.dart';
 import '../../providers.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
+import '../ai/ai_providers.dart';
 import 'one_time_item_form.dart';
 import 'weekly_item_form.dart';
 
-enum AddMethod { type, voice, calendar }
+enum AddMethod { type, voice, calendar, photo }
 
 Future<AddMethod?> showAddMethodSheet(BuildContext context) {
   return showGlowBottomSheet<AddMethod>(
@@ -16,6 +18,13 @@ Future<AddMethod?> showAddMethodSheet(BuildContext context) {
       builder: (context, ref, _) {
         final platform = ref.watch(platformCapabilitiesProvider);
         final mic = ref.watch(micAvailableProvider);
+        // Never shown to a birth date under 18. With AI off it leads to the
+        // AI settings instead.
+        final age = platform.aiAssistant
+            ? ref.watch(aiAgeProvider).value
+            : null;
+        final photo = age != null && age != AiAgeState.hidden;
+        final aiReady = ref.watch(aiReadyProvider).value ?? false;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -36,6 +45,17 @@ Future<AddMethod?> showAddMethodSheet(BuildContext context) {
                   : const Text('พิมพ์ หรือใช้ไมค์บนคีย์บอร์ด'),
               onTap: () => Navigator.of(context).pop(AddMethod.voice),
             ),
+            if (photo)
+              ListTile(
+                leading: const Icon(Icons.image_outlined),
+                title: const Text('นำเข้าจากรูป'),
+                subtitle: aiReady
+                    ? null
+                    : const Text(
+                        'ต้องเปิดผู้ช่วย AI ก่อน (Google กำหนดอายุ 18 ปีขึ้นไป)',
+                      ),
+                onTap: () => Navigator.of(context).pop(AddMethod.photo),
+              ),
             if (platform.calendarImport)
               ListTile(
                 leading: const Icon(Icons.calendar_month_outlined),

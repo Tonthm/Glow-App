@@ -2,6 +2,7 @@
 library;
 
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/core/ai_config.dart';
@@ -18,6 +19,8 @@ void main() {
     AiTask.split: {'today', 'title', 'totalMinutes', 'due'},
     AiTask.explain: {'facts'},
     AiTask.connectionTest: {'ping'},
+    // Besides this, only the timetable picture the user chose to send.
+    AiTask.readTimetable: {'task'},
   };
 
   final requests = [
@@ -26,6 +29,7 @@ void main() {
     buildSplitRequest(title: 'ทำเลข', totalMinutes: 120, today: today)!,
     buildExplainRequest(['พรุ่งนี้มีสอบ'])!,
     buildConnectionTestRequest(),
+    buildTimetableRequest(Uint8List.fromList([0xFF, 0xD8, 1]))!,
   ];
 
   test('every AI job is covered here', () {
@@ -33,7 +37,20 @@ void main() {
     expect(requests.map((r) => r.task).toSet(), AiTask.values.toSet());
   });
 
-  test('no job may send a photo', () {
+  test('only the timetable job can carry a picture at all', () {
+    for (final request in requests) {
+      expect(
+        request.imageJpeg != null,
+        request.task == AiTask.readTimetable,
+        reason: request.task.name,
+      );
+    }
+    // The one way to build it takes nothing but the picture.
+    final source = File('lib/core/ai_payload.dart').readAsStringSync();
+    expect('imageJpeg: jpeg'.allMatches(source), hasLength(1));
+  });
+
+  test('no job may send the card photo', () {
     for (final request in requests) {
       expect(request.input.keys.toSet(), allowed[request.task]);
     }
@@ -50,6 +67,8 @@ void main() {
         (f) => f.uri.pathSegments.last.startsWith('ai_'),
       ),
       File('lib/data/ai_settings_repository.dart'),
+      File('lib/services/timetable_image.dart'),
+      File('lib/core/timetable_import.dart'),
     ].whereType<File>().toList();
     expect(files.length, greaterThan(10));
     for (final file in files) {

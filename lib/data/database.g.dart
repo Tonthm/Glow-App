@@ -8034,6 +8034,17 @@ class $AiSettingsTable extends AiSettings
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _imageConsentVersionMeta =
+      const VerificationMeta('imageConsentVersion');
+  @override
+  late final GeneratedColumn<int> imageConsentVersion = GeneratedColumn<int>(
+    'image_consent_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _callDayMeta = const VerificationMeta(
     'callDay',
   );
@@ -8076,6 +8087,7 @@ class $AiSettingsTable extends AiSettings
     provider,
     model,
     consentVersion,
+    imageConsentVersion,
     callDay,
     callCount,
     dailyQuota,
@@ -8119,6 +8131,15 @@ class $AiSettingsTable extends AiSettings
         consentVersion.isAcceptableOrUnknown(
           data['consent_version']!,
           _consentVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('image_consent_version')) {
+      context.handle(
+        _imageConsentVersionMeta,
+        imageConsentVersion.isAcceptableOrUnknown(
+          data['image_consent_version']!,
+          _imageConsentVersionMeta,
         ),
       );
     }
@@ -8169,6 +8190,10 @@ class $AiSettingsTable extends AiSettings
         DriftSqlType.int,
         data['${effectivePrefix}consent_version'],
       )!,
+      imageConsentVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}image_consent_version'],
+      )!,
       callDay: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}call_day'],
@@ -8198,6 +8223,9 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
 
   /// The version of the consent text the user agreed to; 0 for none.
   final int consentVersion;
+
+  /// The separate agreement to send pictures. Added in schema 21.
+  final int imageConsentVersion;
   final DateTime? callDay;
   final int callCount;
   final int dailyQuota;
@@ -8207,6 +8235,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
     required this.provider,
     required this.model,
     required this.consentVersion,
+    required this.imageConsentVersion,
     this.callDay,
     required this.callCount,
     required this.dailyQuota,
@@ -8219,6 +8248,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
     map['provider'] = Variable<String>(provider);
     map['model'] = Variable<String>(model);
     map['consent_version'] = Variable<int>(consentVersion);
+    map['image_consent_version'] = Variable<int>(imageConsentVersion);
     if (!nullToAbsent || callDay != null) {
       map['call_day'] = Variable<DateTime>(callDay);
     }
@@ -8234,6 +8264,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
       provider: Value(provider),
       model: Value(model),
       consentVersion: Value(consentVersion),
+      imageConsentVersion: Value(imageConsentVersion),
       callDay: callDay == null && nullToAbsent
           ? const Value.absent()
           : Value(callDay),
@@ -8253,6 +8284,9 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
       provider: serializer.fromJson<String>(json['provider']),
       model: serializer.fromJson<String>(json['model']),
       consentVersion: serializer.fromJson<int>(json['consentVersion']),
+      imageConsentVersion: serializer.fromJson<int>(
+        json['imageConsentVersion'],
+      ),
       callDay: serializer.fromJson<DateTime?>(json['callDay']),
       callCount: serializer.fromJson<int>(json['callCount']),
       dailyQuota: serializer.fromJson<int>(json['dailyQuota']),
@@ -8267,6 +8301,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
       'provider': serializer.toJson<String>(provider),
       'model': serializer.toJson<String>(model),
       'consentVersion': serializer.toJson<int>(consentVersion),
+      'imageConsentVersion': serializer.toJson<int>(imageConsentVersion),
       'callDay': serializer.toJson<DateTime?>(callDay),
       'callCount': serializer.toJson<int>(callCount),
       'dailyQuota': serializer.toJson<int>(dailyQuota),
@@ -8279,6 +8314,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
     String? provider,
     String? model,
     int? consentVersion,
+    int? imageConsentVersion,
     Value<DateTime?> callDay = const Value.absent(),
     int? callCount,
     int? dailyQuota,
@@ -8288,6 +8324,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
     provider: provider ?? this.provider,
     model: model ?? this.model,
     consentVersion: consentVersion ?? this.consentVersion,
+    imageConsentVersion: imageConsentVersion ?? this.imageConsentVersion,
     callDay: callDay.present ? callDay.value : this.callDay,
     callCount: callCount ?? this.callCount,
     dailyQuota: dailyQuota ?? this.dailyQuota,
@@ -8301,6 +8338,9 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
       consentVersion: data.consentVersion.present
           ? data.consentVersion.value
           : this.consentVersion,
+      imageConsentVersion: data.imageConsentVersion.present
+          ? data.imageConsentVersion.value
+          : this.imageConsentVersion,
       callDay: data.callDay.present ? data.callDay.value : this.callDay,
       callCount: data.callCount.present ? data.callCount.value : this.callCount,
       dailyQuota: data.dailyQuota.present
@@ -8317,6 +8357,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
           ..write('provider: $provider, ')
           ..write('model: $model, ')
           ..write('consentVersion: $consentVersion, ')
+          ..write('imageConsentVersion: $imageConsentVersion, ')
           ..write('callDay: $callDay, ')
           ..write('callCount: $callCount, ')
           ..write('dailyQuota: $dailyQuota')
@@ -8331,6 +8372,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
     provider,
     model,
     consentVersion,
+    imageConsentVersion,
     callDay,
     callCount,
     dailyQuota,
@@ -8344,6 +8386,7 @@ class AiSettingsRow extends DataClass implements Insertable<AiSettingsRow> {
           other.provider == this.provider &&
           other.model == this.model &&
           other.consentVersion == this.consentVersion &&
+          other.imageConsentVersion == this.imageConsentVersion &&
           other.callDay == this.callDay &&
           other.callCount == this.callCount &&
           other.dailyQuota == this.dailyQuota);
@@ -8355,6 +8398,7 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
   final Value<String> provider;
   final Value<String> model;
   final Value<int> consentVersion;
+  final Value<int> imageConsentVersion;
   final Value<DateTime?> callDay;
   final Value<int> callCount;
   final Value<int> dailyQuota;
@@ -8364,6 +8408,7 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
     this.provider = const Value.absent(),
     this.model = const Value.absent(),
     this.consentVersion = const Value.absent(),
+    this.imageConsentVersion = const Value.absent(),
     this.callDay = const Value.absent(),
     this.callCount = const Value.absent(),
     this.dailyQuota = const Value.absent(),
@@ -8374,6 +8419,7 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
     this.provider = const Value.absent(),
     this.model = const Value.absent(),
     this.consentVersion = const Value.absent(),
+    this.imageConsentVersion = const Value.absent(),
     this.callDay = const Value.absent(),
     this.callCount = const Value.absent(),
     this.dailyQuota = const Value.absent(),
@@ -8384,6 +8430,7 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
     Expression<String>? provider,
     Expression<String>? model,
     Expression<int>? consentVersion,
+    Expression<int>? imageConsentVersion,
     Expression<DateTime>? callDay,
     Expression<int>? callCount,
     Expression<int>? dailyQuota,
@@ -8394,6 +8441,8 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
       if (provider != null) 'provider': provider,
       if (model != null) 'model': model,
       if (consentVersion != null) 'consent_version': consentVersion,
+      if (imageConsentVersion != null)
+        'image_consent_version': imageConsentVersion,
       if (callDay != null) 'call_day': callDay,
       if (callCount != null) 'call_count': callCount,
       if (dailyQuota != null) 'daily_quota': dailyQuota,
@@ -8406,6 +8455,7 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
     Value<String>? provider,
     Value<String>? model,
     Value<int>? consentVersion,
+    Value<int>? imageConsentVersion,
     Value<DateTime?>? callDay,
     Value<int>? callCount,
     Value<int>? dailyQuota,
@@ -8416,6 +8466,7 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
       provider: provider ?? this.provider,
       model: model ?? this.model,
       consentVersion: consentVersion ?? this.consentVersion,
+      imageConsentVersion: imageConsentVersion ?? this.imageConsentVersion,
       callDay: callDay ?? this.callDay,
       callCount: callCount ?? this.callCount,
       dailyQuota: dailyQuota ?? this.dailyQuota,
@@ -8440,6 +8491,9 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
     if (consentVersion.present) {
       map['consent_version'] = Variable<int>(consentVersion.value);
     }
+    if (imageConsentVersion.present) {
+      map['image_consent_version'] = Variable<int>(imageConsentVersion.value);
+    }
     if (callDay.present) {
       map['call_day'] = Variable<DateTime>(callDay.value);
     }
@@ -8460,6 +8514,7 @@ class AiSettingsCompanion extends UpdateCompanion<AiSettingsRow> {
           ..write('provider: $provider, ')
           ..write('model: $model, ')
           ..write('consentVersion: $consentVersion, ')
+          ..write('imageConsentVersion: $imageConsentVersion, ')
           ..write('callDay: $callDay, ')
           ..write('callCount: $callCount, ')
           ..write('dailyQuota: $dailyQuota')
@@ -14153,6 +14208,7 @@ typedef $$AiSettingsTableCreateCompanionBuilder = AiSettingsCompanion Function({
   Value<String> provider,
   Value<String> model,
   Value<int> consentVersion,
+  Value<int> imageConsentVersion,
   Value<DateTime?> callDay,
   Value<int> callCount,
   Value<int> dailyQuota,
@@ -14163,6 +14219,7 @@ typedef $$AiSettingsTableUpdateCompanionBuilder = AiSettingsCompanion Function({
   Value<String> provider,
   Value<String> model,
   Value<int> consentVersion,
+  Value<int> imageConsentVersion,
   Value<DateTime?> callDay,
   Value<int> callCount,
   Value<int> dailyQuota,
@@ -14199,6 +14256,11 @@ class $$AiSettingsTableFilterComposer
 
   ColumnFilters<int> get consentVersion => $composableBuilder(
     column: $table.consentVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get imageConsentVersion => $composableBuilder(
+    column: $table.imageConsentVersion,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14252,6 +14314,11 @@ class $$AiSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get imageConsentVersion => $composableBuilder(
+    column: $table.imageConsentVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get callDay => $composableBuilder(
     column: $table.callDay,
     builder: (column) => ColumnOrderings(column),
@@ -14291,6 +14358,11 @@ class $$AiSettingsTableAnnotationComposer
 
   GeneratedColumn<int> get consentVersion => $composableBuilder(
     column: $table.consentVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get imageConsentVersion => $composableBuilder(
+    column: $table.imageConsentVersion,
     builder: (column) => column,
   );
 
@@ -14342,6 +14414,7 @@ class $$AiSettingsTableTableManager
                 Value<String> provider = const Value.absent(),
                 Value<String> model = const Value.absent(),
                 Value<int> consentVersion = const Value.absent(),
+                Value<int> imageConsentVersion = const Value.absent(),
                 Value<DateTime?> callDay = const Value.absent(),
                 Value<int> callCount = const Value.absent(),
                 Value<int> dailyQuota = const Value.absent(),
@@ -14351,6 +14424,7 @@ class $$AiSettingsTableTableManager
                 provider: provider,
                 model: model,
                 consentVersion: consentVersion,
+                imageConsentVersion: imageConsentVersion,
                 callDay: callDay,
                 callCount: callCount,
                 dailyQuota: dailyQuota,
@@ -14362,6 +14436,7 @@ class $$AiSettingsTableTableManager
                 Value<String> provider = const Value.absent(),
                 Value<String> model = const Value.absent(),
                 Value<int> consentVersion = const Value.absent(),
+                Value<int> imageConsentVersion = const Value.absent(),
                 Value<DateTime?> callDay = const Value.absent(),
                 Value<int> callCount = const Value.absent(),
                 Value<int> dailyQuota = const Value.absent(),
@@ -14371,6 +14446,7 @@ class $$AiSettingsTableTableManager
                 provider: provider,
                 model: model,
                 consentVersion: consentVersion,
+                imageConsentVersion: imageConsentVersion,
                 callDay: callDay,
                 callCount: callCount,
                 dailyQuota: dailyQuota,

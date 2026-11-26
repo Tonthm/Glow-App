@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import '../../core/ai_config.dart';
 import '../../core/ai_payload.dart';
 import '../../core/ai_validators.dart';
+import '../../core/timetable_import.dart';
 import '../../data/ai_settings_repository.dart';
 import 'ai_client.dart';
 import 'api_key_store.dart';
@@ -108,6 +111,16 @@ class AiAssistant {
     });
   }
 
+  /// Job 5. Needs the separate agreement to send pictures. The picture is not
+  /// kept, here or anywhere.
+  Future<AiResult<TimetableReading>> readTimetable(Uint8List jpeg) => _ask(
+    buildTimetableRequest(jpeg),
+    (answer) => answer.length > aiTimetableResponseChars
+        ? null
+        : parseTimetable(answer),
+    needsImageConsent: true,
+  );
+
   /// "ทดสอบการเชื่อมต่อ". Works before AI is switched on, but still needs
   /// consent and a key, and counts toward the daily limit.
   Future<AiFailure?> testConnection() async {
@@ -123,6 +136,7 @@ class AiAssistant {
     AiRequest? request,
     T? Function(String answer) check, {
     bool requireEnabled = true,
+    bool needsImageConsent = false,
   }) async {
     var apiKey = 'demo';
     var model = aiDefaultModel;
@@ -134,6 +148,8 @@ class AiAssistant {
       final key = await keys.read();
       if ((requireEnabled && !row.enabled) ||
           row.consentVersion != aiConsentVersion ||
+          (needsImageConsent &&
+              row.imageConsentVersion != aiImageConsentVersion) ||
           key == null ||
           key.isEmpty) {
         return const AiResult.failed(AiFailure.notReady);

@@ -49,3 +49,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Real timetable pictures for tool/eval_timetable.dart: never committed.
+test_timetables/

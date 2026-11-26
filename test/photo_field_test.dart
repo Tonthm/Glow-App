@@ -10,7 +10,7 @@ import 'package:material_ui/material_ui.dart';
 
 class _OnePhoto implements PhotoPicker {
   @override
-  Future<Uint8List?> pick(PhotoFrom from) async =>
+  Future<Uint8List?> pick(PhotoFrom from, {bool selfie = true}) async =>
       img.encodeJpg(img.Image(width: 600, height: 400));
 }
 

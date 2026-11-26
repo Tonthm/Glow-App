@@ -39,8 +39,34 @@ class FakeAiClient implements AiClient {
       AiTask.split => {'parts': _parts(input)},
       AiTask.explain => {'summary': (input['facts'] as List).take(2).join(' ')},
       AiTask.connectionTest => {'ok': true},
+      // Made up: the stand-in can't see the picture.
+      AiTask.readTimetable => {
+        'items': [
+          _demoClass('คณิตศาสตร์', 'จันทร์', '08:30', '10:20', 0.97),
+          _demoClass('ฟิสิกส์', 'อังคาร', '13.00', '14.50', 0.55),
+          _demoClass('English', 'Thu', '10:30 AM', '12:00 PM', 0.9),
+        ],
+        'unreadable': ['ศุกร์ คาบ 5 ??'],
+      },
     });
   }
+
+  static Map<String, Object?> _demoClass(
+    String title,
+    String day,
+    String start,
+    String end,
+    double confidence,
+  ) => {
+    'title': title,
+    'day': day,
+    'start': start,
+    'end': end,
+    'room': null,
+    'teacher': null,
+    'confidence': confidence,
+    'uncertain': <String>[],
+  };
 
   /// Splits on "แล้วก็" and reads each piece with the rule parser.
   static List<Object> _tasks(Map<String, Object?> input) {

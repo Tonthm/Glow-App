@@ -4,8 +4,14 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
-/// What schema 20 added.
+/// What schema 21 added.
+const _rewindFrom21 = [
+  'ALTER TABLE ai_settings DROP COLUMN image_consent_version',
+];
+
+/// What schema 20 added, and the newer columns on top of it.
 const _rewindFrom20 = [
+  ..._rewindFrom21,
   'DROP TABLE task_steps',
   'ALTER TABLE settings DROP COLUMN notify_deadline',
   'ALTER TABLE settings DROP COLUMN notify_before_class',
@@ -278,6 +284,21 @@ void main() {
     expect((await db.select(db.eveningTasks).getSingle()).title, 'เลข');
     expect((await db.select(db.subjectColors).getSingle()).color, 7);
     expect(await db.select(db.taskSteps).get(), isEmpty);
+    await db.close();
+  });
+
+  test('a version 20 database keeps AI settings, without image consent', () async {
+    await prepare([
+      'INSERT INTO ai_settings (id, enabled, consent_version, daily_quota)'
+          ' VALUES (0, 1, 1, 50)',
+      ..._rewindFrom21,
+      'PRAGMA user_version = 20',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    final ai = await db.select(db.aiSettings).getSingle();
+    expect((ai.enabled, ai.consentVersion, ai.dailyQuota), (true, 1, 50));
+    expect(ai.imageConsentVersion, 0);
     await db.close();
   });
 

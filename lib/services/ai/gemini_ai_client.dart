@@ -27,14 +27,23 @@ class GeminiAiClient implements AiClient {
   static Map<String, Object?> requestBody(AiRequest request, String model) => {
     'model': model,
     'system_instruction': request.systemInstruction,
-    'input': request.inputJson,
+    'input': request.imageJpeg == null
+        ? request.inputJson
+        : [
+            {'type': 'text', 'text': request.inputJson},
+            {
+              'type': 'image',
+              'data': base64Encode(request.imageJpeg!),
+              'mime_type': 'image/jpeg',
+            },
+          ],
     'response_format': {
       'type': 'text',
       'mime_type': 'application/json',
       'schema': request.schema,
     },
     'generation_config': {
-      'max_output_tokens': aiMaxOutputTokens,
+      'max_output_tokens': aiOutputTokensFor(request.task),
       'thinking_level': 'minimal',
     },
     // Don't keep the request on Google's side for later retrieval.

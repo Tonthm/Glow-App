@@ -4,8 +4,10 @@
 library;
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'ai_config.dart';
+import 'area_crop.dart';
 
 class AiRequest {
   final AiTask task;
@@ -13,7 +15,10 @@ class AiRequest {
   /// The data sent to the model, as JSON.
   final Map<String, Object?> input;
 
-  const AiRequest._(this.task, this.input);
+  /// Only for [AiTask.readTimetable]: the picture the user chose to send.
+  final Uint8List? imageJpeg;
+
+  const AiRequest._(this.task, this.input, {this.imageJpeg});
 
   String get systemInstruction => aiSystemPrompts[task]!;
   Map<String, Object> get schema => aiSchemas[task]!;
@@ -78,6 +83,16 @@ AiRequest? buildExplainRequest(List<String> facts) {
   }
   if (kept.isEmpty) return null;
   return AiRequest._(AiTask.explain, {'facts': kept});
+}
+
+/// [jpeg] is the timetable picture, already cut, shrunk and stripped of its
+/// metadata (services/timetable_image). Nothing else goes with it. Null if it
+/// is empty or too big.
+AiRequest? buildTimetableRequest(Uint8List jpeg) {
+  if (jpeg.isEmpty || jpeg.length > maxTimetableImageBytes) return null;
+  return AiRequest._(AiTask.readTimetable, const {
+    'task': 'read this timetable',
+  }, imageJpeg: jpeg);
 }
 
 AiRequest buildConnectionTestRequest() =>

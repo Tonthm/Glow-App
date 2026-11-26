@@ -16,7 +16,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 11;
+  static const _version = 12;
 
   /// The card photo goes in only if [includePhoto] is asked for.
   Future<Map<String, dynamic>> buildSnapshot({
@@ -244,9 +244,13 @@ class BackupService {
       await load(
         'aiSettings',
         db.aiSettings,
-        // A restored backup never switches AI on by itself.
-        (j) =>
-            AiSettingsRow.fromJson({...j, 'enabled': false}).toCompanion(false),
+        // A restored backup never switches AI on by itself, and asks again
+        // before any picture is sent.
+        (j) => AiSettingsRow.fromJson({
+          ...j,
+          'enabled': false,
+          'imageConsentVersion': 0,
+        }).toCompanion(false),
       );
       await load(
         'calendarReminderStates',

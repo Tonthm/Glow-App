@@ -424,6 +424,10 @@ class AiSettings extends Table {
 
   /// The version of the consent text the user agreed to; 0 for none.
   IntColumn get consentVersion => integer().withDefault(const Constant(0))();
+
+  /// The separate agreement to send pictures. Added in schema 21.
+  IntColumn get imageConsentVersion =>
+      integer().withDefault(const Constant(0))();
   DateTimeColumn get callDay => dateTime().nullable()();
   IntColumn get callCount => integer().withDefault(const Constant(0))();
   IntColumn get dailyQuota =>
@@ -493,7 +497,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -626,6 +630,15 @@ class AppDatabase extends _$AppDatabase {
         await _addColumnIfMissing(m, settings, settings.notifyDeadline);
         await _addColumnIfMissing(m, settings, settings.notifyBeforeClass);
         await _addColumnIfMissing(m, settings, settings.beforeClassMinutes);
+      }
+      // From 14 on the table exists without this column; older databases get
+      // it from createTable above.
+      if (from < 21) {
+        await _addColumnIfMissing(
+          m,
+          aiSettings,
+          aiSettings.imageConsentVersion,
+        );
       }
     },
     // A removed photo or birth date is wiped from the file, not only
