@@ -69,6 +69,11 @@ class GeminiAiClient implements AiClient {
 
     final status = response.statusCode;
     if (status != 200) {
+      // A wrong key comes back as 400, not 401 (seen on 26 Nov 2026). The body
+      // is only searched, never kept.
+      if (status == 400 && response.body.contains('API_KEY_INVALID')) {
+        throw const AiException(AiFailure.badKey, statusCode: 400);
+      }
       throw AiException(switch (status) {
         401 || 403 => AiFailure.badKey,
         402 || 429 => AiFailure.rateLimited,

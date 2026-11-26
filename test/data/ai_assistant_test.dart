@@ -179,6 +179,26 @@ void main() {
       }
     });
 
+    test('treats a 400 for a wrong key as a key problem', () async {
+      Future<AiFailure> failureFor(String body) async {
+        final client = GeminiAiClient(
+          client: MockClient((_) async => http.Response(body, 400)),
+        );
+        try {
+          await client.complete(request, apiKey: secret, model: aiDefaultModel);
+        } on AiException catch (e) {
+          return e.failure;
+        }
+        fail('expected an AiException');
+      }
+
+      expect(
+        await failureFor('[{"error":{"reason":"API_KEY_INVALID"}}]'),
+        AiFailure.badKey,
+      );
+      expect(await failureFor('{"error":{}}'), AiFailure.server);
+    });
+
     test('rejects an unfinished answer', () {
       expect(GeminiAiClient.modelText(reply('incomplete', '{')), isNull);
       expect(GeminiAiClient.modelText('not json'), isNull);
