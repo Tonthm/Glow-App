@@ -55,7 +55,7 @@ class NightRing extends StatelessWidget {
                     child: Text(
                       dayLabel,
                       style: TextStyle(
-                        fontSize: GlowFontSize.smallest,
+                        fontSize: GlowFontSize.tiny,
                         color: textColor,
                         fontWeight: FontWeight.w700,
                       ),
@@ -65,7 +65,7 @@ class NightRing extends StatelessWidget {
               : Text(
                   dayLabel,
                   style: TextStyle(
-                    fontSize: GlowFontSize.smallest,
+                    fontSize: GlowFontSize.tiny,
                     color: textColor,
                   ),
                 ),

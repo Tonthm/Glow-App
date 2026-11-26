@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="glow_widget_background">#000000</color>
-    <color name="glow_widget_text">#F5F5F5</color>
-    <color name="glow_widget_text_secondary">#A3A3A3</color>
-    <color name="glow_widget_accent">#8B8BFF</color>
+    <color name="glow_widget_background">#1F1C2B</color>
+    <color name="glow_widget_text">#F4F2FB</color>
+    <color name="glow_widget_text_secondary">#B5B0C9</color>
+    <color name="glow_widget_accent">#BDB4FF</color>
     <color name="glow_widget_lamp">#FFC86B</color>
+    <color name="glow_widget_outline">#8D87A8</color>
 </resources>

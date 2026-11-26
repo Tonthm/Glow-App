@@ -35,7 +35,7 @@ class GlowBottomSheet extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Theme.of(context).dividerColor,
+                color: Theme.of(context).colorScheme.outline,
                 borderRadius: BorderRadius.circular(GlowRadius.pill),
               ),
             ),

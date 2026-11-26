@@ -11,84 +11,135 @@ class GlowAppTheme {
 
   static ThemeData _build(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
+    Color pick(Color light, Color dark) => isDark ? dark : light;
 
-    final background = isDark
-        ? GlowBaseColors.backgroundDark
-        : GlowBaseColors.backgroundLight;
-    final surface = isDark
-        ? GlowBaseColors.surfaceDark
-        : GlowBaseColors.surfaceLight;
-    final textPrimary = isDark
-        ? GlowBaseColors.textPrimaryDark
-        : GlowBaseColors.textPrimaryLight;
-    final textSecondary = isDark
-        ? GlowBaseColors.textSecondaryDark
-        : GlowBaseColors.textSecondaryLight;
-    final divider = isDark
-        ? GlowBaseColors.dividerDark
-        : GlowBaseColors.dividerLight;
-    final accent = isDark
-        ? GlowBaseColors.accentDark
-        : GlowBaseColors.accentLight;
-    final onAccent = isDark
-        ? GlowBaseColors.onAccentDark
-        : GlowBaseColors.onAccentLight;
+    final background = pick(
+      GlowBaseColors.backgroundLight,
+      GlowBaseColors.backgroundDark,
+    );
+    final surface = pick(
+      GlowBaseColors.surfaceLight,
+      GlowBaseColors.surfaceDark,
+    );
+    final textPrimary = pick(
+      GlowBaseColors.textPrimaryLight,
+      GlowBaseColors.textPrimaryDark,
+    );
+    final textSecondary = pick(
+      GlowBaseColors.textSecondaryLight,
+      GlowBaseColors.textSecondaryDark,
+    );
+    final outline = pick(
+      GlowBaseColors.outlineLight,
+      GlowBaseColors.outlineDark,
+    );
+    final divider = pick(
+      GlowBaseColors.dividerLight,
+      GlowBaseColors.dividerDark,
+    );
+    final accent = pick(GlowBaseColors.accentLight, GlowBaseColors.accentDark);
+    final onAccent = pick(
+      GlowBaseColors.onAccentLight,
+      GlowBaseColors.onAccentDark,
+    );
+    final accentFill = pick(
+      GlowBaseColors.accentFillLight,
+      GlowBaseColors.accentFillDark,
+    );
+    final onAccentFill = pick(
+      GlowBaseColors.onAccentFillLight,
+      GlowBaseColors.onAccentFillDark,
+    );
+    final glow = isDark ? GlowColors.dark : GlowColors.light;
+    final selectedFill = glow.pastel(GlowPastel.lilac);
 
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: accent,
       onPrimary: onAccent,
+      primaryContainer: selectedFill,
+      onPrimaryContainer: textPrimary,
       secondary: accent,
       onSecondary: onAccent,
+      secondaryContainer: selectedFill,
+      onSecondaryContainer: textPrimary,
       error: GlowBaseColors.danger,
-      onError: Colors.white,
+      onError: GlowBaseColors.onDanger,
       surface: surface,
       onSurface: textPrimary,
+      onSurfaceVariant: textSecondary,
+      surfaceContainerHighest: divider,
+      outline: outline,
+      outlineVariant: divider,
     );
 
+    TextStyle text(double size, FontWeight weight, Color color) => TextStyle(
+      fontFamily: 'NotoSansThai',
+      fontWeight: weight,
+      fontSize: size,
+      // Thai stacks marks above and below the line.
+      height: 1.5,
+      color: color,
+    );
+
+    const regular = FontWeight.w400;
+    const bold = FontWeight.w700;
     final baseTextTheme = TextTheme(
-      headlineLarge: TextStyle(
-        fontFamily: 'NotoSansThai',
-        fontWeight: FontWeight.w700,
-        fontSize: GlowFontSize.headingLarge,
-        height: 1.5,
-        color: textPrimary,
-      ),
-      titleLarge: TextStyle(
-        fontFamily: 'NotoSansThai',
-        fontWeight: FontWeight.w700,
-        fontSize: GlowFontSize.heading,
-        height: 1.5,
-        color: textPrimary,
-      ),
-      bodyLarge: TextStyle(
-        fontFamily: 'NotoSansThai',
-        fontWeight: FontWeight.w400,
-        fontSize: GlowFontSize.body,
-        height: 1.5,
-        color: textPrimary,
-      ),
-      bodyMedium: TextStyle(
-        fontFamily: 'NotoSansThai',
-        fontWeight: FontWeight.w400,
-        fontSize: GlowFontSize.secondary,
-        height: 1.5,
-        color: textSecondary,
-      ),
-      labelSmall: TextStyle(
-        fontFamily: 'NotoSansThai',
-        fontWeight: FontWeight.w400,
-        fontSize: GlowFontSize.smallest,
-        height: 1.5,
-        color: textSecondary,
-      ),
       displayLarge: TextStyle(
         fontFamily: 'NotoSansThai',
-        fontWeight: FontWeight.w700,
+        fontWeight: bold,
         fontSize: GlowFontSize.bigNumber,
         color: textPrimary,
       ),
+      headlineLarge: text(GlowFontSize.title, bold, textPrimary),
+      titleLarge: text(GlowFontSize.title, bold, textPrimary),
+      titleMedium: text(GlowFontSize.body, bold, textPrimary),
+      bodyLarge: text(GlowFontSize.body, regular, textPrimary),
+      bodyMedium: text(GlowFontSize.body, regular, textSecondary),
+      bodySmall: text(GlowFontSize.tiny, regular, textSecondary),
+      labelSmall: text(GlowFontSize.tiny, regular, textSecondary),
     );
+
+    const buttonText = TextStyle(
+      fontFamily: 'NotoSansThai',
+      fontWeight: bold,
+      fontSize: GlowFontSize.body,
+    );
+    final line = BorderSide(color: outline, width: GlowStroke.outline);
+    final faintLine = BorderSide(color: divider, width: GlowStroke.outline);
+    final buttonShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(GlowRadius.button),
+    );
+    final cardShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(GlowRadius.card),
+      side: line,
+    );
+
+    // The pastel button with an ink outline, used by both the elevated and
+    // the filled button.
+    final mainButton = ButtonStyle(
+      backgroundColor: WidgetStateProperty.resolveWith(
+        (states) =>
+            states.contains(WidgetState.disabled) ? divider : accentFill,
+      ),
+      foregroundColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? textSecondary
+            : onAccentFill,
+      ),
+      side: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled) ? faintLine : line,
+      ),
+      shape: WidgetStatePropertyAll(buttonShape),
+      elevation: const WidgetStatePropertyAll(0),
+      textStyle: const WidgetStatePropertyAll(buttonText),
+    );
+
+    OutlineInputBorder fieldBorder(Color color, double width) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(GlowRadius.button),
+          borderSide: BorderSide(color: color, width: width),
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -101,8 +152,8 @@ class GlowAppTheme {
       dividerColor: divider,
       dividerTheme: DividerThemeData(
         color: divider,
-        thickness: 0.5,
-        space: 0.5,
+        thickness: GlowStroke.divider,
+        space: GlowStroke.divider,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: background,
@@ -110,12 +161,7 @@ class GlowAppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontFamily: 'NotoSansThai',
-          fontWeight: FontWeight.w700,
-          fontSize: GlowFontSize.heading,
-          color: textPrimary,
-        ),
+        titleTextStyle: text(GlowFontSize.title, bold, textPrimary),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: background,
@@ -124,70 +170,111 @@ class GlowAppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: textPrimary,
+        unselectedLabelColor: textSecondary,
+        indicatorColor: accent,
+        dividerColor: divider,
+        labelStyle: buttonText,
+        unselectedLabelStyle: buttonText.copyWith(fontWeight: regular),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accent,
-          foregroundColor: onAccent,
-          minimumSize: const Size.fromHeight(48),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(GlowRadius.button),
-          ),
-          elevation: 0,
-          textStyle: const TextStyle(
-            fontFamily: 'NotoSansThai',
-            fontWeight: FontWeight.w700,
-            fontSize: GlowFontSize.body,
-          ),
+        style: mainButton.copyWith(
+          minimumSize: const WidgetStatePropertyAll(Size.fromHeight(48)),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: mainButton.copyWith(
+          minimumSize: const WidgetStatePropertyAll(Size(64, 48)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: textPrimary,
+          minimumSize: const Size(64, 48),
+          side: line,
+          shape: buttonShape,
+          textStyle: buttonText,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: accent,
           minimumSize: const Size(48, 48),
-          textStyle: const TextStyle(
-            fontFamily: 'NotoSansThai',
-            fontWeight: FontWeight.w700,
-            fontSize: GlowFontSize.body,
-          ),
+          shape: buttonShape,
+          textStyle: buttonText,
         ),
       ),
-      cardTheme: CardThemeData(
-        color: surface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(GlowRadius.card),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) =>
+                states.contains(WidgetState.selected) ? selectedFill : surface,
+          ),
+          foregroundColor: WidgetStatePropertyAll(textPrimary),
+          side: WidgetStatePropertyAll(line),
+          textStyle: const WidgetStatePropertyAll(buttonText),
         ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentFill,
+        foregroundColor: onAccentFill,
+        elevation: 0,
+        shape: cardShape,
+      ),
+      cardTheme: CardThemeData(color: surface, elevation: 0, shape: cardShape),
+      dialogTheme: DialogThemeData(
+        backgroundColor: surface,
+        elevation: 0,
+        shape: cardShape,
+        titleTextStyle: text(GlowFontSize.title, bold, textPrimary),
+        contentTextStyle: text(GlowFontSize.body, regular, textPrimary),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: surface,
         elevation: 8,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(GlowRadius.card),
           ),
+          side: line,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(GlowRadius.button),
-          borderSide: BorderSide(color: divider),
-        ),
+        border: fieldBorder(outline, GlowStroke.outline),
+        enabledBorder: fieldBorder(outline, GlowStroke.outline),
+        disabledBorder: fieldBorder(divider, GlowStroke.outline),
+        focusedBorder: fieldBorder(accent, GlowStroke.focus),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surface,
+        selectedColor: selectedFill,
+        checkmarkColor: textPrimary,
+        side: line,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(GlowRadius.pill),
         ),
-        labelStyle: TextStyle(
-          fontFamily: 'NotoSansThai',
-          fontSize: GlowFontSize.secondary,
-          color: textPrimary,
+        labelStyle: text(GlowFontSize.body, regular, textPrimary),
+        secondaryLabelStyle: text(GlowFontSize.body, bold, textPrimary),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: textPrimary,
+        contentTextStyle: text(GlowFontSize.body, regular, background),
+        actionTextColor: pick(
+          GlowBaseColors.accentDark,
+          GlowBaseColors.accentLight,
         ),
+        shape: buttonShape,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: accent,
+        linearTrackColor: divider,
       ),
       iconTheme: IconThemeData(color: textPrimary, size: 26),
-      extensions: [isDark ? GlowColors.dark : GlowColors.light],
+      extensions: [glow],
     );
   }
 }

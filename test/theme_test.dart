@@ -1,0 +1,56 @@
+import 'dart:math' as math;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:glow/theme/app_theme.dart';
+import 'package:glow/theme/glow_colors.dart';
+import 'package:material_ui/material_ui.dart';
+
+double _contrast(Color a, Color b) {
+  final la = a.computeLuminance(), lb = b.computeLuminance();
+  return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  for (final brightness in Brightness.values) {
+    final theme = brightness == Brightness.dark
+        ? GlowAppTheme.dark()
+        : GlowAppTheme.light();
+    final scheme = theme.colorScheme;
+    final page = theme.scaffoldBackgroundColor;
+    final glow = theme.extension<GlowColors>()!;
+    final button = theme.elevatedButtonTheme.style!;
+
+    group('${brightness.name} theme is readable', () {
+      // 4.5:1 is the WCAG AA level for normal text.
+      void readable(String name, Color text, Color on) {
+        test(name, () {
+          expect(_contrast(text, on), greaterThanOrEqualTo(4.5));
+        });
+      }
+
+      readable('text on the page', scheme.onSurface, page);
+      readable('secondary text on the page', scheme.onSurfaceVariant, page);
+      readable(
+        'secondary text on cards',
+        scheme.onSurfaceVariant,
+        scheme.surface,
+      );
+      readable('links on the page', scheme.primary, page);
+      readable('links on cards', scheme.primary, scheme.surface);
+      readable(
+        'main button label',
+        button.foregroundColor!.resolve({})!,
+        button.backgroundColor!.resolve({})!,
+      );
+      for (final pastel in GlowPastel.values) {
+        readable(
+          'text on ${pastel.name}',
+          scheme.onSurface,
+          glow.pastel(pastel),
+        );
+      }
+    });
+  }
+}

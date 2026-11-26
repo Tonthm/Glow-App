@@ -312,10 +312,18 @@ class _BlanketCell extends StatelessWidget {
         child: Stack(
           children: [
             if (isEquipped)
-              const Positioned(
+              Positioned(
                 top: 4,
                 left: 4,
-                child: Icon(Icons.check_circle, color: Colors.white, size: 18),
+                child: CircleAvatar(
+                  radius: 11,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  child: Icon(
+                    Icons.check,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    size: 16,
+                  ),
+                ),
               ),
             if (priceCoins != null)
               Positioned(

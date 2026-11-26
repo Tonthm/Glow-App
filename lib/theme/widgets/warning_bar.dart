@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../glow_colors.dart';
 import '../tokens.dart';
+import 'glow_card.dart';
 
 enum WarningBarSeverity { yellow, red }
 
@@ -21,40 +23,23 @@ class WarningBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = severity == WarningBarSeverity.red
-        ? const Color(0xFFED4956)
-        : const Color(0xFFF2C94C);
-
-    return InkWell(
+    final isRed = severity == WarningBarSeverity.red;
+    return GlowCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(GlowRadius.card),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: GlowSpacing.lg,
-          vertical: GlowSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(GlowRadius.card),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              severity == WarningBarSeverity.red
-                  ? Icons.error_outline
-                  : Icons.schedule_outlined,
-              color: color,
-              size: 22,
-            ),
-            const SizedBox(width: GlowSpacing.sm),
-            Expanded(
-              child: Text(
-                message,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ),
-          ],
-        ),
+      pastel: isRed ? GlowPastel.pink : GlowPastel.butter,
+      padding: const EdgeInsets.symmetric(
+        horizontal: GlowSpacing.lg,
+        vertical: GlowSpacing.md,
+      ),
+      child: Row(
+        children: [
+          // The icon shape tells the two apart without relying on color.
+          Icon(isRed ? Icons.error_outline : Icons.schedule_outlined, size: 22),
+          const SizedBox(width: GlowSpacing.sm),
+          Expanded(
+            child: Text(message, style: Theme.of(context).textTheme.bodyLarge),
+          ),
+        ],
       ),
     );
   }

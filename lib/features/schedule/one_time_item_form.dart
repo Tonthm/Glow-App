@@ -114,10 +114,7 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
               title: const Text('วันที่'),
               subtitle: Text(
                 '${_date.day}/${_date.month}/${_date.year}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {

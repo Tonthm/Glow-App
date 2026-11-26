@@ -90,7 +90,7 @@ class Heatmap extends StatelessWidget {
               height: _cellSize,
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(GlowRadius.cell),
               ),
             ),
             if (cell.isPreExamNight)
@@ -148,7 +148,7 @@ class HeatmapLegend extends StatelessWidget {
                 height: 10,
                 decoration: BoxDecoration(
                   color: entry.value,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(GlowRadius.cell),
                 ),
               ),
               const SizedBox(width: GlowSpacing.xs),

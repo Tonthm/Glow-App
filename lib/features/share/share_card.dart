@@ -130,11 +130,14 @@ class ShareCard extends StatelessWidget {
                           ),
                           // A mark as well as a color.
                           child: cell.checkIn?.result == CheckInResultDb.enough
-                              ? const Icon(Icons.check, color: Colors.black)
+                              ? const Icon(
+                                  Icons.check,
+                                  color: GlowBaseColors.ink,
+                                )
                               : Text(
                                   _resultMarks[cell.checkIn?.result] ?? '',
                                   style: textTheme.titleLarge?.copyWith(
-                                    color: Colors.black,
+                                    color: GlowBaseColors.ink,
                                   ),
                                 ),
                         ),

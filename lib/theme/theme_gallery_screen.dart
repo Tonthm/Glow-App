@@ -4,6 +4,7 @@ import 'app_theme.dart';
 import 'glow_colors.dart';
 import 'tokens.dart';
 import 'widgets/empty_state.dart';
+import 'widgets/glow_card.dart';
 import 'widgets/glow_bottom_sheet.dart';
 import 'widgets/glow_primary_button.dart';
 import 'widgets/night_ring.dart';
@@ -65,13 +66,18 @@ class _GalleryBody extends StatelessWidget {
             const _ResultSwatches(),
             const SizedBox(height: GlowSpacing.xl),
             const _SectionTitle('ตัวอักษร'),
-            Text('หัวข้อใหญ่ 24', style: theme.textTheme.headlineLarge),
-            Text('หัวข้อ 18', style: theme.textTheme.titleLarge),
-            Text('เนื้อหา 16', style: theme.textTheme.bodyLarge),
-            Text('รอง 14', style: theme.textTheme.bodyMedium),
-            Text('เล็กสุด 12', style: theme.textTheme.labelSmall),
+            Text('หัวข้อ 20', style: theme.textTheme.titleLarge),
+            Text('เนื้อหา 15', style: theme.textTheme.bodyLarge),
+            Text('ข้อความรอง 15', style: theme.textTheme.bodyMedium),
+            Text('กราฟเท่านั้น 12', style: theme.textTheme.labelSmall),
             Text('48', style: theme.textTheme.displayLarge),
             const SizedBox(height: GlowSpacing.xl),
+            const _SectionTitle('การ์ดและสีพาสเทล'),
+            for (final pastel in GlowPastel.values) ...[
+              GlowCard(pastel: pastel, child: Text(pastel.name)),
+              const SizedBox(height: GlowSpacing.sm),
+            ],
+            const SizedBox(height: GlowSpacing.lg),
             const _SectionTitle('ปุ่ม'),
             GlowPrimaryButton(label: 'ปุ่มหลัก', onPressed: () {}),
             const SizedBox(height: GlowSpacing.sm),

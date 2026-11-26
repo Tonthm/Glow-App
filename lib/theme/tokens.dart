@@ -14,42 +14,85 @@ class GlowSpacing {
 }
 
 class GlowRadius {
-  static const double button = 10;
-  static const double card = 16;
+  static const double button = 14;
+  static const double card = 20;
   static const double pill = 999;
+
+  /// Squares in the heatmap and its legend.
+  static const double cell = 3;
 }
 
+class GlowStroke {
+  /// The thin ink line around cards, buttons, chips and fields.
+  static const double outline = 1.2;
+  static const double divider = 0.8;
+  static const double focus = 2;
+}
+
+/// A screen uses two text sizes, [title] and [body], with weight doing the
+/// rest of the work. [bigNumber] is the one hero figure (tonight's bedtime)
+/// and [tiny] is only for dense charts such as the heatmap and week grid.
 class GlowFontSize {
-  static const double headingLarge = 24;
-  static const double heading = 18;
-  static const double body = 16;
-  static const double secondary = 14;
-  static const double smallest = 12;
+  static const double title = 20;
+  static const double body = 15;
+  static const double tiny = 12;
   static const double bigNumber = 48;
 }
 
 class GlowBaseColors {
   // Light mode
-  static const backgroundLight = Color(0xFFFFFFFF);
-  static const surfaceLight = Color(0xFFFAFAFA);
-  static const textPrimaryLight = Color(0xFF1A1A1A);
-  static const textSecondaryLight = Color(0xFF8A8A8A);
-  static const dividerLight = Color(0xFFE3E3E3);
-  static const accentLight = Color(0xFF5B5BD6);
+  static const backgroundLight = Color(0xFFFBF9FF);
+  static const surfaceLight = Color(0xFFFFFFFF);
+  static const textPrimaryLight = Color(0xFF1D1A29);
+  static const textSecondaryLight = Color(0xFF5E5973);
+  static const outlineLight = Color(0xFF1D1A29);
+  static const dividerLight = Color(0xFFE4DFF0);
+
+  /// Dark enough to read as text on the light background.
+  static const accentLight = Color(0xFF4B3FC4);
   static const onAccentLight = Color(0xFFFFFFFF);
 
-  // Dark mode
-  static const backgroundDark = Color(0xFF000000);
-  static const surfaceDark = Color(0xFF121212);
-  static const textPrimaryDark = Color(0xFFF5F5F5);
-  static const textSecondaryDark = Color(0xFFA3A3A3);
-  static const dividerDark = Color(0xFF262626);
-  static const accentDark = Color(0xFF8B8BFF);
-  static const onAccentDark = Color(0xFF000000);
+  /// The pastel behind the main button.
+  static const accentFillLight = Color(0xFFBDB4FF);
+  static const onAccentFillLight = Color(0xFF1D1A29);
+
+  // Dark mode: a black line would disappear, so the outline turns light.
+  static const backgroundDark = Color(0xFF13111B);
+  static const surfaceDark = Color(0xFF1F1C2B);
+  static const textPrimaryDark = Color(0xFFF4F2FB);
+  static const textSecondaryDark = Color(0xFFB5B0C9);
+  static const outlineDark = Color(0xFF8D87A8);
+  static const dividerDark = Color(0xFF322E44);
+  static const accentDark = Color(0xFFBDB4FF);
+  static const onAccentDark = Color(0xFF17141F);
+  static const accentFillDark = Color(0xFFBDB4FF);
+  static const onAccentFillDark = Color(0xFF17141F);
 
   // Same in both modes
   static const lampGlow = Color(0xFFFFC86B);
   static const danger = Color(0xFFED4956);
+  static const onDanger = Color(0xFF1D1A29);
+
+  /// Ink for marks drawn on top of a bright swatch.
+  static const ink = Color(0xFF1D1A29);
+}
+
+/// Soft fills for cards, tags and subject colors. Text on them is the normal
+/// text color: the light set is pale, the dark set is deep.
+class GlowPastelColors {
+  static const lilacLight = Color(0xFFE4DEFF);
+  static const pinkLight = Color(0xFFFFDCE8);
+  static const peachLight = Color(0xFFFFE3CF);
+  static const butterLight = Color(0xFFFFF0B8);
+  static const mintLight = Color(0xFFD2F2DF);
+  static const skyLight = Color(0xFFD6EAFF);
+
+  static const lilacDark = Color(0xFF37315C);
+  static const pinkDark = Color(0xFF4F2D40);
+  static const peachDark = Color(0xFF503526);
+  static const butterDark = Color(0xFF473F1E);
+  static const mintDark = Color(0xFF224233);
+  static const skyDark = Color(0xFF213A53);
 }
 
 /// Sleep-result colors per THEME.md section "สีผลการนอน" — used in heatmap,

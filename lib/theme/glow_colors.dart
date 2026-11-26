@@ -4,6 +4,9 @@ import 'tokens.dart';
 
 enum SleepResult { noData, notEnough, almostEnough, enough, enoughOnTime, over }
 
+/// The soft fills of the app. Saved data may refer to these by name.
+enum GlowPastel { lilac, pink, peach, butter, mint, sky }
+
 /// ThemeExtension carrying colors THEME.md defines but ThemeData has no slot
 /// for: the two-directional sleep-result palette and the bedside lamp glow.
 /// Access via `Theme.of(context).extension<GlowColors>()!` (or the
@@ -17,6 +20,9 @@ class GlowColors extends ThemeExtension<GlowColors> {
   final Color enoughOnTime;
   final Color over;
 
+  /// One color per [GlowPastel], in enum order.
+  final List<Color> pastels;
+
   const GlowColors({
     required this.lampGlow,
     required this.noData,
@@ -25,6 +31,7 @@ class GlowColors extends ThemeExtension<GlowColors> {
     required this.enough,
     required this.enoughOnTime,
     required this.over,
+    required this.pastels,
   });
 
   static const light = GlowColors(
@@ -35,6 +42,14 @@ class GlowColors extends ThemeExtension<GlowColors> {
     enough: GlowResultColors.enoughLight,
     enoughOnTime: GlowResultColors.enoughOnTimeLight,
     over: GlowResultColors.overLight,
+    pastels: [
+      GlowPastelColors.lilacLight,
+      GlowPastelColors.pinkLight,
+      GlowPastelColors.peachLight,
+      GlowPastelColors.butterLight,
+      GlowPastelColors.mintLight,
+      GlowPastelColors.skyLight,
+    ],
   );
 
   static const dark = GlowColors(
@@ -45,7 +60,17 @@ class GlowColors extends ThemeExtension<GlowColors> {
     enough: GlowResultColors.enoughDark,
     enoughOnTime: GlowResultColors.enoughOnTimeDark,
     over: GlowResultColors.overDark,
+    pastels: [
+      GlowPastelColors.lilacDark,
+      GlowPastelColors.pinkDark,
+      GlowPastelColors.peachDark,
+      GlowPastelColors.butterDark,
+      GlowPastelColors.mintDark,
+      GlowPastelColors.skyDark,
+    ],
   );
+
+  Color pastel(GlowPastel pastel) => pastels[pastel.index];
 
   Color forResult(SleepResult result) => switch (result) {
     SleepResult.noData => noData,
@@ -65,6 +90,7 @@ class GlowColors extends ThemeExtension<GlowColors> {
     Color? enough,
     Color? enoughOnTime,
     Color? over,
+    List<Color>? pastels,
   }) {
     return GlowColors(
       lampGlow: lampGlow ?? this.lampGlow,
@@ -74,6 +100,7 @@ class GlowColors extends ThemeExtension<GlowColors> {
       enough: enough ?? this.enough,
       enoughOnTime: enoughOnTime ?? this.enoughOnTime,
       over: over ?? this.over,
+      pastels: pastels ?? this.pastels,
     );
   }
 
@@ -88,6 +115,10 @@ class GlowColors extends ThemeExtension<GlowColors> {
       enough: Color.lerp(enough, other.enough, t)!,
       enoughOnTime: Color.lerp(enoughOnTime, other.enoughOnTime, t)!,
       over: Color.lerp(over, other.over, t)!,
+      pastels: [
+        for (var i = 0; i < pastels.length; i++)
+          Color.lerp(pastels[i], other.pastels[i], t)!,
+      ],
     );
   }
 }
