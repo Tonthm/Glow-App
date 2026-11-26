@@ -24,7 +24,7 @@ void main() {
   final square = _fullSquare(source);
 
   _save('assets/logo_square.png', _resize(square, 512));
-  _save('web/favicon.png', _resize(square, 48));
+  // web/favicon.png is made by hand (rounded corners), so it isn't touched.
   _save('web/icons/apple-touch-icon.png', _resize(square, 180));
   _save('web/icons/Icon-192.png', _resize(square, 192));
   _save('web/icons/Icon-512.png', _resize(square, 512));
