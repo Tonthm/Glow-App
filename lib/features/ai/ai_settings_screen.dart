@@ -68,14 +68,8 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   /// True once the user has agreed to the current consent text.
   Future<bool> _ensureConsent(AiSettingsRow row) async {
     if (row.consentVersion == aiConsentVersion) return true;
-    final ageGroup =
-        (await ref.read(settingsRepositoryProvider).get()).ageGroup;
-    if (!mounted) return false;
-    final agreed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => AiConsentScreen(under18: ageGroup == AgeGroup.under18),
-      ),
-    );
+    final agreed = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(builder: (_) => const AiConsentScreen()));
     if (agreed != true) return false;
     await ref
         .read(aiSettingsRepositoryProvider)
@@ -112,23 +106,28 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     }
     final repo = ref.read(aiSettingsRepositoryProvider);
     final used = AiSettingsRepository.callsOn(row, DateTime.now());
+    final adult =
+        ref.watch(settingsStreamProvider).value?.ageGroup == AgeGroup.adult;
 
     return Scaffold(
       appBar: AppBar(title: const Text('ผู้ช่วย AI')),
       body: ListView(
         padding: const EdgeInsets.all(GlowSpacing.pageMargin),
         children: [
+          if (!adult) Text(aiUnderAgeMessage, style: textTheme.bodyLarge),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('เปิดผู้ช่วย AI'),
             subtitle: const Text(
               'ช่วยแยกงาน ประเมินเวลา แบ่งงานใหญ่ และอธิบายแผนเย็นนี้',
             ),
-            value: row.enabled,
-            onChanged: (on) async {
-              if (on && !await _ensureConsent(row)) return;
-              await repo.update(AiSettingsCompanion(enabled: Value(on)));
-            },
+            value: adult && row.enabled,
+            onChanged: adult
+                ? (on) async {
+                    if (on && !await _ensureConsent(row)) return;
+                    await repo.update(AiSettingsCompanion(enabled: Value(on)));
+                  }
+                : null,
           ),
           if (row.enabled && _hasKey == false)
             Text(
@@ -201,7 +200,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
           const SizedBox(height: GlowSpacing.lg),
           GlowPrimaryButton(
             label: _testing ? 'กำลังทดสอบ…' : 'ทดสอบการเชื่อมต่อ',
-            onPressed: _testing ? null : () => _test(row),
+            onPressed: _testing || !adult ? null : () => _test(row),
           ),
           if (_testResult != null)
             Text(_testResult!, style: textTheme.bodyLarge),

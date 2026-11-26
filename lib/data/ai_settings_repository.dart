@@ -38,6 +38,15 @@ class AiSettingsRepository {
     )..where((t) => t.id.equals(0))).write(change);
   }
 
+  /// True unless the user chose "18 ปีขึ้นไป". No choice yet counts as under
+  /// 18, the stored default.
+  Future<bool> isUnder18() async {
+    final row = await (db.select(
+      db.settings,
+    )..where((t) => t.id.equals(0))).getSingleOrNull();
+    return row?.ageGroup != AgeGroup.adult;
+  }
+
   /// Calls made on [now]'s day.
   static int callsOn(AiSettingsRow row, DateTime now) =>
       row.callDay == DateTime(now.year, now.month, now.day) ? row.callCount : 0;

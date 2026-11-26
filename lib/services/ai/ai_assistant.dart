@@ -15,17 +15,25 @@ class AiResult<T> {
   const AiResult.failed(AiFailure this.failure) : value = null;
 }
 
+/// Gemini's terms require users to be 18 or older, and don't allow apps likely
+/// to be used by anyone younger (read 26 Nov 2026).
+const String aiUnderAgeMessage =
+    'ผู้ช่วย AI ใช้ได้เมื่อตั้งช่วงอายุเป็น 18 ปีขึ้นไป ตามเงื่อนไขของ '
+    '$aiProviderName ฟีเจอร์อื่นใช้ได้ตามปกติ';
+
 /// A gentle line for when AI can't be used.
 String aiFailureMessage(AiFailure failure) => switch (failure) {
   AiFailure.quotaReached => 'วันนี้ใช้ AI ครบจำนวนแล้ว ใช้แบบธรรมดาแทน',
   AiFailure.inputTooLong =>
     'ข้อความยาวเกิน $aiMaxInputChars ตัวอักษร ใช้แบบธรรมดาแทน',
   AiFailure.badKey => 'ใช้ AI ไม่ได้ ลองตรวจ API key ในตั้งค่า ใช้แบบธรรมดาแทน',
+  AiFailure.underAge => aiUnderAgeMessage,
   _ => 'ตอนนี้ใช้ AI ไม่ได้ ใช้แบบธรรมดาแทน',
 };
 
-/// The only way the app talks to AI: consent and the daily limit are checked
-/// before each call, and every answer goes through core/ before it is used.
+/// The only way the app talks to AI: age group, consent, and the daily limit
+/// are checked before each call, and every answer goes through core/ before it
+/// is used.
 /// It proposes; nothing here saves anything.
 class AiAssistant {
   final AiSettingsRepository settings;
@@ -48,6 +56,7 @@ class AiAssistant {
 
   Future<bool> isReady() async {
     if (demo) return true;
+    if (await settings.isUnder18()) return false;
     final row = await settings.get();
     if (!row.enabled || row.consentVersion != aiConsentVersion) return false;
     return (await keys.read())?.isNotEmpty ?? false;
@@ -113,6 +122,9 @@ class AiAssistant {
     var apiKey = 'demo';
     var model = aiDefaultModel;
     if (!demo) {
+      if (await settings.isUnder18()) {
+        return const AiResult.failed(AiFailure.underAge);
+      }
       final row = await settings.get();
       final key = await keys.read();
       if ((requireEnabled && !row.enabled) ||

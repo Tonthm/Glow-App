@@ -8,6 +8,7 @@ import 'package:glow/core/ai_config.dart';
 import 'package:glow/core/ai_payload.dart';
 import 'package:glow/data/ai_settings_repository.dart';
 import 'package:glow/data/database.dart';
+import 'package:glow/data/settings_repository.dart';
 import 'package:glow/services/ai/ai_assistant.dart';
 import 'package:glow/services/ai/ai_client.dart';
 import 'package:glow/services/ai/api_key_store.dart';
@@ -25,10 +26,13 @@ void main() {
   late MemoryApiKeyStore keys;
   final today = DateTime(2026, 11, 23);
 
-  setUp(() {
+  setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     settings = AiSettingsRepository(db);
     keys = MemoryApiKeyStore(secret);
+    final app = SettingsRepository(db);
+    await app.ensureRowExists();
+    await app.applyAgeGroupDefaults(AgeGroup.adult);
   });
 
   tearDown(() => db.close());
@@ -52,6 +56,20 @@ void main() {
     final client = FakeAiClient();
     final result = await assistant(client).parseTasks('เลข', today: today);
     expect(result.failure, AiFailure.notReady);
+    expect(client.requests, isEmpty);
+  });
+
+  test('stays off for the under-18 age group, even if switched on', () async {
+    await switchOn();
+    await SettingsRepository(db).applyAgeGroupDefaults(AgeGroup.under18);
+    final client = FakeAiClient();
+    final ai = assistant(client);
+    expect(await ai.isReady(), isFalse);
+    expect(
+      (await ai.parseTasks('เลข', today: today)).failure,
+      AiFailure.underAge,
+    );
+    expect(await ai.testConnection(), AiFailure.underAge);
     expect(client.requests, isEmpty);
   });
 

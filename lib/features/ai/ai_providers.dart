@@ -44,6 +44,8 @@ final aiKeyVersionProvider = StateProvider<int>((ref) => 0);
 /// Whether the AI parts of the screens should show.
 final aiReadyProvider = FutureProvider<bool>((ref) {
   ref.watch(aiSettingsProvider);
+  // The age group lives in the app's settings.
+  ref.watch(settingsStreamProvider);
   ref.watch(aiKeyVersionProvider);
   return ref.watch(aiAssistantProvider).isReady();
 });

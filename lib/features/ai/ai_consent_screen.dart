@@ -3,16 +3,13 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/ai_config.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_primary_button.dart';
-import '../../theme/widgets/warning_bar.dart';
 
 /// Shown before AI is first switched on. Pops true if the user agrees.
 ///
 /// The facts about Google's terms were read on 26 Nov 2026. If this text
 /// changes, raise [aiConsentVersion].
 class AiConsentScreen extends StatelessWidget {
-  final bool under18;
-
-  const AiConsentScreen({super.key, required this.under18});
+  const AiConsentScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,16 +32,6 @@ class AiConsentScreen extends StatelessWidget {
             'ข้อความงานที่สั่งให้ประมวลผล จะถูกส่งตรงไปที่ $aiProviderName '
             'ด้วย API key ของคุณเอง ไม่ผ่านเซิร์ฟเวอร์ของ Glow',
           ),
-          if (under18) ...[
-            const SizedBox(height: GlowSpacing.md),
-            const WarningBar(
-              severity: WarningBarSeverity.yellow,
-              message:
-                  'ตั้งช่วงอายุไว้ว่าต่ำกว่า 18 ปี ผู้ให้บริการ AI ส่วนใหญ่'
-                  'กำหนดอายุขั้นต่ำของเจ้าของบัญชี ตรวจเงื่อนไขของ '
-                  '$aiProviderName ก่อนใช้',
-            ),
-          ],
           heading('ส่งอะไรบ้าง'),
           body(
             '• ข้อความที่พิมพ์หรือพูดในช่องงาน\n'

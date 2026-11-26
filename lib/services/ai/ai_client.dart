@@ -3,6 +3,9 @@ import '../../core/ai_payload.dart';
 enum AiFailure {
   /// AI is off, not agreed to, or has no key.
   notReady,
+
+  /// The age group is under 18, which Gemini's terms don't allow.
+  underAge,
   inputTooLong,
   quotaReached,
   offline,
