@@ -1,6 +1,6 @@
 # ฝาก Glow เวอร์ชันเว็บบน GitHub Pages
 
-> build เว็บผ่านและลองบนเครื่องแล้ว แต่ **ยังไม่เคย deploy** ขั้นตอน GitHub Pages ด้านล่างยังไม่เคยรันจริง
+> deploy ครั้งแรกแล้วเมื่อ 26 พ.ย. 2026 ที่ https://tonthm.github.io/Glow-App/ (branch `gh-pages`, worktree `../glow-pages`) GitHub เปิด Pages ให้เองหลัง push
 
 ## ก่อน deploy ครั้งแรก
 
