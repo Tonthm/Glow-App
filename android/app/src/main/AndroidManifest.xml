@@ -14,6 +14,8 @@
     <uses-permission android:name="android.permission.READ_CALENDAR"/>
     <!-- Asked only when the mic button is first pressed (voice entry). -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Used only by the optional AI assistant, which is off by default. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Glow"
         android:name="${applicationName}"
