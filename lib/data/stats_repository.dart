@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../core/check_in.dart';
+import '../core/story_share.dart';
 import 'database.dart';
 
 DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -123,6 +124,17 @@ class StatsRepository {
     }
     return cells;
   }
+
+  /// Every recorded night, for the picture shared to a story.
+  Future<List<StoryNight>> storyNights() async => [
+    for (final c in await db.select(db.checkIns).get())
+      StoryNight(
+        wakeDate: _dateOnly(c.wakeDate),
+        lightsOffAt: c.lightsOffAt,
+        wakeAt: c.actualWakeAt,
+        result: CheckInResult.values.byName(c.result.name),
+      ),
+  ];
 
   StatsSummary summarize(
     List<HeatmapCell> cells, {

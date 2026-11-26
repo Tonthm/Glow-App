@@ -24,6 +24,7 @@ import 'services/calendar_import_service.dart';
 import 'services/debug_sample_data_service.dart';
 import 'services/notification_service.dart';
 import 'services/permissions_service.dart';
+import 'services/image_share.dart';
 import 'services/photo_picker.dart';
 import 'services/platform/platform_capabilities.dart';
 import 'services/screen_service.dart';
@@ -219,6 +220,10 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 /// Overridable, so tests can show the web version's screens.
 final platformCapabilitiesProvider = Provider<PlatformCapabilities>((ref) {
   return PlatformCapabilities.current;
+});
+
+final imageSharerProvider = Provider<ImageSharer>((ref) {
+  return createImageSharer();
 });
 
 final photoPickerProvider = Provider<PhotoPicker>((ref) {

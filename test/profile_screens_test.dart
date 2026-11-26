@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,11 +8,8 @@ import 'package:glow/data/wallet_repository.dart';
 import 'package:glow/features/card/card_details_sheet.dart';
 import 'package:glow/features/onboarding/onboarding_screen.dart';
 import 'package:glow/features/settings/settings_screen.dart';
-import 'package:glow/features/share/share_screen.dart';
 import 'package:glow/providers.dart';
 import 'package:glow/theme/app_theme.dart';
-import 'package:glow/theme/widgets/student_card.dart';
-import 'package:image/image.dart' as img;
 import 'package:material_ui/material_ui.dart';
 
 void main() {
@@ -172,21 +167,6 @@ void main() {
     await cards.setBirthDate(DateTime(2012, 1, 1), now: DateTime.now());
     await settle(tester);
     expect(ai, findsNothing);
-    await finish(tester);
-  });
-
-  testWidgets('a shared card has no photo until the user adds it', (
-    tester,
-  ) async {
-    await start();
-    await cards.savePhoto(img.encodeJpg(img.Image(width: 40, height: 50)));
-    await show(tester, ShareScreen(monday: DateTime(2026, 11, 23)));
-
-    Uint8List? shared() =>
-        tester.widget<StudentCard>(find.byType(StudentCard)).photo;
-    expect(shared(), isNull);
-    await tap(tester, 'ใส่รูปถ่าย');
-    expect(shared(), isNotNull);
     await finish(tester);
   });
 }

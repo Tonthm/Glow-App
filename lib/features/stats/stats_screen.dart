@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-import '../../core/night_date.dart';
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
@@ -82,13 +81,9 @@ class StatsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.ios_share_outlined),
-            tooltip: 'แชร์สัปดาห์นี้',
+            tooltip: 'แชร์ลงสตอรี่',
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ShareScreen(
-                  monday: mondayOfWeek(ref.read(clockProvider)()),
-                ),
-              ),
+              MaterialPageRoute(builder: (_) => const ShareScreen()),
             ),
           ),
           const SettingsButton(),

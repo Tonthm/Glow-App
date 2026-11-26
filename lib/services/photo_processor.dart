@@ -16,7 +16,10 @@ const int _workingSide = 1600;
 /// Opens a picked file, scaled down so a large camera picture fits in memory.
 /// The phone or browser does the decoding.
 /// Throws if the file isn't a picture it can read.
-Future<ui.Image> openPickedPhoto(Uint8List bytes) async {
+Future<ui.Image> openPickedPhoto(
+  Uint8List bytes, {
+  int maxSide = _workingSide,
+}) async {
   if (bytes.length > maxPickedPhotoBytes) {
     throw const FormatException('too large');
   }
@@ -25,12 +28,12 @@ Future<ui.Image> openPickedPhoto(Uint8List bytes) async {
   final codec = await ui.instantiateImageCodecWithSize(
     buffer,
     getTargetSize: (width, height) {
-      if (width <= _workingSide && height <= _workingSide) {
+      if (width <= maxSide && height <= maxSide) {
         return const ui.TargetImageSize();
       }
       return width >= height
-          ? const ui.TargetImageSize(width: _workingSide)
-          : const ui.TargetImageSize(height: _workingSide);
+          ? ui.TargetImageSize(width: maxSide)
+          : ui.TargetImageSize(height: maxSide);
     },
   );
   try {

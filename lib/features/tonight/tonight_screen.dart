@@ -313,7 +313,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.ios_share),
-            tooltip: 'แชร์บัตร',
+            tooltip: 'แชร์ลงสตอรี่',
             onPressed: _shareCard,
           ),
           const SettingsButton(),
@@ -362,11 +362,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   }
 
   void _shareCard() {
-    final monday = mondayOfWeek(
-      resolveTonightWakeDate(ref.read(clockProvider)()),
-    );
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => ShareScreen(monday: monday)));
+        .push(MaterialPageRoute(builder: (_) => const ShareScreen()));
   }
 
   bool _canPressInBed(TonightPlanData plan) => canPressInBed(

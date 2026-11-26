@@ -8,11 +8,16 @@ class GlowPrimaryButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final IconData? icon;
 
+  /// Run [onPressed] at the tap itself, animating alongside. For things the
+  /// browser only allows straight from a tap, such as sharing.
+  final bool immediate;
+
   const GlowPrimaryButton({
     super.key,
     required this.label,
     required this.onPressed,
     this.icon,
+    this.immediate = false,
   });
 
   @override
@@ -39,9 +44,12 @@ class _GlowPrimaryButtonState extends State<GlowPrimaryButton>
   Future<void> _handleTap() async {
     if (widget.onPressed == null) return;
     HapticFeedback.lightImpact();
+    if (widget.immediate) widget.onPressed!();
+    // The action may have closed the screen.
+    if (!mounted) return;
     await _controller.reverse();
     await _controller.forward();
-    widget.onPressed!();
+    if (!widget.immediate) widget.onPressed?.call();
   }
 
   @override

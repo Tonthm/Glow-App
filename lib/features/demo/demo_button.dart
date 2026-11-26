@@ -1,6 +1,8 @@
 /// Debug-only floating button for moving through time during a demo.
 library;
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,6 +14,7 @@ import '../../services/app_clock.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../ai/ai_providers.dart';
+import '../share/story_gallery_screen.dart';
 import 'demo_data.dart';
 
 final demoButtonVisibleProvider = StateProvider<bool>((ref) => true);
@@ -37,6 +40,7 @@ class DemoButton extends ConsumerWidget {
   }
 
   Future<void> _openMenu(BuildContext context, WidgetRef ref) async {
+    final navigator = Navigator.of(context);
     final action = await showGlowBottomSheet<Future<String?> Function()>(
       context: context,
       builder: (context) {
@@ -84,6 +88,16 @@ class DemoButton extends ConsumerWidget {
                     : 'ปิด AI จำลองแล้ว';
               },
             ),
+            item('ตรวจภาพแชร์', () async {
+              unawaited(
+                navigator.push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const StoryGalleryScreen(),
+                  ),
+                ),
+              );
+              return null;
+            }),
             item('กลับเวลาจริง', () async {
               await clock.reset();
               return null;

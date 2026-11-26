@@ -43,6 +43,31 @@ class GlowSubjectColors {
   };
 }
 
+/// The picture shared to a story. It goes over any photo, so these don't
+/// follow the app's theme: white text, or dark text for bright photos.
+class GlowStoryColors {
+  static const textLight = Color(0xFFFFFFFF);
+  static const textDark = Color(0xFF1D1A29);
+
+  // Dots under white text, then under dark text.
+  static const fullLight = Color(0xFF3DDC84);
+  static const slightlyShortLight = Color(0xFFFFD23F);
+  static const veryShortLight = Color(0xFFFF5A5F);
+  static const noneLight = Color(0xFFD5D3DD);
+  static const fullDark = Color(0xFF14804A);
+  static const slightlyShortDark = Color(0xFFA86F00);
+  static const veryShortDark = Color(0xFFC41E35);
+  static const noneDark = Color(0xFF5E5973);
+
+  /// Soft edges that keep text and dots clear of the photo behind them.
+  static const shadow = Color(0x99000000);
+  static const halo = Color(0xE6FFFFFF);
+
+  /// Behind the see-through picture in the preview.
+  static const checkerLight = Color(0xFF9C99A8);
+  static const checkerDark = Color(0xFF7A7788);
+}
+
 class GlowRadius {
   static const double button = 14;
   static const double card = 20;

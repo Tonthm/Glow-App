@@ -132,17 +132,9 @@ class CheckInResultScreen extends ConsumerWidget {
               if (wakeDate.weekday == DateTime.monday)
                 TextButton.icon(
                   icon: const Icon(Icons.ios_share_outlined),
-                  label: const Text('แชร์สัปดาห์ที่แล้ว'),
+                  label: const Text('แชร์ลงสตอรี่'),
                   onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ShareScreen(
-                        monday: DateTime(
-                          wakeDate.year,
-                          wakeDate.month,
-                          wakeDate.day - 7,
-                        ),
-                      ),
-                    ),
+                    MaterialPageRoute(builder: (_) => const ShareScreen()),
                   ),
                 ),
               const SizedBox(height: GlowSpacing.xl),
