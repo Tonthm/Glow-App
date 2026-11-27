@@ -1,6 +1,6 @@
 // Offline cache. tool/build_web.dart fills in the two lines below for each
 // build; a changed VERSION is what makes the app offer to reload.
-const VERSION = 'b27947c4';
+const VERSION = '3676c7dc';
 const FILES = ["./","assets/AssetManifest.bin","assets/AssetManifest.bin.json","assets/FontManifest.json","assets/NOTICES","assets/assets/fonts/NotoSansThai.ttf","assets/assets/fonts/Nunito.ttf","assets/assets/logo_square.png","assets/fonts/MaterialIcons-Regular.otf","assets/fonts/fallback/Roboto-Regular.ttf","assets/packages/cupertino_icons/assets/CupertinoIcons.ttf","assets/packages/flutter_local_notifications_web/web/notifications_service_worker.js","assets/packages/material_ui/shaders/ink_sparkle.frag","assets/shaders/ink_sparkle.frag","assets/shaders/stretch_effect.frag","canvaskit/canvaskit.js","canvaskit/canvaskit.wasm","drift_worker.js","favicon.png","flutter.js","flutter_bootstrap.js","icons/Icon-192.png","icons/Icon-512.png","icons/Icon-maskable-192.png","icons/Icon-maskable-512.png","icons/apple-touch-icon.png","index.html","main.dart.js","manifest.json","sqlite3.wasm","version.json"];
 
 const CACHE = 'glow-' + VERSION;
