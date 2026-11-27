@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../data/database.dart';
 import '../../data/settings_repository.dart';
 import '../../providers.dart';
+import '../../theme/tokens.dart';
 import '../shared/time_of_day_field.dart';
 import 'setting_row.dart';
 
@@ -53,7 +54,7 @@ class EveningSettingsRows extends ConsumerWidget {
           onChanged: (v) =>
               repo.updateEvening(SettingsCompanion(eveningEnabled: Value(v))),
         ),
-        const Divider(),
+        const SizedBox(height: GlowSpacing.sm),
         if (settings.eveningEnabled) ...[
           minutes(
             'พักหลังถึงบ้าน',
@@ -94,7 +95,7 @@ class EveningSettingsRows extends ConsumerWidget {
               SettingsCompanion(showerOnArrival: Value(v)),
             ),
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           minutes(
             'ทำงานติดกันนานสุด',
             settings.maxFocusMinutes,

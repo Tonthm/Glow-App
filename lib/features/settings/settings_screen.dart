@@ -138,38 +138,40 @@ class NotificationSettingsScreen extends ConsumerWidget {
             value: settings.notifyPutPhoneDown,
             onChanged: (v) => repo.updateNotificationToggles(putPhoneDown: v),
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           SwitchListTile(
             title: const Text('เตือนถึงเวลานอน'),
             value: settings.notifyBedtime,
             onChanged: (v) => repo.updateNotificationToggles(bedtime: v),
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           SwitchListTile(
             title: const Text('เตือนคืนแดงข้างหน้า'),
             value: settings.notifyBusyNight,
             onChanged: (v) => repo.updateNotificationToggles(busyNight: v),
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           SwitchListTile(
             title: const Text('เตือนเช็กอิน'),
             value: settings.notifyCheckIn,
             onChanged: (v) => repo.updateNotificationToggles(checkIn: v),
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           SwitchListTile(
             title: const Text('เตือนเดดไลน์'),
             subtitle: const Text('เย็นก่อนวันส่ง ไม่เลยเวลาเข้านอน'),
             value: settings.notifyDeadline,
             onChanged: (v) => repo.updateTaskReminders(deadline: v),
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           SwitchListTile(
             title: const Text('เตือนก่อนคาบเรียน'),
             subtitle: const Text('ไม่ปลุกตอนนอน'),
             value: settings.notifyBeforeClass,
             onChanged: (v) => repo.updateTaskReminders(beforeClass: v),
           ),
+          if (settings.notifyBeforeClass)
+            const SizedBox(height: GlowSpacing.sm),
           if (settings.notifyBeforeClass)
             SettingRow(
               title: 'เตือนก่อนคาบกี่นาที',
@@ -186,7 +188,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 }
               },
             ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           if (platform.calendarReminders)
             SettingRow(
               title: 'เพิ่มเตือนลงปฏิทิน (7 วัน)',
@@ -347,7 +349,7 @@ class AdvancedSettingsScreen extends ConsumerWidget {
             value: settings.routineEnabled,
             onChanged: repo.updateRoutineEnabled,
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           SettingRow(
             title: 'ท่าที่ซ่อนไว้',
             value: '${hiddenPoseSet(settings).length} ท่า',
@@ -403,7 +405,7 @@ class AdvancedSettingsScreen extends ConsumerWidget {
               }
             },
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           ListTile(
             title: const Text('นำเข้าข้อมูลจากไฟล์สำรอง'),
             trailing: const Icon(Icons.download_outlined),
@@ -429,7 +431,7 @@ class AdvancedSettingsScreen extends ConsumerWidget {
               }
             },
           ),
-          const Divider(),
+          const SizedBox(height: GlowSpacing.sm),
           ListTile(
             title: Text(
               'ลบข้อมูลทั้งหมด',
@@ -661,7 +663,7 @@ class _ExactAlarmRowState extends ConsumerState<_ExactAlarmRow> {
             await _check();
           },
         ),
-        const Divider(),
+        const SizedBox(height: GlowSpacing.sm),
       ],
     );
   }

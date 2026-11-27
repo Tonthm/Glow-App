@@ -36,7 +36,7 @@ final storyRendererProvider = Provider<StoryRenderer>((ref) => renderStoryPng);
 /// The app icon as the picture draws it. The caller frees it.
 final storyLogoProvider = Provider<Future<ui.Image?> Function()>((ref) {
   return () async {
-    final data = await rootBundle.load('assets/mascot.png');
+    final data = await rootBundle.load('assets/logo_square.png');
     return openPickedPhoto(data.buffer.asUint8List(), maxSide: 256);
   };
 });
