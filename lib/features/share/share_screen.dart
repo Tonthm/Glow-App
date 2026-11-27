@@ -403,20 +403,21 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                   () => _options = _options.copyWith(position: v.first),
                 ),
               ),
+              const SizedBox(height: GlowSpacing.sm),
               SwitchListTile(
-                contentPadding: EdgeInsets.zero,
                 title: const Text('โลโก้ Glow'),
                 value: _options.showLogo,
                 onChanged: (v) =>
                     _change(() => _options = _options.copyWith(showLogo: v)),
               ),
+              const SizedBox(height: GlowSpacing.sm),
               SwitchListTile(
-                contentPadding: EdgeInsets.zero,
                 title: const Text('แสดงเวลาเข้านอน – ตื่น'),
                 value: _options.showTimes,
                 onChanged: (v) =>
                     _change(() => _options = _options.copyWith(showTimes: v)),
               ),
+              const SizedBox(height: GlowSpacing.sm),
               OutlinedButton.icon(
                 icon: const Icon(Icons.photo_outlined),
                 label: const Text('ดูบนรูปของฉัน'),
