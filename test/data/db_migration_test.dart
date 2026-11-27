@@ -4,8 +4,12 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
-/// What schema 22 added.
+/// What schema 23 added.
+const _rewindFrom23 = ['DROP TABLE guide_states'];
+
+/// What schema 22 added, and the newer table on top of it.
 const _rewindFrom22 = [
+  ..._rewindFrom23,
   'ALTER TABLE settings DROP COLUMN cycle_align_enabled',
   'ALTER TABLE settings DROP COLUMN cycle_minutes',
   'ALTER TABLE night_plans DROP COLUMN cycle_shift_minutes',
@@ -212,44 +216,50 @@ void main() {
     await db.close();
   });
 
-  test('a version 16 database, as published on the web, keeps it all', () async {
-    await prepare([
-      'INSERT INTO settings (id, onboarding_completed, target_min_minutes)'
-          ' VALUES (0, 1, 495)',
-      'INSERT INTO weekly_items (title, day_of_week, start_minutes,'
-          " end_minutes, type) VALUES ('ฟิสิกส์', 1, 480, 540, 0)",
-      'INSERT INTO one_time_items (title, date, type)'
-          " VALUES ('สอบเคมี', 1796000000, 0)",
-      'INSERT INTO wallets (id, coins, equipped_blanket_id)'
-          " VALUES (0, 88, 'blanket_navy')",
-      'INSERT INTO owned_items (item_id, acquired_at)'
-          " VALUES ('sticker_zzz', 1795000000)",
-      'INSERT INTO fire_states (id, points, level, shields)'
-          ' VALUES (0, 15, 4, 1)',
-      'INSERT INTO card_profiles (id, display_name, school, sticker_ids)'
-          " VALUES (0, 'มายด์', 'โรงเรียน', 'sticker_zzz')",
-      ..._rewindFrom17,
-      'ALTER TABLE card_profiles DROP COLUMN birth_date',
-      'PRAGMA user_version = 16',
-    ]);
+  test(
+    'a version 16 database, as published on the web, keeps it all',
+    () async {
+      await prepare([
+        'INSERT INTO settings (id, onboarding_completed, target_min_minutes)'
+            ' VALUES (0, 1, 495)',
+        'INSERT INTO weekly_items (title, day_of_week, start_minutes,'
+            " end_minutes, type) VALUES ('ฟิสิกส์', 1, 480, 540, 0)",
+        'INSERT INTO one_time_items (title, date, type)'
+            " VALUES ('สอบเคมี', 1796000000, 0)",
+        'INSERT INTO wallets (id, coins, equipped_blanket_id)'
+            " VALUES (0, 88, 'blanket_navy')",
+        'INSERT INTO owned_items (item_id, acquired_at)'
+            " VALUES ('sticker_zzz', 1795000000)",
+        'INSERT INTO fire_states (id, points, level, shields)'
+            ' VALUES (0, 15, 4, 1)',
+        'INSERT INTO card_profiles (id, display_name, school, sticker_ids)'
+            " VALUES (0, 'มายด์', 'โรงเรียน', 'sticker_zzz')",
+        ..._rewindFrom17,
+        'ALTER TABLE card_profiles DROP COLUMN birth_date',
+        'PRAGMA user_version = 16',
+      ]);
 
-    final db = AppDatabase.forTesting(NativeDatabase(file));
-    final settings = await db.select(db.settings).getSingle();
-    expect(settings.onboardingCompleted, isTrue);
-    expect(settings.targetMinMinutes, 495);
-    expect(settings.earliestClassMinutes, isNull);
-    expect((await db.select(db.weeklyItems).getSingle()).title, 'ฟิสิกส์');
-    expect((await db.select(db.oneTimeItems).getSingle()).title, 'สอบเคมี');
-    expect((await db.select(db.wallets).getSingle()).coins, 88);
-    expect((await db.select(db.ownedItems).getSingle()).itemId, 'sticker_zzz');
-    final fire = await db.select(db.fireStates).getSingle();
-    expect((fire.points, fire.level, fire.shields), (15, 4, 1));
-    final card = await db.select(db.cardProfiles).getSingle();
-    expect((card.displayName, card.stickerIds), ('มายด์', 'sticker_zzz'));
-    expect(card.birthDate, isNull);
-    expect(await db.select(db.cardPhotos).get(), isEmpty);
-    await db.close();
-  });
+      final db = AppDatabase.forTesting(NativeDatabase(file));
+      final settings = await db.select(db.settings).getSingle();
+      expect(settings.onboardingCompleted, isTrue);
+      expect(settings.targetMinMinutes, 495);
+      expect(settings.earliestClassMinutes, isNull);
+      expect((await db.select(db.weeklyItems).getSingle()).title, 'ฟิสิกส์');
+      expect((await db.select(db.oneTimeItems).getSingle()).title, 'สอบเคมี');
+      expect((await db.select(db.wallets).getSingle()).coins, 88);
+      expect(
+        (await db.select(db.ownedItems).getSingle()).itemId,
+        'sticker_zzz',
+      );
+      final fire = await db.select(db.fireStates).getSingle();
+      expect((fire.points, fire.level, fire.shields), (15, 4, 1));
+      final card = await db.select(db.cardProfiles).getSingle();
+      expect((card.displayName, card.stickerIds), ('มายด์', 'sticker_zzz'));
+      expect(card.birthDate, isNull);
+      expect(await db.select(db.cardPhotos).get(), isEmpty);
+      await db.close();
+    },
+  );
 
   test('a version 17 database keeps the profile and photo', () async {
     await prepare([
@@ -271,7 +281,12 @@ void main() {
     expect((await db.select(db.weeklyItems).getSingle()).title, 'ฟิสิกส์');
     final card = await db.select(db.cardProfiles).getSingle();
     expect(card.birthDate, isNotNull);
-    expect((await db.select(db.cardPhotos).getSingle()).jpeg, [255, 216, 255, 0]);
+    expect((await db.select(db.cardPhotos).getSingle()).jpeg, [
+      255,
+      216,
+      255,
+      0,
+    ]);
     await db.close();
   });
 
@@ -296,20 +311,23 @@ void main() {
     await db.close();
   });
 
-  test('a version 20 database keeps AI settings, without image consent', () async {
-    await prepare([
-      'INSERT INTO ai_settings (id, enabled, consent_version, daily_quota)'
-          ' VALUES (0, 1, 1, 50)',
-      ..._rewindFrom21,
-      'PRAGMA user_version = 20',
-    ]);
+  test(
+    'a version 20 database keeps AI settings, without image consent',
+    () async {
+      await prepare([
+        'INSERT INTO ai_settings (id, enabled, consent_version, daily_quota)'
+            ' VALUES (0, 1, 1, 50)',
+        ..._rewindFrom21,
+        'PRAGMA user_version = 20',
+      ]);
 
-    final db = AppDatabase.forTesting(NativeDatabase(file));
-    final ai = await db.select(db.aiSettings).getSingle();
-    expect((ai.enabled, ai.consentVersion, ai.dailyQuota), (true, 1, 50));
-    expect(ai.imageConsentVersion, 0);
-    await db.close();
-  });
+      final db = AppDatabase.forTesting(NativeDatabase(file));
+      final ai = await db.select(db.aiSettings).getSingle();
+      expect((ai.enabled, ai.consentVersion, ai.dailyQuota), (true, 1, 50));
+      expect(ai.imageConsentVersion, 0);
+      await db.close();
+    },
+  );
 
   test('a version 21 database keeps plans, fire and coins', () async {
     await prepare([
@@ -343,6 +361,21 @@ void main() {
     expect((await db.select(db.ownedItems).getSingle()).itemId, 'blanket_navy');
     final fire = await db.select(db.fireStates).getSingle();
     expect((fire.points, fire.level, fire.shields), (9, 3, 2));
+    await db.close();
+  });
+
+  test('a version 22 database gains an untouched guide', () async {
+    await prepare([
+      'INSERT INTO settings (id, onboarding_completed) VALUES (0, 1)',
+      'INSERT INTO wallets (id, coins) VALUES (0, 91)',
+      ..._rewindFrom23,
+      'PRAGMA user_version = 22',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    // No row: nobody who already uses the app is made to see the tour.
+    expect(await db.select(db.guideStates).get(), isEmpty);
+    expect((await db.select(db.wallets).getSingle()).coins, 91);
     await db.close();
   });
 

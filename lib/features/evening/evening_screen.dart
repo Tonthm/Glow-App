@@ -20,6 +20,7 @@ import '../../theme/widgets/warning_bar.dart';
 import '../ai/ai_providers.dart';
 import '../ai/ai_split_sheet.dart';
 import '../ai/why_card.dart';
+import '../guide/info_button.dart';
 import 'evening_providers.dart';
 import 'task_form_sheet.dart';
 
@@ -69,6 +70,7 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
       appBar: AppBar(
         title: const Text('ตารางเย็นนี้'),
         actions: [
+          const InfoButton(GuideTip.evening),
           IconButton(
             icon: const Icon(Icons.checklist),
             tooltip: 'งานทั้งหมด',
@@ -282,9 +284,7 @@ class _EveningScreenState extends ConsumerState<EveningScreen> {
               ref.watch(subjectColorsProvider).value ?? const {},
               block.title,
             ) ??
-            (isTask
-                ? theme.colorScheme.primary.withValues(alpha: 0.16)
-                : null),
+            (isTask ? theme.colorScheme.primary.withValues(alpha: 0.16) : null),
         border: Border.all(color: theme.dividerColor),
         borderRadius: BorderRadius.circular(GlowRadius.button),
       ),

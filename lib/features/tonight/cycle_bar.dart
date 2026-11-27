@@ -4,6 +4,7 @@ import '../../core/sleep_cycles.dart';
 import '../../data/night_planning_repository.dart';
 import '../../theme/glow_colors.dart';
 import '../../theme/tokens.dart';
+import '../guide/info_button.dart';
 
 /// Tonight from bedtime to wake as estimated sleep cycles (CLAUDE.md section
 /// 20). Every cycle looks the same: the app knows nothing about which part of
@@ -69,11 +70,19 @@ class CycleBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: GlowSpacing.xs),
-        Text(
-          'ประมาณ $count รอบ'
-          '${cycles.fallAsleepMinutes > 0 ? ' · ช่องแรกคือช่วงกว่าจะหลับ' : ''}',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                'ประมาณ $count รอบ'
+                '${cycles.fallAsleepMinutes > 0 ? ' · ช่องแรกคือช่วงกว่าจะหลับ' : ''}',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            const InfoButton(GuideTip.cycles),
+          ],
         ),
         Text(
           cycleDisclaimer,

@@ -1,19 +1,18 @@
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'countdown_strip.dart';
 import 'cycle_bar.dart';
 import '../../core/first_class.dart';
+import '../../core/guide.dart';
 import '../../core/activity_guess.dart';
 import '../../core/bed_press.dart';
 import '../../core/economy_config.dart';
 import '../../core/night_date.dart';
 import '../../core/quests.dart';
 import '../../core/quests.dart' as quests;
-import '../../core/routine_builder.dart';
 import '../../core/routine_config.dart';
 import '../../core/schedule_load.dart';
 import '../../core/schedule_models.dart';
@@ -33,9 +32,10 @@ import '../../theme/widgets/night_ring.dart';
 import '../../theme/widgets/warning_bar.dart';
 import '../card/my_card.dart';
 import '../evening/evening_card.dart';
-import '../evening/evening_screen.dart';
+import '../guide/guide_button.dart';
+import '../guide/info_button.dart';
+import '../guide/starter_checklist.dart';
 import '../routine/activity_card.dart';
-import '../routine/routine_screen.dart';
 import '../settings/setting_row.dart';
 import '../share/share_screen.dart';
 import '../shared/settings_button.dart';
@@ -44,6 +44,7 @@ import '../stats/night_detail_sheet.dart';
 import '../web/web_reminder_bars.dart';
 import 'check_in_card.dart';
 import 'check_in_result_screen.dart';
+import 'tonight_actions.dart';
 import '../../services/app_clock.dart';
 import '../../services/home_widget_service.dart';
 
@@ -237,9 +238,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   Set<DayActivityKind>? _picked;
   DateTime? _pickedFor;
 
-  /// True after the app is (re)opened, until answered. Pressing the button
-  /// during this visit doesn't count as coming back.
-  bool _cameBack = true;
+  /// The checklist's "ดูแผนคืนนี้" is ticked once per visit at most.
+  bool _planSeen = false;
 
   @override
   void initState() {
@@ -260,7 +260,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     // have changed, and permissions may have been switched off meanwhile.
     _lifecycle = AppLifecycleListener(
       onResume: () {
-        setState(() => _cameBack = true);
+        ref.read(justOpenedProvider.notifier).state = true;
         ref.invalidate(tonightPlanProvider);
         _checkPermissions();
       },
@@ -306,6 +306,17 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
       }
     });
     final planAsync = ref.watch(tonightPlanProvider);
+    if (!_planSeen &&
+        hasSchedule &&
+        planAsync.hasValue &&
+        planAsync.requireValue.pendingCheckIn == null &&
+        ref.watch(selectedTabIndexProvider) == 0) {
+      _planSeen = true;
+      final guide = ref.read(guideRepositoryProvider);
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => guide.markDone({ChecklistStep.viewPlan}),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -321,6 +332,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
             onPressed: _shareCard,
           ),
           const SettingsButton(),
+          const GuideButton(),
         ],
       ),
       body: RefreshIndicator(
@@ -348,6 +360,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                 error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
                 data: _buildPlan,
               ),
+            const StarterChecklist(),
             const SizedBox(height: GlowSpacing.md),
             GlowFold(
               icon: Icons.badge_outlined,
@@ -374,14 +387,11 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         .push(MaterialPageRoute(builder: (_) => const ShareScreen()));
   }
 
-  bool _canPressInBed(TonightPlanData plan) => canPressInBed(
-    now: ref.read(clockProvider)(),
-    notifyTime: NightPlanningRepository.notifyTimeOf(plan.draft),
-    plannedWakeTime: plan.draft.wakeTime,
-  );
+  bool _canPressInBed(TonightPlanData plan) =>
+      canPressInBedAt(ref.read(clockProvider)(), plan);
 
   bool _asksIfStillUp(TonightPlanData plan) {
-    if (!_cameBack || plan.inBedAt == null) return false;
+    if (!ref.watch(justOpenedProvider) || plan.inBedAt == null) return false;
     return ref
         .read(clockProvider)()
         .isBefore(bedPressWindowEnd(plan.draft.wakeTime));
@@ -487,7 +497,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         if (_asksIfStillUp(plan)) ...[
           _StillUpBar(
             onMove: () => _goToBed(plan),
-            onDismiss: () => setState(() => _cameBack = false),
+            onDismiss: () =>
+                ref.read(justOpenedProvider.notifier).state = false,
           ),
           const SizedBox(height: GlowSpacing.md),
         ],
@@ -576,7 +587,14 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         children: [
           _WeekRings(cells: plan.weekCells, tonight: plan.wakeDate),
           const SizedBox(height: GlowSpacing.lg),
-          Text(_modeLine(plan), style: textTheme.bodyLarge),
+          Row(
+            children: [
+              Expanded(
+                child: Text(_modeLine(plan), style: textTheme.bodyLarge),
+              ),
+              const InfoButton(GuideTip.questModes),
+            ],
+          ),
           Text(
             _questLine(plan.mode, routine: plan.routineEnabled),
             style: textTheme.bodyMedium,
@@ -597,15 +615,11 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     );
   }
 
-  List<Pose> _routineFor(TonightPlanData plan) => buildRoutine(
-    wakeDate: plan.wakeDate,
-    activities: _picked ?? plan.activities,
-    mode: plan.mode,
-    hiddenPoseIds: plan.hiddenPoseIds,
-  );
-
   int _routineMinutes(TonightPlanData plan) {
-    final seconds = _routineFor(plan).fold(0, (sum, p) => sum + p.seconds);
+    final seconds = routineFor(
+      plan,
+      picked: _picked,
+    ).fold(0, (sum, p) => sum + p.seconds);
     return (seconds / 60).round();
   }
 
@@ -626,18 +640,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     if (mounted) ref.invalidate(tonightPlanProvider);
   }
 
-  Future<void> _openEvening(TonightPlanData plan) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EveningScreen(
-          onStartRoutine: plan.routineEnabled && plan.inBedAt == null
-              ? () => _startRoutine(plan)
-              : null,
-        ),
-      ),
-    );
-    if (mounted) ref.invalidate(tonightPlanProvider);
-  }
+  Future<void> _openEvening(TonightPlanData plan) =>
+      openEvening(context, plan, picked: _picked);
 
   Future<void> _saveActivities(
     TonightPlanData plan,
@@ -649,30 +653,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     if (mounted) ref.invalidate(tonightPlanProvider);
   }
 
-  Future<void> _startRoutine(TonightPlanData plan) async {
-    // Starting settles what today involved.
-    await ref
-        .read(routineRepositoryProvider)
-        .saveActivities(
-          plan.wakeDate,
-          _picked ?? plan.activities,
-          confirmed: true,
-        );
-    if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => RoutineScreen(
-          wakeDate: plan.wakeDate,
-          poses: _routineFor(plan),
-          mode: plan.mode,
-          onInBed: plan.inBedAt == null && _canPressInBed(plan)
-              ? () => _goToBed(plan)
-              : null,
-        ),
-      ),
-    );
-    if (mounted) ref.invalidate(tonightPlanProvider);
-  }
+  Future<void> _startRoutine(TonightPlanData plan) =>
+      startRoutine(context, plan, picked: _picked);
 
   Future<void> _toggleLowEnergy(TonightPlanData plan) async {
     final turningOn = !plan.lowEnergy;
@@ -690,19 +672,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     }
   }
 
-  Future<void> _goToBed(TonightPlanData plan) async {
-    setState(() => _cameBack = false);
-    final notifications = ref.read(notificationServiceProvider);
-    HapticFeedback.lightImpact();
-    await ref
-        .read(nightPlanningRepositoryProvider)
-        .markInBed(plan.wakeDate, ref.read(clockProvider)());
-    await notifications.cancelBedtimeNotification(plan.wakeDate);
-    if (!mounted) return;
-    ref.invalidate(tonightPlanProvider);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('บันทึกแล้ว ฝันดีนะ')));
-  }
+  Future<void> _goToBed(TonightPlanData plan) => goToBed(context, plan);
 
   Future<void> _undoInBed(TonightPlanData plan) async {
     await ref.read(nightPlanningRepositoryProvider).undoInBed(plan.wakeDate);

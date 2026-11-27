@@ -16,7 +16,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 13;
+  static const _version = 14;
 
   /// The card photo goes in only if [includePhoto] is asked for.
   Future<Map<String, dynamic>> buildSnapshot({
@@ -55,6 +55,7 @@ class BackupService {
       'aiSettings': await dump(db.aiSettings),
       // Keeps the SEQUENCE counters, so re-added reminders still update.
       'calendarReminderStates': await dump(db.calendarReminderStates),
+      'guideStates': await dump(db.guideStates),
     };
   }
 
@@ -258,6 +259,11 @@ class BackupService {
         'calendarReminderStates',
         db.calendarReminderStates,
         (j) => CalendarReminderRow.fromJson(j).toCompanion(false),
+      );
+      await load(
+        'guideStates',
+        db.guideStates,
+        (j) => GuideStateRow.fromJson(j).toCompanion(false),
       );
     });
   }

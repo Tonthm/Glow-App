@@ -40,13 +40,16 @@ class Settings extends Table {
       integer().withDefault(const Constant(15))();
   IntColumn get freeDayWakeMinutes =>
       integer().withDefault(const Constant(450))();
+
   /// The earliest class time given at the start, used only while the
   /// timetable has no classes (core/first_class). Added in schema 17.
   IntColumn get earliestClassMinutes => integer().nullable()();
+
   /// The first column of the calendar, 7 = Sunday, 1 = Monday. Only how it
   /// is drawn: quests and stats keep Monday. Added in schema 18.
   IntColumn get calendarFirstWeekday =>
       integer().withDefault(const Constant(DateTime.sunday))();
+
   /// Deadline and before-class reminders, off until asked for. Added in
   /// schema 20.
   BoolColumn get notifyDeadline =>
@@ -55,6 +58,7 @@ class Settings extends Table {
       boolean().withDefault(const Constant(false))();
   IntColumn get beforeClassMinutes =>
       integer().withDefault(const Constant(15))();
+
   /// Sleep cycles (section 20): whether bedtime moves earlier to make
   /// whole cycles, and how long one is taken to be. Added in schema 22.
   BoolColumn get cycleAlignEnabled =>
@@ -468,6 +472,26 @@ class CalendarReminderStates extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Single-row table (id always 0): how far the guide has been used (CLAUDE.md
+/// section 21).
+@DataClassName('GuideStateRow')
+class GuideStates extends Table {
+  IntColumn get id => integer().withDefault(const Constant(0))();
+
+  /// Set when setup finishes, until the first tour is closed. People who were
+  /// already using the app are never made to see it.
+  BoolColumn get tourPending => boolean().withDefault(const Constant(false))();
+  BoolColumn get checklistDismissed =>
+      boolean().withDefault(const Constant(false))();
+
+  /// Comma-separated ChecklistStep names. A step stays ticked even if what
+  /// ticked it is later deleted.
+  TextColumn get doneSteps => text().withDefault(const Constant(''))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Settings,
@@ -489,6 +513,7 @@ class CalendarReminderStates extends Table {
     CardPhotos,
     SubjectColors,
     TaskSteps,
+    GuideStates,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -507,7 +532,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -655,6 +680,9 @@ class AppDatabase extends _$AppDatabase {
         await _addColumnIfMissing(m, settings, settings.cycleMinutes);
         await _addColumnIfMissing(m, nightPlans, nightPlans.cycleShiftMinutes);
         await _addColumnIfMissing(m, nightPlans, nightPlans.cycleMinutes);
+      }
+      if (from < 23) {
+        await m.createTable(guideStates);
       }
     },
     // A removed photo or birth date is wiped from the file, not only

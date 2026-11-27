@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/demo/demo_button.dart';
+import 'features/guide/tour_screen.dart';
 import 'features/room/room_screen.dart';
 import 'features/schedule/schedule_screen.dart';
 import 'features/stats/stats_screen.dart';
@@ -49,11 +50,28 @@ const _tabSpecs = [
 ];
 
 /// Four labelled tabs in the floating capsule from the Figma design.
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showFirstTour());
+  }
+
+  /// Only right after setup (section 21).
+  Future<void> _showFirstTour() async {
+    final guide = await ref.read(guideRepositoryProvider).get();
+    if (guide.tourPending && mounted) await openTour(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final index = ref.watch(selectedTabIndexProvider);
     final theme = Theme.of(context);
 

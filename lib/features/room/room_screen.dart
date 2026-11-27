@@ -16,6 +16,8 @@ import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/stat_tile.dart';
 import '../card/card_details_sheet.dart';
 import '../card/my_card.dart';
+import '../guide/guide_button.dart';
+import '../guide/info_button.dart';
 import '../shared/settings_button.dart';
 import 'blanket_color.dart';
 
@@ -61,7 +63,7 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('บัตร'),
-        actions: const [SettingsButton()],
+        actions: const [SettingsButton(), GuideButton()],
       ),
       body: ListView(
         padding: const EdgeInsets.all(GlowSpacing.pageMargin),
@@ -73,6 +75,12 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
             label: const Text('แก้โปรไฟล์ รูป และอวตาร'),
           ),
           const SizedBox(height: GlowSpacing.sm),
+          Row(
+            children: [
+              Text('ไฟและโล่', style: Theme.of(context).textTheme.titleMedium),
+              const InfoButton(GuideTip.fireAndShields),
+            ],
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [

@@ -10449,6 +10449,325 @@ class TaskStepsCompanion extends UpdateCompanion<TaskStepRow> {
   }
 }
 
+class $GuideStatesTable extends GuideStates
+    with TableInfo<$GuideStatesTable, GuideStateRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GuideStatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _tourPendingMeta = const VerificationMeta(
+    'tourPending',
+  );
+  @override
+  late final GeneratedColumn<bool> tourPending = GeneratedColumn<bool>(
+    'tour_pending',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("tour_pending" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _checklistDismissedMeta =
+      const VerificationMeta('checklistDismissed');
+  @override
+  late final GeneratedColumn<bool> checklistDismissed = GeneratedColumn<bool>(
+    'checklist_dismissed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("checklist_dismissed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _doneStepsMeta = const VerificationMeta(
+    'doneSteps',
+  );
+  @override
+  late final GeneratedColumn<String> doneSteps = GeneratedColumn<String>(
+    'done_steps',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tourPending,
+    checklistDismissed,
+    doneSteps,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'guide_states';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GuideStateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tour_pending')) {
+      context.handle(
+        _tourPendingMeta,
+        tourPending.isAcceptableOrUnknown(
+          data['tour_pending']!,
+          _tourPendingMeta,
+        ),
+      );
+    }
+    if (data.containsKey('checklist_dismissed')) {
+      context.handle(
+        _checklistDismissedMeta,
+        checklistDismissed.isAcceptableOrUnknown(
+          data['checklist_dismissed']!,
+          _checklistDismissedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('done_steps')) {
+      context.handle(
+        _doneStepsMeta,
+        doneSteps.isAcceptableOrUnknown(data['done_steps']!, _doneStepsMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GuideStateRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GuideStateRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tourPending: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}tour_pending'],
+      )!,
+      checklistDismissed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}checklist_dismissed'],
+      )!,
+      doneSteps: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}done_steps'],
+      )!,
+    );
+  }
+
+  @override
+  $GuideStatesTable createAlias(String alias) {
+    return $GuideStatesTable(attachedDatabase, alias);
+  }
+}
+
+class GuideStateRow extends DataClass implements Insertable<GuideStateRow> {
+  final int id;
+
+  /// Set when setup finishes, until the first tour is closed. People who were
+  /// already using the app are never made to see it.
+  final bool tourPending;
+  final bool checklistDismissed;
+
+  /// Comma-separated ChecklistStep names. A step stays ticked even if what
+  /// ticked it is later deleted.
+  final String doneSteps;
+  const GuideStateRow({
+    required this.id,
+    required this.tourPending,
+    required this.checklistDismissed,
+    required this.doneSteps,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tour_pending'] = Variable<bool>(tourPending);
+    map['checklist_dismissed'] = Variable<bool>(checklistDismissed);
+    map['done_steps'] = Variable<String>(doneSteps);
+    return map;
+  }
+
+  GuideStatesCompanion toCompanion(bool nullToAbsent) {
+    return GuideStatesCompanion(
+      id: Value(id),
+      tourPending: Value(tourPending),
+      checklistDismissed: Value(checklistDismissed),
+      doneSteps: Value(doneSteps),
+    );
+  }
+
+  factory GuideStateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GuideStateRow(
+      id: serializer.fromJson<int>(json['id']),
+      tourPending: serializer.fromJson<bool>(json['tourPending']),
+      checklistDismissed: serializer.fromJson<bool>(json['checklistDismissed']),
+      doneSteps: serializer.fromJson<String>(json['doneSteps']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tourPending': serializer.toJson<bool>(tourPending),
+      'checklistDismissed': serializer.toJson<bool>(checklistDismissed),
+      'doneSteps': serializer.toJson<String>(doneSteps),
+    };
+  }
+
+  GuideStateRow copyWith({
+    int? id,
+    bool? tourPending,
+    bool? checklistDismissed,
+    String? doneSteps,
+  }) => GuideStateRow(
+    id: id ?? this.id,
+    tourPending: tourPending ?? this.tourPending,
+    checklistDismissed: checklistDismissed ?? this.checklistDismissed,
+    doneSteps: doneSteps ?? this.doneSteps,
+  );
+  GuideStateRow copyWithCompanion(GuideStatesCompanion data) {
+    return GuideStateRow(
+      id: data.id.present ? data.id.value : this.id,
+      tourPending: data.tourPending.present
+          ? data.tourPending.value
+          : this.tourPending,
+      checklistDismissed: data.checklistDismissed.present
+          ? data.checklistDismissed.value
+          : this.checklistDismissed,
+      doneSteps: data.doneSteps.present ? data.doneSteps.value : this.doneSteps,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GuideStateRow(')
+          ..write('id: $id, ')
+          ..write('tourPending: $tourPending, ')
+          ..write('checklistDismissed: $checklistDismissed, ')
+          ..write('doneSteps: $doneSteps')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, tourPending, checklistDismissed, doneSteps);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GuideStateRow &&
+          other.id == this.id &&
+          other.tourPending == this.tourPending &&
+          other.checklistDismissed == this.checklistDismissed &&
+          other.doneSteps == this.doneSteps);
+}
+
+class GuideStatesCompanion extends UpdateCompanion<GuideStateRow> {
+  final Value<int> id;
+  final Value<bool> tourPending;
+  final Value<bool> checklistDismissed;
+  final Value<String> doneSteps;
+  const GuideStatesCompanion({
+    this.id = const Value.absent(),
+    this.tourPending = const Value.absent(),
+    this.checklistDismissed = const Value.absent(),
+    this.doneSteps = const Value.absent(),
+  });
+  GuideStatesCompanion.insert({
+    this.id = const Value.absent(),
+    this.tourPending = const Value.absent(),
+    this.checklistDismissed = const Value.absent(),
+    this.doneSteps = const Value.absent(),
+  });
+  static Insertable<GuideStateRow> custom({
+    Expression<int>? id,
+    Expression<bool>? tourPending,
+    Expression<bool>? checklistDismissed,
+    Expression<String>? doneSteps,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tourPending != null) 'tour_pending': tourPending,
+      if (checklistDismissed != null) 'checklist_dismissed': checklistDismissed,
+      if (doneSteps != null) 'done_steps': doneSteps,
+    });
+  }
+
+  GuideStatesCompanion copyWith({
+    Value<int>? id,
+    Value<bool>? tourPending,
+    Value<bool>? checklistDismissed,
+    Value<String>? doneSteps,
+  }) {
+    return GuideStatesCompanion(
+      id: id ?? this.id,
+      tourPending: tourPending ?? this.tourPending,
+      checklistDismissed: checklistDismissed ?? this.checklistDismissed,
+      doneSteps: doneSteps ?? this.doneSteps,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tourPending.present) {
+      map['tour_pending'] = Variable<bool>(tourPending.value);
+    }
+    if (checklistDismissed.present) {
+      map['checklist_dismissed'] = Variable<bool>(checklistDismissed.value);
+    }
+    if (doneSteps.present) {
+      map['done_steps'] = Variable<String>(doneSteps.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GuideStatesCompanion(')
+          ..write('id: $id, ')
+          ..write('tourPending: $tourPending, ')
+          ..write('checklistDismissed: $checklistDismissed, ')
+          ..write('doneSteps: $doneSteps')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -10475,6 +10794,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CardPhotosTable cardPhotos = $CardPhotosTable(this);
   late final $SubjectColorsTable subjectColors = $SubjectColorsTable(this);
   late final $TaskStepsTable taskSteps = $TaskStepsTable(this);
+  late final $GuideStatesTable guideStates = $GuideStatesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -10499,6 +10819,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cardPhotos,
     subjectColors,
     taskSteps,
+    guideStates,
   ];
 }
 
@@ -15812,6 +16133,194 @@ typedef $$TaskStepsTableProcessedTableManager =
       TaskStepRow,
       PrefetchHooks Function()
     >;
+typedef $$GuideStatesTableCreateCompanionBuilder =
+    GuideStatesCompanion Function({
+      Value<int> id,
+      Value<bool> tourPending,
+      Value<bool> checklistDismissed,
+      Value<String> doneSteps,
+    });
+typedef $$GuideStatesTableUpdateCompanionBuilder =
+    GuideStatesCompanion Function({
+      Value<int> id,
+      Value<bool> tourPending,
+      Value<bool> checklistDismissed,
+      Value<String> doneSteps,
+    });
+
+class $$GuideStatesTableFilterComposer
+    extends Composer<_$AppDatabase, $GuideStatesTable> {
+  $$GuideStatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get tourPending => $composableBuilder(
+    column: $table.tourPending,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get checklistDismissed => $composableBuilder(
+    column: $table.checklistDismissed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get doneSteps => $composableBuilder(
+    column: $table.doneSteps,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GuideStatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $GuideStatesTable> {
+  $$GuideStatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get tourPending => $composableBuilder(
+    column: $table.tourPending,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get checklistDismissed => $composableBuilder(
+    column: $table.checklistDismissed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get doneSteps => $composableBuilder(
+    column: $table.doneSteps,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GuideStatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GuideStatesTable> {
+  $$GuideStatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get tourPending => $composableBuilder(
+    column: $table.tourPending,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get checklistDismissed => $composableBuilder(
+    column: $table.checklistDismissed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get doneSteps =>
+      $composableBuilder(column: $table.doneSteps, builder: (column) => column);
+}
+
+class $$GuideStatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GuideStatesTable,
+          GuideStateRow,
+          $$GuideStatesTableFilterComposer,
+          $$GuideStatesTableOrderingComposer,
+          $$GuideStatesTableAnnotationComposer,
+          $$GuideStatesTableCreateCompanionBuilder,
+          $$GuideStatesTableUpdateCompanionBuilder,
+          (
+            GuideStateRow,
+            BaseReferences<_$AppDatabase, $GuideStatesTable, GuideStateRow>,
+          ),
+          GuideStateRow,
+          PrefetchHooks Function()
+        > {
+  $$GuideStatesTableTableManager(_$AppDatabase db, $GuideStatesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GuideStatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GuideStatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GuideStatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> tourPending = const Value.absent(),
+                Value<bool> checklistDismissed = const Value.absent(),
+                Value<String> doneSteps = const Value.absent(),
+              }) => GuideStatesCompanion(
+                id: id,
+                tourPending: tourPending,
+                checklistDismissed: checklistDismissed,
+                doneSteps: doneSteps,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> tourPending = const Value.absent(),
+                Value<bool> checklistDismissed = const Value.absent(),
+                Value<String> doneSteps = const Value.absent(),
+              }) => GuideStatesCompanion.insert(
+                id: id,
+                tourPending: tourPending,
+                checklistDismissed: checklistDismissed,
+                doneSteps: doneSteps,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$GuideStatesTable, GuideStateRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $GuideStatesTable,
+                    GuideStateRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GuideStatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GuideStatesTable,
+      GuideStateRow,
+      $$GuideStatesTableFilterComposer,
+      $$GuideStatesTableOrderingComposer,
+      $$GuideStatesTableAnnotationComposer,
+      $$GuideStatesTableCreateCompanionBuilder,
+      $$GuideStatesTableUpdateCompanionBuilder,
+      (
+        GuideStateRow,
+        BaseReferences<_$AppDatabase, $GuideStatesTable, GuideStateRow>,
+      ),
+      GuideStateRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -15857,4 +16366,6 @@ class $AppDatabaseManager {
       $$SubjectColorsTableTableManager(_db, _db.subjectColors);
   $$TaskStepsTableTableManager get taskSteps =>
       $$TaskStepsTableTableManager(_db, _db.taskSteps);
+  $$GuideStatesTableTableManager get guideStates =>
+      $$GuideStatesTableTableManager(_db, _db.guideStates);
 }

@@ -101,6 +101,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
     // Section 1: onboarding ends with entering the first schedule.
     ref.read(selectedTabIndexProvider.notifier).state = 1;
+    // The short tour comes first (section 21).
+    await ref.read(guideRepositoryProvider).setTourPending(true);
     await settings.markOnboardingCompleted(now);
   }
 

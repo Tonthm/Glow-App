@@ -9,6 +9,7 @@ import 'data/check_in_repository.dart';
 import 'data/database.dart';
 import 'data/evening_repository.dart';
 import 'data/fire_repository.dart';
+import 'data/guide_repository.dart';
 import 'data/night_planning_repository.dart';
 import 'data/quest_repository.dart';
 import 'data/routine_repository.dart';
@@ -79,6 +80,10 @@ final questRepositoryProvider = Provider<QuestRepository>((ref) {
     ref.watch(walletRepositoryProvider),
     ref.watch(scheduleRepositoryProvider),
   );
+});
+
+final guideRepositoryProvider = Provider<GuideRepository>((ref) {
+  return GuideRepository(ref.watch(databaseProvider));
 });
 
 final routineRepositoryProvider = Provider<RoutineRepository>((ref) {
