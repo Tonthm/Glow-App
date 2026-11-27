@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../tokens.dart';
+import '../glow_colors.dart';
 
 /// Shown on any screen with nothing in it yet, per THEME.md: an icon, a
 /// short Thai message saying what to do next, and an optional action.
@@ -27,7 +28,19 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: textSecondary?.color),
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: context.glowColors.pastel(GlowPastel.lilac),
+              ),
+              child: Icon(
+                icon,
+                size: 36,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
             const SizedBox(height: GlowSpacing.lg),
             Text(message, style: textSecondary, textAlign: TextAlign.center),
             if (actionLabel != null && onAction != null) ...[

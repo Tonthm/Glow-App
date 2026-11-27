@@ -72,7 +72,7 @@ class TimeOfDayField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: GlowSpacing.lg),
       title: Text(label),
       subtitle: Text(
         formatTimeOfDay(time),

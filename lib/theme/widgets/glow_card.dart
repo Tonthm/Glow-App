@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../glow_colors.dart';
 import '../tokens.dart';
 
-/// The app's card: rounded, with a thin ink outline and an optional pastel
+/// The app's card: rounded, with a clean surface and an optional pastel
 /// fill. Use it instead of drawing a box in a screen.
 class GlowCard extends StatelessWidget {
   final Widget child;
@@ -28,10 +28,6 @@ class GlowCard extends StatelessWidget {
           : context.glowColors.pastel(pastel!),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(GlowRadius.card),
-        side: BorderSide(
-          color: theme.colorScheme.outline,
-          width: GlowStroke.outline,
-        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

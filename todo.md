@@ -174,3 +174,12 @@ flutter emulators --launch glow_test
 flutter run
 dart run build_runner build   # หลังแก้ lib/data/database.dart
 ```
+## UI ตาม Figma — 27 พ.ย. 2026
+
+- [x] ธีมครีม/คอรัล/ม่วง ฟอนต์ IBM Plex Sans Thai + Fredoka ฝังพร้อมใบอนุญาต
+- [x] แถบนำทางแคปซูลมีป้ายไทย บัตรสัดส่วนใหม่ การ์ด/ฟอร์ม/สถิติ/ตั้งค่าเข้าชุด
+- [x] โหมดสีที่เลือกมีผลกับหน้าที่เปิดใหม่ และจัดเว็บกึ่งกลางกว้างไม่เกิน 520 dp
+- [x] ตรวจเว็บ release ใน Chrome ที่ 320×640, 393×852 และ 1440×1000: เปิดแอป ตั้งค่า โหมดมืด และย่อ–ขยายหน้าต่างผ่าน ไม่มี console error
+- [ ] เทียบ Figma สดทุกหน้า (MCP Starter quota เต็ม; รอบนี้ใช้ภาพที่ดึงไว้และ SVG เพิ่มเติม)
+- [ ] ลอง Safari/iPhone จริง รวมคีย์บอร์ด การเลือกภาพ และแชร์ไฟล์
+- [ ] Flutter 3.50.1 debug: หลังเดินหลายหน้าและย่อ–ขยาย viewport พบ RawTooltip assertion `size == theater.size`; การกดใช้งานที่ขนาดคงที่และ release smoke รวมย่อ–ขยายหน้าต่างไม่พบปัญหานี้

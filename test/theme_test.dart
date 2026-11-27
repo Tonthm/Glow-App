@@ -41,6 +41,17 @@ void main() {
       readable('links on the page', scheme.primary, page);
       readable('links on cards', scheme.primary, scheme.surface);
       readable(
+        'selected navigation label',
+        scheme.onPrimaryContainer,
+        scheme.primaryContainer,
+      );
+      final secondaryButton = theme.outlinedButtonTheme.style!;
+      readable(
+        'secondary button label',
+        secondaryButton.foregroundColor!.resolve({})!,
+        secondaryButton.backgroundColor!.resolve({})!,
+      );
+      readable(
         'main button label',
         button.foregroundColor!.resolve({})!,
         button.backgroundColor!.resolve({})!,

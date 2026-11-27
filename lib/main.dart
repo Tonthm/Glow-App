@@ -30,11 +30,12 @@ Future<void> main() async {
   );
 }
 
-class GlowApp extends StatelessWidget {
+class GlowApp extends ConsumerWidget {
   const GlowApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(settingsStreamProvider).value?.themeMode;
     return MaterialApp(
       title: 'Glow',
       // The demo runs on a debug build; keep the banner off the stage.
@@ -44,10 +45,33 @@ class GlowApp extends StatelessWidget {
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: GlowAppTheme.light(),
       darkTheme: GlowAppTheme.dark(),
-      themeMode: ThemeMode.system,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
+      themeMode: switch (themeMode) {
+        AppThemeMode.light => ThemeMode.light,
+        AppThemeMode.dark => ThemeMode.dark,
+        _ => ThemeMode.system,
+      },
+      builder: (context, child) => LayoutBuilder(
+        builder: (context, constraints) {
+          final media = MediaQuery.of(context);
+          final width = constraints.maxWidth.clamp(0.0, 520.0);
+          return ColoredBox(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Center(
+              child: SizedBox(
+                width: width,
+                child: ClipRect(
+                  child: MediaQuery(
+                    data: media.copyWith(
+                      size: Size(width, media.size.height),
+                      alwaysUse24HourFormat: true,
+                    ),
+                    child: child!,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
       home: const WebAppGate(child: _RootGate()),
     );
@@ -65,38 +89,9 @@ class _RootGate extends ConsumerWidget {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) =>
           Scaffold(body: Center(child: Text('เกิดข้อผิดพลาด: $e'))),
-      data: (settings) => _ThemedApp(
-        themeMode: settings.themeMode,
-        child: settings.onboardingCompleted
-            ? const AppShell()
-            : const OnboardingScreen(),
-      ),
-    );
-  }
-}
-
-/// MaterialApp's themeMode is fixed at the top (GlowApp) since it can't read
-/// riverpod state before ProviderScope exists above it — this re-applies the
-/// user's stored "ตามระบบ/สว่าง/มืด" choice (section 3) over that default via
-/// an inherited Theme override.
-class _ThemedApp extends StatelessWidget {
-  final AppThemeMode themeMode;
-  final Widget child;
-
-  const _ThemedApp({required this.themeMode, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    if (themeMode == AppThemeMode.system) return child;
-    final isDark = themeMode == AppThemeMode.dark;
-    return Theme(
-      data: isDark ? GlowAppTheme.dark() : GlowAppTheme.light(),
-      child: MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          platformBrightness: isDark ? Brightness.dark : Brightness.light,
-        ),
-        child: child,
-      ),
+      data: (settings) => settings.onboardingCompleted
+          ? const AppShell()
+          : const OnboardingScreen(),
     );
   }
 }

@@ -18,7 +18,7 @@ void main() {
   Future<void> show(WidgetTester tester) async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await SettingsRepository(db).applyAgeGroupDefaults(AgeGroup.adult);
-    // Tall enough that the whole first page is built at once.
+    // A narrow viewport also exercises wrapped setting descriptions.
     tester.view.physicalSize = const Size(320, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -57,6 +57,7 @@ void main() {
     // The advanced link is a way further, not a setting.
     expect(find.byType(SettingRow), findsNWidgets(5));
     expect(find.byType(SwitchListTile), findsNothing);
+    final seen = await allText(tester);
     for (final title in [
       'โปรไฟล์และบัตร',
       'เวลาเดินทาง',
@@ -65,9 +66,12 @@ void main() {
       'โหมดสี',
       'ตั้งค่าขั้นสูง',
     ]) {
-      expect(find.text(title), findsOneWidget, reason: title);
+      expect(seen, contains(title), reason: title);
     }
-    expect(find.textContaining('ไม่ใช่คำแนะนำทางการแพทย์'), findsOneWidget);
+    expect(
+      seen.any((text) => text.contains('ไม่ใช่คำแนะนำทางการแพทย์')),
+      isTrue,
+    );
     await closeDatabase(tester, db);
   });
 

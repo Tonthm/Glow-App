@@ -57,8 +57,8 @@ class GlowAppTheme {
       brightness: brightness,
       primary: accent,
       onPrimary: onAccent,
-      primaryContainer: selectedFill,
-      onPrimaryContainer: textPrimary,
+      primaryContainer: accentFill,
+      onPrimaryContainer: onAccentFill,
       secondary: accent,
       onSecondary: onAccent,
       secondaryContainer: selectedFill,
@@ -74,7 +74,7 @@ class GlowAppTheme {
     );
 
     TextStyle text(double size, FontWeight weight, Color color) => TextStyle(
-      fontFamily: 'NotoSansThai',
+      fontFamily: 'IBMPlexSansThai',
       fontWeight: weight,
       fontSize: size,
       // Thai stacks marks above and below the line.
@@ -83,10 +83,10 @@ class GlowAppTheme {
     );
 
     const regular = FontWeight.w400;
-    const bold = FontWeight.w700;
+    const bold = FontWeight.w600;
     final baseTextTheme = TextTheme(
       displayLarge: TextStyle(
-        fontFamily: 'NotoSansThai',
+        fontFamily: 'Fredoka',
         fontWeight: bold,
         fontSize: GlowFontSize.bigNumber,
         color: textPrimary,
@@ -101,22 +101,19 @@ class GlowAppTheme {
     );
 
     const buttonText = TextStyle(
-      fontFamily: 'NotoSansThai',
+      fontFamily: 'IBMPlexSansThai',
       fontWeight: bold,
       fontSize: GlowFontSize.body,
     );
-    final line = BorderSide(color: outline, width: GlowStroke.outline);
-    final faintLine = BorderSide(color: divider, width: GlowStroke.outline);
     final buttonShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(GlowRadius.button),
     );
     final cardShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(GlowRadius.card),
-      side: line,
+      side: BorderSide.none,
     );
 
-    // The pastel button with an ink outline, used by both the elevated and
-    // the filled button.
+    // The coral action is shared by elevated and filled buttons.
     final mainButton = ButtonStyle(
       backgroundColor: WidgetStateProperty.resolveWith(
         (states) =>
@@ -127,12 +124,13 @@ class GlowAppTheme {
             ? textSecondary
             : onAccentFill,
       ),
-      side: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.disabled) ? faintLine : line,
-      ),
+      side: const WidgetStatePropertyAll(BorderSide.none),
       shape: WidgetStatePropertyAll(buttonShape),
       elevation: const WidgetStatePropertyAll(0),
       textStyle: const WidgetStatePropertyAll(buttonText),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      ),
     );
 
     OutlineInputBorder fieldBorder(Color color, double width) =>
@@ -146,8 +144,7 @@ class GlowAppTheme {
       brightness: brightness,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: background,
-      fontFamily: 'NotoSansThai',
-      // Nunito has "≈" and "±", which Noto Sans Thai lacks.
+      fontFamily: 'IBMPlexSansThai',
       textTheme: baseTextTheme.apply(fontFamilyFallback: const ['Nunito']),
       dividerColor: divider,
       dividerTheme: DividerThemeData(
@@ -161,6 +158,8 @@ class GlowAppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
+        toolbarHeight: 72,
+        titleSpacing: GlowSpacing.pageMargin,
         titleTextStyle: text(GlowFontSize.title, bold, textPrimary),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -191,8 +190,9 @@ class GlowAppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: textPrimary,
+          backgroundColor: divider,
           minimumSize: const Size(64, 48),
-          side: line,
+          side: BorderSide.none,
           shape: buttonShape,
           textStyle: buttonText,
         ),
@@ -209,10 +209,18 @@ class GlowAppTheme {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith(
             (states) =>
-                states.contains(WidgetState.selected) ? selectedFill : surface,
+                states.contains(WidgetState.selected) ? accentFill : divider,
           ),
-          foregroundColor: WidgetStatePropertyAll(textPrimary),
-          side: WidgetStatePropertyAll(line),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? onAccentFill
+                : textPrimary,
+          ),
+          side: const WidgetStatePropertyAll(BorderSide.none),
+          shape: WidgetStatePropertyAll(buttonShape),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
           textStyle: const WidgetStatePropertyAll(buttonText),
         ),
       ),
@@ -231,20 +239,21 @@ class GlowAppTheme {
         contentTextStyle: text(GlowFontSize.body, regular, textPrimary),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: surface,
+        backgroundColor: background,
         elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(GlowRadius.card),
           ),
-          side: line,
+          side: BorderSide.none,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        border: fieldBorder(outline, GlowStroke.outline),
-        enabledBorder: fieldBorder(outline, GlowStroke.outline),
+        contentPadding: const EdgeInsets.all(GlowSpacing.lg),
+        border: fieldBorder(Colors.transparent, 0),
+        enabledBorder: fieldBorder(Colors.transparent, 0),
         disabledBorder: fieldBorder(divider, GlowStroke.outline),
         focusedBorder: fieldBorder(accent, GlowStroke.focus),
       ),
@@ -252,7 +261,7 @@ class GlowAppTheme {
         backgroundColor: surface,
         selectedColor: selectedFill,
         checkmarkColor: textPrimary,
-        side: line,
+        side: BorderSide.none,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(GlowRadius.pill),
         ),
@@ -270,10 +279,27 @@ class GlowAppTheme {
         shape: buttonShape,
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: accent,
+        color: accentFill,
         linearTrackColor: divider,
       ),
-      iconTheme: IconThemeData(color: textPrimary, size: 26),
+      switchTheme: SwitchThemeData(
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) ? accentFill : divider,
+        ),
+        thumbColor: WidgetStatePropertyAll(surface),
+        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      ),
+      listTileTheme: ListTileThemeData(
+        tileColor: surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GlowRadius.button),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: GlowSpacing.lg),
+        minVerticalPadding: GlowSpacing.md,
+        iconColor: textPrimary,
+      ),
+      iconTheme: IconThemeData(color: textPrimary, size: 24),
       extensions: [glow],
     );
   }

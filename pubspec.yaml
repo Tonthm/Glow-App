@@ -99,6 +99,16 @@ flutter:
   # google/fonts, OFL-licensed) — each weight below maps to the same ttf,
   # letting Flutter select the instance via FontWeight.
   fonts:
+    - family: IBMPlexSansThai
+      fonts:
+        - asset: assets/fonts/IBMPlexSansThai-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansThai-SemiBold.ttf
+          weight: 600
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka.ttf
+          weight: 600
     - family: NotoSansThai
       fonts:
         - asset: assets/fonts/NotoSansThai.ttf

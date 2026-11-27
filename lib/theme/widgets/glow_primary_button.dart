@@ -65,7 +65,9 @@ class _GlowPrimaryButtonState extends State<GlowPrimaryButton>
                 children: [
                   Icon(widget.icon, size: 20),
                   const SizedBox(width: 8),
-                  Text(widget.label),
+                  Flexible(
+                    child: Text(widget.label, textAlign: TextAlign.center),
+                  ),
                 ],
               ),
       ),

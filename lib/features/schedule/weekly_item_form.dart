@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/subject_color.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
+import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../shared/subject_color_picker.dart';
 import '../shared/time_of_day_field.dart';
 import '../shared/title_autocomplete_field.dart';
@@ -24,10 +25,9 @@ Future<void> showWeeklyItemForm(
   int? initialDayOfWeek,
   TimeOfDay? initialStart,
 }) {
-  return showModalBottomSheet(
+  return showGlowBottomSheet(
     context: context,
     isScrollControlled: true,
-    useSafeArea: true,
     builder: (_) => _WeeklyItemForm(
       existing: existing,
       initialDayOfWeek: initialDayOfWeek,
@@ -57,6 +57,7 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
   late TimeOfDay _start;
   late TimeOfDay _end;
   late WeeklyItemType _type;
+
   /// For a new item: the days it happens on.
   late final Set<int> _days;
 
@@ -99,9 +100,7 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
 
     return Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
+        top: 8,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
       child: SingleChildScrollView(
@@ -120,6 +119,7 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
             ),
             const SizedBox(height: 12),
             SegmentedButton<WeeklyItemType>(
+              showSelectedIcon: false,
               segments: const [
                 ButtonSegment(
                   value: WeeklyItemType.classSession,
@@ -152,9 +152,8 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
                 return FilterChip(
                   label: Text(_dayLabels[i]),
                   selected: _days.contains(day),
-                  onSelected: (on) => setState(
-                    () => on ? _days.add(day) : _days.remove(day),
-                  ),
+                  onSelected: (on) =>
+                      setState(() => on ? _days.add(day) : _days.remove(day)),
                 );
               }),
             ),
@@ -193,8 +192,18 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             const SizedBox(height: 16),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                FilledButton(
+                  onPressed:
+                      _title.trim().isEmpty ||
+                          !_hasValidTimes ||
+                          (!_isEdit && _days.isEmpty)
+                      ? null
+                      : _save,
+                  child: const Text('บันทึก'),
+                ),
                 if (_isEdit)
                   TextButton(
                     onPressed: () async {
@@ -210,16 +219,6 @@ class _WeeklyItemFormState extends ConsumerState<_WeeklyItemForm> {
                       ),
                     ),
                   ),
-                const Spacer(),
-                FilledButton(
-                  onPressed:
-                      _title.trim().isEmpty ||
-                          !_hasValidTimes ||
-                          (!_isEdit && _days.isEmpty)
-                      ? null
-                      : _save,
-                  child: const Text('บันทึก'),
-                ),
               ],
             ),
           ],

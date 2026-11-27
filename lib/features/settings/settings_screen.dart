@@ -15,6 +15,7 @@ import '../card/card_details_sheet.dart';
 import '../web/web_reminder_bars.dart';
 import '../demo/demo_button.dart';
 import '../../theme/theme_gallery_screen.dart';
+import '../../theme/tokens.dart';
 import '../shared/minutes_stepper.dart';
 import '../shared/time_of_day_field.dart';
 import 'evening_settings_rows.dart';
@@ -495,7 +496,10 @@ class _SettingsPage extends ConsumerWidget {
           .when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('เกิดข้อผิดพลาด: $e')),
-            data: (settings) => ListView(children: rows(context, settings)),
+            data: (settings) => ListView(
+              padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+              children: rows(context, settings),
+            ),
           ),
     );
   }

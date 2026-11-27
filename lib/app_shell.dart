@@ -8,6 +8,7 @@ import 'features/schedule/schedule_screen.dart';
 import 'features/stats/stats_screen.dart';
 import 'features/tonight/tonight_screen.dart';
 import 'providers.dart';
+import 'theme/tokens.dart';
 
 const _tabs = [TonightScreen(), ScheduleScreen(), StatsScreen(), RoomScreen()];
 
@@ -39,16 +40,10 @@ const _tabSpecs = [
     filled: Icons.bar_chart,
     label: 'สถิติ',
   ),
-  _TabSpec(
-    outlined: Icons.badge_outlined,
-    filled: Icons.badge,
-    label: 'บัตรของฉัน',
-  ),
+  _TabSpec(outlined: Icons.badge_outlined, filled: Icons.badge, label: 'บัตร'),
 ];
 
-/// Bottom nav with the 4 tabs from CLAUDE.md section 1 (icons only, per
-/// THEME.md "ไม่มีตัวหนังสือ"), plus the settings shortcut in each tab's
-/// top-right corner.
+/// Four labelled tabs in the floating capsule from the Figma design.
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
@@ -68,28 +63,67 @@ class AppShell extends ConsumerWidget {
             ),
         ],
       ),
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: theme.dividerColor, width: 0.5),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Material(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(GlowRadius.pill),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                for (final (i, spec) in _tabSpecs.indexed)
+                  Expanded(
+                    child: Semantics(
+                      label: spec.label,
+                      selected: index == i,
+                      button: true,
+                      child: Material(
+                        color: index == i
+                            ? theme.colorScheme.primaryContainer
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () =>
+                              ref
+                                      .read(selectedTabIndexProvider.notifier)
+                                      .state =
+                                  i,
+                          child: ExcludeSemantics(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    index == i ? spec.filled : spec.outlined,
+                                    size: 22,
+                                    color: index == i
+                                        ? theme.colorScheme.onPrimaryContainer
+                                        : theme.colorScheme.onSurface,
+                                  ),
+                                  Text(
+                                    spec.label,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: index == i
+                                          ? theme.colorScheme.onPrimaryContainer
+                                          : theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: index,
-          onTap: (i) => ref.read(selectedTabIndexProvider.notifier).state = i,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          items: [
-            for (final spec in _tabSpecs)
-              BottomNavigationBarItem(
-                icon: Semantics(label: spec.label, child: Icon(spec.outlined)),
-                activeIcon: Semantics(
-                  label: spec.label,
-                  child: Icon(spec.filled),
-                ),
-                label: spec.label,
-              ),
-          ],
         ),
       ),
     );

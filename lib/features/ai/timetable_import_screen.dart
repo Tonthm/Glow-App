@@ -30,14 +30,12 @@ String timetableFailureMessage(AiFailure failure) => switch (failure) {
   AiFailure.inputTooLong => 'รูปใหญ่เกินไป ลองครอบตัดให้เล็กลง',
   AiFailure.quotaReached => 'วันนี้ใช้ AI ครบจำนวนที่ตั้งไว้แล้ว',
   AiFailure.offline => 'ต่ออินเทอร์เน็ตไม่ได้ ตรวจการเชื่อมต่อแล้วลองใหม่',
-  AiFailure.timeout =>
-    'ใช้เวลานานเกินไป ลองใหม่ หรือครอบตัดให้เหลือเฉพาะตาราง',
+  AiFailure.timeout => 'ใช้เวลานานเกินไป ลองใหม่ หรือครอบตัดให้เหลือเฉพาะตาราง',
   AiFailure.badKey => 'API key ใช้ไม่ได้ ตรวจในตั้งค่า ผู้ช่วย AI',
   AiFailure.rateLimited =>
     'Google แจ้งว่าใช้เกินโควตาของ key นี้ ลองใหม่ภายหลัง',
   AiFailure.server => 'บริการของ Google ขัดข้องหรือไม่รับคำขอ ลองใหม่ภายหลัง',
-  AiFailure.badResponse =>
-    'อ่านคำตอบจาก AI ไม่ได้ ลองรูปที่ชัดและตรงกว่านี้',
+  AiFailure.badResponse => 'อ่านคำตอบจาก AI ไม่ได้ ลองรูปที่ชัดและตรงกว่านี้',
 };
 
 const String _nothingFound =
@@ -279,48 +277,61 @@ class _TimetableImportScreenState extends ConsumerState<TimetableImportScreen> {
 
   Widget _confirmPage(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return ListView(
-      padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+    return Column(
       children: [
-        const WarningBar(
-          severity: WarningBarSeverity.yellow,
-          message:
-              'รูปด้านล่างนี้จะถูกส่งไปให้ Google ถ้ายังเห็นชื่อ '
-              'หรือรหัสนักเรียน ให้กลับไปครอบตัดออกก่อน',
-        ),
-        const SizedBox(height: GlowSpacing.md),
-        SizedBox(
-          height: 300,
-          child: InteractiveViewer(
-            maxScale: 6,
-            child: Image.memory(_jpeg!, semanticLabel: 'รูปที่จะส่ง'),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+            children: [
+              const WarningBar(
+                severity: WarningBarSeverity.yellow,
+                message:
+                    'รูปด้านล่างนี้จะถูกส่งไปให้ Google ถ้ายังเห็นชื่อ '
+                    'หรือรหัสนักเรียน ให้กลับไปครอบตัดออกก่อน',
+              ),
+              const SizedBox(height: GlowSpacing.md),
+              SizedBox(
+                height: 300,
+                child: InteractiveViewer(
+                  maxScale: 6,
+                  child: Image.memory(_jpeg!, semanticLabel: 'รูปที่จะส่ง'),
+                ),
+              ),
+              Text(
+                'ขนาดที่ส่ง ${(_jpeg!.length / 1024).round()} KB',
+                style: textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
-        Text(
-          'ขนาดที่ส่ง ${(_jpeg!.length / 1024).round()} KB',
-          style: textTheme.bodyMedium,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: GlowSpacing.md),
-        GlowPrimaryButton(
-          label: _busy ? 'กำลังอ่าน…' : 'ส่งให้ Google อ่าน',
-          onPressed: _busy ? null : _send,
-        ),
-        if (_busy)
-          const Padding(
-            padding: EdgeInsets.all(GlowSpacing.md),
-            child: Center(child: CircularProgressIndicator()),
+        Padding(
+          padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              GlowPrimaryButton(
+                label: _busy ? 'กำลังอ่าน…' : 'ส่งให้ Google อ่าน',
+                onPressed: _busy ? null : _send,
+              ),
+              if (_busy)
+                const Padding(
+                  padding: EdgeInsets.all(GlowSpacing.md),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : () => setState(() {
+                        _error = null;
+                        _phase = _Phase.crop;
+                      }),
+                child: const Text('กลับไปครอบตัด'),
+              ),
+              ..._errorAndFallback(),
+            ],
           ),
-        TextButton(
-          onPressed: _busy
-              ? null
-              : () => setState(() {
-                  _error = null;
-                  _phase = _Phase.crop;
-                }),
-          child: const Text('กลับไปครอบตัด'),
         ),
-        ..._errorAndFallback(),
       ],
     );
   }

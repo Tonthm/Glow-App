@@ -5,8 +5,7 @@ import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../shared/minutes_stepper.dart';
 
-/// A settings line: name on the left, current value on the right, divider
-/// below; tapping opens a bottom sheet to edit it (THEME.md).
+/// A settings row on a rounded surface; tapping opens its editor.
 class SettingRow extends StatelessWidget {
   final String title;
   final String? value;
@@ -30,7 +29,7 @@ class SettingRow extends StatelessWidget {
               : Text(value!, style: Theme.of(context).textTheme.bodyMedium),
           onTap: onTap,
         ),
-        const Divider(),
+        const SizedBox(height: GlowSpacing.sm),
       ],
     );
   }

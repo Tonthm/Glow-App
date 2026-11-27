@@ -127,12 +127,12 @@ TextStyle _style(
 }) {
   final edge = darkText ? GlowStoryColors.halo : GlowStoryColors.shadow;
   return TextStyle(
-    fontFamily: 'Nunito',
-    fontFamilyFallback: const ['NotoSansThai'],
+    fontFamily: 'Fredoka',
+    fontFamilyFallback: const ['IBMPlexSansThai', 'NotoSansThai'],
     fontSize: size,
     height: 1.25,
     fontWeight: weight,
-    // Both fonts are variable: this picks the weight inside the file.
+    // Fredoka is variable; the Thai fallback uses its bundled static weight.
     fontVariations: [FontVariation('wght', weight.value.toDouble())],
     color: darkText ? GlowStoryColors.textDark : GlowStoryColors.textLight,
     // A tight edge for pale or busy patches, then a wider soft one.
@@ -179,13 +179,7 @@ _Part _dots(StorySummary story, {required bool darkText}) {
         top + _dotRadius + (i ~/ columns) * (_dotRadius * 2 + gapY),
       );
       final cell = story.cells[i];
-      paintStoryDot(
-        canvas,
-        cell.dot,
-        centre,
-        _dotRadius,
-        darkText: darkText,
-      );
+      paintStoryDot(canvas, cell.dot, centre, _dotRadius, darkText: darkText);
       if (!isWeek) continue;
       final letter = _layOut(
         TextSpan(
@@ -248,7 +242,10 @@ List<_Part> _parts(StorySummary story, StoryOptions options) {
     ],
     if (note != null)
       _text(
-        TextSpan(text: note, style: _style(40, darkText: dark)),
+        TextSpan(
+          text: note,
+          style: _style(40, darkText: dark),
+        ),
         gapAbove: 24,
       ),
   ];

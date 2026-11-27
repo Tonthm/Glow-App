@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
+import '../../theme/widgets/glow_card.dart';
 import '../../theme/widgets/empty_state.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/stat_tile.dart';
@@ -82,9 +83,8 @@ class StatsScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.ios_share_outlined),
             tooltip: 'แชร์ลงสตอรี่',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ShareScreen()),
-            ),
+            onPressed: () => Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const ShareScreen())),
           ),
           const SettingsButton(),
         ],
@@ -94,31 +94,19 @@ class StatsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Wrap(
-              spacing: GlowSpacing.sm,
-              children: [
-                ChoiceChip(
-                  label: const Text('เทอมนี้'),
-                  selected: range == _StatsRange.term,
-                  onSelected: (_) =>
-                      ref.read(_statsRangeProvider.notifier).state =
-                          _StatsRange.term,
+            SegmentedButton<_StatsRange>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(value: _StatsRange.term, label: Text('เทอมนี้')),
+                ButtonSegment(
+                  value: _StatsRange.threeMonths,
+                  label: Text('3 เดือน'),
                 ),
-                ChoiceChip(
-                  label: const Text('3 เดือน'),
-                  selected: range == _StatsRange.threeMonths,
-                  onSelected: (_) =>
-                      ref.read(_statsRangeProvider.notifier).state =
-                          _StatsRange.threeMonths,
-                ),
-                ChoiceChip(
-                  label: const Text('1 ปี'),
-                  selected: range == _StatsRange.oneYear,
-                  onSelected: (_) =>
-                      ref.read(_statsRangeProvider.notifier).state =
-                          _StatsRange.oneYear,
-                ),
+                ButtonSegment(value: _StatsRange.oneYear, label: Text('1 ปี')),
               ],
+              selected: {range},
+              onSelectionChanged: (v) =>
+                  ref.read(_statsRangeProvider.notifier).state = v.single,
             ),
             const SizedBox(height: GlowSpacing.lg),
             Expanded(
@@ -149,10 +137,12 @@ class StatsScreen extends ConsumerWidget {
                   final comparison = ref.watch(_monthComparisonProvider).value;
                   return ListView(
                     children: [
-                      Heatmap(
-                        cells: cells,
-                        onCellTap: (cell) =>
-                            _showCellDetail(context, cell, fallAsleepMinutes),
+                      GlowCard(
+                        child: Heatmap(
+                          cells: cells,
+                          onCellTap: (cell) =>
+                              _showCellDetail(context, cell, fallAsleepMinutes),
+                        ),
                       ),
                       const SizedBox(height: GlowSpacing.md),
                       const HeatmapLegend(),
@@ -222,8 +212,9 @@ class _SummaryNumbers extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: GlowSpacing.lg),
             child: Row(
               children: [
-                Expanded(child: tiles[i]),
-                Expanded(child: tiles[i + 1]),
+                Expanded(child: GlowCard(child: tiles[i])),
+                const SizedBox(width: GlowSpacing.sm),
+                Expanded(child: GlowCard(child: tiles[i + 1])),
               ],
             ),
           ),

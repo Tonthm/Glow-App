@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' show Value;
 import '../../core/subject_color.dart';
 import '../../data/database.dart';
 import '../../providers.dart';
+import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../shared/subject_color_picker.dart';
 import '../shared/time_of_day_field.dart';
 import '../shared/title_autocomplete_field.dart';
@@ -16,10 +17,9 @@ Future<void> showOneTimeItemForm(
   DateTime? initialDate,
   TimeOfDay? initialStart,
 }) {
-  return showModalBottomSheet(
+  return showGlowBottomSheet(
     context: context,
     isScrollControlled: true,
-    useSafeArea: true,
     builder: (_) => _OneTimeItemForm(
       existing: existing,
       initialDate: initialDate,
@@ -86,9 +86,7 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
 
     return Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
+        top: 8,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
       child: SingleChildScrollView(
@@ -107,6 +105,7 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
             ),
             const SizedBox(height: 12),
             SegmentedButton<OneTimeItemType>(
+              showSelectedIcon: false,
               segments: const [
                 ButtonSegment(value: OneTimeItemType.exam, label: Text('สอบ')),
                 ButtonSegment(
@@ -192,8 +191,15 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             const SizedBox(height: 16),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                FilledButton(
+                  onPressed: _title.trim().isEmpty || !_hasValidTimes
+                      ? null
+                      : _save,
+                  child: const Text('บันทึก'),
+                ),
                 if (_isEdit)
                   TextButton(
                     onPressed: () async {
@@ -209,13 +215,6 @@ class _OneTimeItemFormState extends ConsumerState<_OneTimeItemForm> {
                       ),
                     ),
                   ),
-                const Spacer(),
-                FilledButton(
-                  onPressed: _title.trim().isEmpty || !_hasValidTimes
-                      ? null
-                      : _save,
-                  child: const Text('บันทึก'),
-                ),
               ],
             ),
           ],

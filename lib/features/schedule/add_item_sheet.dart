@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/birth_date.dart';
 import '../../core/calendar_view.dart';
 import '../../providers.dart';
+import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../ai/ai_providers.dart';
 import 'one_time_item_form.dart';
@@ -27,12 +28,34 @@ Future<AddMethod?> showAddMethodSheet(BuildContext context) {
         final aiReady = ref.watch(aiReadyProvider).value ?? false;
         return Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Text('เพิ่มตาราง', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: GlowSpacing.sm),
+            Text(
+              'เลือกวิธีที่สะดวกสำหรับคุณ',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: GlowSpacing.xl),
+            Center(
+              child: CircleAvatar(
+                radius: 28,
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .secondaryContainer,
+                child: Icon(
+                  Icons.calendar_today_outlined,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+            const SizedBox(height: GlowSpacing.xl),
             ListTile(
               leading: const Icon(Icons.keyboard_outlined),
               title: const Text('พิมพ์'),
               onTap: () => Navigator.of(context).pop(AddMethod.type),
             ),
+            const SizedBox(height: GlowSpacing.sm),
             // Without a mic this page still takes a whole sentence, which
             // the phone's own keyboard can dictate.
             ListTile(
@@ -40,12 +63,11 @@ Future<AddMethod?> showAddMethodSheet(BuildContext context) {
                 mic ? Icons.mic_none_outlined : Icons.notes_outlined,
               ),
               title: Text(mic ? 'พูด' : 'ใส่หลายคาบเป็นประโยค'),
-              subtitle: mic
-                  ? null
-                  : const Text('พิมพ์ หรือใช้ไมค์บนคีย์บอร์ด'),
+              subtitle: mic ? null : const Text('พิมพ์ หรือใช้ไมค์บนคีย์บอร์ด'),
               onTap: () => Navigator.of(context).pop(AddMethod.voice),
             ),
-            if (photo)
+            if (photo) ...[
+              const SizedBox(height: GlowSpacing.sm),
               ListTile(
                 leading: const Icon(Icons.image_outlined),
                 title: const Text('นำเข้าจากรูป'),
@@ -56,12 +78,15 @@ Future<AddMethod?> showAddMethodSheet(BuildContext context) {
                       ),
                 onTap: () => Navigator.of(context).pop(AddMethod.photo),
               ),
-            if (platform.calendarImport)
+            ],
+            if (platform.calendarImport) ...[
+              const SizedBox(height: GlowSpacing.sm),
               ListTile(
                 leading: const Icon(Icons.calendar_month_outlined),
                 title: const Text('นำเข้าจากปฏิทิน'),
                 onTap: () => Navigator.of(context).pop(AddMethod.calendar),
               ),
+            ],
           ],
         );
       },
@@ -83,6 +108,8 @@ Future<void> showTypedEntryChooser(
     builder: (context) => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Text('พิมพ์ตาราง', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: GlowSpacing.lg),
         if (date != null)
           Text(dayTitle(date), style: Theme.of(context).textTheme.titleMedium),
         ListTile(

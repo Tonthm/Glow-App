@@ -20,6 +20,9 @@ final now = DateTime(2026, 11, 27, 9);
 /// sizes would be wrong.
 Future<void> loadFonts() async {
   for (final (family, file) in [
+    ('Fredoka', 'assets/fonts/Fredoka.ttf'),
+    ('IBMPlexSansThai', 'assets/fonts/IBMPlexSansThai-Regular.ttf'),
+    ('IBMPlexSansThai', 'assets/fonts/IBMPlexSansThai-SemiBold.ttf'),
     ('Nunito', 'assets/fonts/Nunito.ttf'),
     ('NotoSansThai', 'assets/fonts/NotoSansThai.ttf'),
   ]) {
@@ -190,10 +193,7 @@ void main() {
     expect(month.cells.map((c) => c.dot).toSet(), StoryDot.values.toSet());
     expect(month.nightsWithData, greaterThan(20));
     final midnight = sample(StorySample.acrossMidnight, StoryView.week);
-    expect(
-      midnight.bedMinutes! < 60 || midnight.bedMinutes! > 23 * 60,
-      isTrue,
-    );
+    expect(midnight.bedMinutes! < 60 || midnight.bedMinutes! > 23 * 60, isTrue);
     // Each sample's verdicts match the app's own rule for its hours.
     for (final set in StorySample.values) {
       for (final n in set.nights(now)) {
@@ -222,9 +222,8 @@ void main() {
             StoryOptions(darkText: dark),
             logo: logo,
           );
-          File(
-            '$out/${set.name}_${view.name}_${dark ? 'dark' : 'light'}.png',
-          ).writeAsBytesSync(png);
+          File('$out/${set.name}_${view.name}_${dark ? 'dark' : 'light'}.png')
+              .writeAsBytesSync(png);
         }
       }
     }

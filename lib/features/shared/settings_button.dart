@@ -10,7 +10,7 @@ class SettingsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.settings_outlined),
+      icon: const Icon(Icons.tune_outlined),
       tooltip: 'ตั้งค่า',
       onPressed: () =>
           Navigator.of(context)

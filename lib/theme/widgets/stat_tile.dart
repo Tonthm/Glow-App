@@ -21,7 +21,7 @@ class StatTile extends StatelessWidget {
           value,
           style: textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
-            fontFamily: 'NotoSansThai',
+            fontFamily: 'IBMPlexSansThai',
           ),
         ),
         const SizedBox(height: GlowSpacing.xs),

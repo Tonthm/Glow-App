@@ -8,7 +8,7 @@ import '../tokens.dart';
 import 'card_art.dart';
 
 /// The size the card is laid out at; it scales to the space it gets.
-const Size studentCardSize = Size(320, 200);
+const Size studentCardSize = Size(344, 190);
 
 /// Black or white, whichever reads better on [background].
 Color cardTextColor(Color background) {
@@ -37,6 +37,7 @@ class StudentCard extends StatelessWidget {
   final AvatarMood mood;
   final int fireLevel;
   final int firePoints;
+
   /// The user's picture, shown instead of the avatar.
   final Uint8List? photo;
 
@@ -79,11 +80,11 @@ class StudentCard extends StatelessWidget {
       AvatarMood.sleepy => ' อวตารดูง่วงนิดหน่อย',
     };
     TextStyle text(double size, {bool bold = false}) => TextStyle(
-      fontFamily: 'NotoSansThai',
+      fontFamily: 'IBMPlexSansThai',
       fontFamilyFallback: const ['Nunito'],
       fontSize: size,
       height: 1.4,
-      fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+      fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
       color: ink,
     );
     Widget line(String value, TextStyle style) =>
@@ -118,10 +119,7 @@ class StudentCard extends StatelessWidget {
                   const SizedBox(width: GlowSpacing.sm),
                   Text(
                     'Glow',
-                    style: text(
-                      GlowFontSize.body,
-                      bold: true,
-                    ).copyWith(fontFamily: 'Nunito'),
+                    style: text(20, bold: true).copyWith(fontFamily: 'Fredoka'),
                   ),
                   const Spacer(),
                   Text('บัตรนักเรียน', style: text(GlowFontSize.tiny)),
@@ -157,7 +155,7 @@ class StudentCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          line(shownName, text(GlowFontSize.body, bold: true)),
+                          line(shownName, text(20, bold: true)),
                           if (school.isNotEmpty || showBlanks)
                             line(
                               school.isEmpty ? 'โรงเรียน ........' : school,
@@ -165,9 +163,7 @@ class StudentCard extends StatelessWidget {
                             ),
                           if (classYear.isNotEmpty || showBlanks)
                             line(
-                              classYear.isEmpty
-                                  ? 'ชั้นปี ........'
-                                  : classYear,
+                              classYear.isEmpty ? 'ชั้นปี ........' : classYear,
                               text(GlowFontSize.tiny),
                             ),
                         ],
@@ -185,7 +181,7 @@ class StudentCard extends StatelessWidget {
                         // A stamp is never pressed perfectly straight.
                         angle: i.isEven ? -0.12 : 0.1,
                         child: CustomPaint(
-                          size: const Size.square(28),
+                          size: const Size.square(22),
                           painter: FireStampPainter(
                             stamped: i < level,
                             empty: ink,
@@ -239,7 +235,7 @@ class StudentCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(GlowRadius.card),
                   side: BorderSide(
                     color: Theme.of(context).colorScheme.outline,
-                    width: GlowStroke.outline * 1.5,
+                    width: GlowStroke.outline,
                   ),
                 ),
                 clipBehavior: Clip.antiAlias,

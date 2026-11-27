@@ -60,14 +60,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     ref.watch(clockProvider);
     final data = ref.watch(calendarDataProvider);
 
     return Scaffold(
       appBar: AppBar(
-        // Small, so the page keeps to two text sizes.
-        title: Text('ตาราง', style: theme.textTheme.titleMedium),
+        title: const Text('ตาราง'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -366,8 +364,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 }
 
 /// Day, month, and Buddhist year, as everywhere on this screen.
-String _formatDate(DateTime d) =>
-    '${d.day}/${d.month}/${buddhistYear(d.year)}';
+String _formatDate(DateTime d) => '${d.day}/${d.month}/${buddhistYear(d.year)}';
 
 /// Every one-time item, so a far-off exam can be found without paging through
 /// the months.
@@ -404,9 +401,7 @@ class _OneTimeList extends StatelessWidget {
             title: Row(
               children: [
                 SubjectDot(colors, item.title),
-                Expanded(
-                  child: Text(item.title, style: textTheme.bodyLarge),
-                ),
+                Expanded(child: Text(item.title, style: textTheme.bodyLarge)),
               ],
             ),
             subtitle: Text(

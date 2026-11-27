@@ -308,7 +308,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         // The one place that uses the wordmark font (THEME.md).
         title: const Text(
           'Glow',
-          style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w800),
+          style: TextStyle(fontFamily: 'Fredoka', fontWeight: FontWeight.w600),
         ),
         actions: [
           IconButton(
@@ -338,7 +338,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
               onTap: () =>
                   ref.read(selectedTabIndexProvider.notifier).state = 3,
             ),
-            const SizedBox(height: GlowSpacing.lg),
+            const SizedBox(height: GlowSpacing.xl),
             if (!hasSchedule)
               const _EmptyScheduleCard()
             else

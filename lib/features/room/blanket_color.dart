@@ -4,7 +4,7 @@ import '../../core/economy_config.dart';
 
 /// The card color for an owned blanket (the saved ids predate the card), or
 /// the starting one.
-const int defaultBlanketColor = 0xFFD9D2FF;
+const int defaultBlanketColor = 0xFFDCD5F5;
 
 Color blanketColorOf(String? itemId) {
   if (itemId == null) return const Color(defaultBlanketColor);

@@ -10,7 +10,7 @@ class GlowSpacing {
   static const double lg = 16;
   static const double xl = 24;
   static const double xxl = 32;
-  static const double pageMargin = 16;
+  static const double pageMargin = 24;
 }
 
 /// The calendar's small marks: strong enough to see on the page, unlike the
@@ -69,8 +69,8 @@ class GlowStoryColors {
 }
 
 class GlowRadius {
-  static const double button = 14;
-  static const double card = 20;
+  static const double button = 16;
+  static const double card = 24;
   static const double pill = 999;
 
   /// Squares in the heatmap and its legend.
@@ -88,40 +88,40 @@ class GlowStroke {
 /// rest of the work. [bigNumber] is the one hero figure (tonight's bedtime)
 /// and [tiny] is only for dense charts such as the heatmap and week grid.
 class GlowFontSize {
-  static const double title = 20;
+  static const double title = 24;
   static const double body = 15;
   static const double tiny = 12;
-  static const double bigNumber = 48;
+  static const double bigNumber = 56;
 }
 
 class GlowBaseColors {
   // Light mode
-  static const backgroundLight = Color(0xFFFBF9FF);
+  static const backgroundLight = Color(0xFFFFF9F0);
   static const surfaceLight = Color(0xFFFFFFFF);
-  static const textPrimaryLight = Color(0xFF1D1A29);
-  static const textSecondaryLight = Color(0xFF5E5973);
-  static const outlineLight = Color(0xFF1D1A29);
-  static const dividerLight = Color(0xFFE4DFF0);
+  static const textPrimaryLight = Color(0xFF302D2A);
+  static const textSecondaryLight = Color(0xFF736B62);
+  static const outlineLight = Color(0xFF302D2A);
+  static const dividerLight = Color(0xFFEBE1D3);
 
   /// Dark enough to read as text on the light background.
-  static const accentLight = Color(0xFF4B3FC4);
+  static const accentLight = Color(0xFFAC382C);
   static const onAccentLight = Color(0xFFFFFFFF);
 
   /// The pastel behind the main button.
-  static const accentFillLight = Color(0xFFBDB4FF);
-  static const onAccentFillLight = Color(0xFF1D1A29);
+  static const accentFillLight = Color(0xFFFB6B58);
+  static const onAccentFillLight = Color(0xFF302D2A);
 
   // Dark mode: a black line would disappear, so the outline turns light.
-  static const backgroundDark = Color(0xFF13111B);
-  static const surfaceDark = Color(0xFF1F1C2B);
+  static const backgroundDark = Color(0xFF22222F);
+  static const surfaceDark = Color(0xFF2D2C3C);
   static const textPrimaryDark = Color(0xFFF4F2FB);
   static const textSecondaryDark = Color(0xFFB5B0C9);
   static const outlineDark = Color(0xFF8D87A8);
-  static const dividerDark = Color(0xFF322E44);
-  static const accentDark = Color(0xFFBDB4FF);
+  static const dividerDark = Color(0xFF454052);
+  static const accentDark = Color(0xFFFFA18F);
   static const onAccentDark = Color(0xFF17141F);
-  static const accentFillDark = Color(0xFFBDB4FF);
-  static const onAccentFillDark = Color(0xFF17141F);
+  static const accentFillDark = Color(0xFFFB6B58);
+  static const onAccentFillDark = Color(0xFF302D2A);
 
   // Same in both modes
   static const lampGlow = Color(0xFFFFC86B);
@@ -135,12 +135,12 @@ class GlowBaseColors {
 /// Soft fills for cards, tags and subject colors. Text on them is the normal
 /// text color: the light set is pale, the dark set is deep.
 class GlowPastelColors {
-  static const lilacLight = Color(0xFFE4DEFF);
-  static const pinkLight = Color(0xFFFFDCE8);
+  static const lilacLight = Color(0xFFDCD5F5);
+  static const pinkLight = Color(0xFFF6D5D9);
   static const peachLight = Color(0xFFFFE3CF);
-  static const butterLight = Color(0xFFFFF0B8);
-  static const mintLight = Color(0xFFD2F2DF);
-  static const skyLight = Color(0xFFD6EAFF);
+  static const butterLight = Color(0xFFFFECB9);
+  static const mintLight = Color(0xFFD2EBDD);
+  static const skyLight = Color(0xFFD8E7F4);
 
   static const lilacDark = Color(0xFF37315C);
   static const pinkDark = Color(0xFF4F2D40);

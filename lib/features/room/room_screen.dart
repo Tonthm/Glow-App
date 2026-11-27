@@ -89,6 +89,7 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
           ),
           const SizedBox(height: GlowSpacing.xl),
           SegmentedButton<bool>(
+            showSelectedIcon: false,
             segments: const [
               ButtonSegment(value: false, label: Text('ของฉัน')),
               ButtonSegment(value: true, label: Text('ร้านค้า')),
