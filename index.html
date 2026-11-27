@@ -7,8 +7,8 @@
   <meta charset="UTF-8">
   <meta name="description" content="Glow วางแผนเวลานอนจากตารางเรียน">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FBF9FF">
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#13111B">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFF9F0">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#22222F">
 
   <!-- Home screen app on iOS -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -22,8 +22,19 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
-    body { background: #FBF9FF; }
-    @media (prefers-color-scheme: dark) { body { background: #13111B; } }
+    @font-face {
+      font-family: 'Fredoka';
+      src: url('assets/assets/fonts/Fredoka.ttf') format('truetype');
+      font-weight: 600;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'IBM Plex Sans Thai';
+      src: url('assets/assets/fonts/IBMPlexSansThai-Regular.ttf') format('truetype');
+      font-display: swap;
+    }
+    body { background: #FFF9F0; }
+    @media (prefers-color-scheme: dark) { body { background: #22222F; } }
 
     /* The logo while the app loads. */
     #glow-splash {
@@ -32,13 +43,27 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
+      width: min(100%, 520px);
+      margin: auto;
+      background: #FB6B58;
+      color: #302D2A;
+      font-family: 'IBM Plex Sans Thai', sans-serif;
       pointer-events: none;
     }
-    #glow-splash img { width: 128px; height: 128px; border-radius: 28px; }
+    #glow-splash img { width: 144px; height: 144px; border-radius: 32px; }
+    #glow-splash h1 { font: 600 56px 'Fredoka', sans-serif; margin: 16px 0 0; }
+    #glow-splash p { margin: 8px 0 0; font-size: 15px; }
+    #glow-splash .loading { margin-top: 64px; letter-spacing: 6px; }
   </style>
 </head>
 <body>
-  <div id="glow-splash"><img src="icons/Icon-512.png" alt="Glow"></div>
+  <div id="glow-splash" role="status" aria-label="กำลังเปิด Glow">
+    <img src="icons/Icon-512.png" alt="">
+    <h1>Glow</h1>
+    <p>นอนดีขึ้น เริ่มจากคืนนี้</p>
+    <span class="loading" aria-hidden="true">• · ·</span>
+  </div>
   <script>
     window.addEventListener('flutter-first-frame', function () {
       var splash = document.getElementById('glow-splash');
