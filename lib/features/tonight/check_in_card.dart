@@ -123,7 +123,7 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
           Text('เมื่อคืนไม่ได้กดเข้านอน', style: textTheme.labelSmall),
         const SizedBox(height: GlowSpacing.xl),
         GlowPrimaryButton(
-          label: 'ใช่ ตามนี้',
+          label: 'ตื่นแล้ว · ใช่ ตามนี้',
           onPressed: _submitting ? null : _confirm,
         ),
         const SizedBox(height: GlowSpacing.sm),

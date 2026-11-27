@@ -296,7 +296,7 @@ class _RoutineScreenState extends ConsumerState<RoutineScreen> {
             ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('กลับหน้าคืนนี้'),
+            child: const Text('กลับหน้านอน'),
           ),
         ],
       ),

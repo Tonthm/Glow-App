@@ -17,18 +17,23 @@ class _TabSpec {
   final IconData filled;
   final String label;
 
+  /// The sleep tab: a bigger icon that keeps the accent color.
+  final bool main;
+
   const _TabSpec({
     required this.outlined,
     required this.filled,
     required this.label,
+    this.main = false,
   });
 }
 
 const _tabSpecs = [
   _TabSpec(
-    outlined: Icons.nightlight_outlined,
-    filled: Icons.nightlight,
-    label: 'คืนนี้',
+    outlined: Icons.bedtime_outlined,
+    filled: Icons.bedtime,
+    label: 'นอน',
+    main: true,
   ),
   _TabSpec(
     outlined: Icons.calendar_today_outlined,
@@ -104,9 +109,11 @@ class AppShell extends ConsumerWidget {
                                   children: [
                                     Icon(
                                       index == i ? spec.filled : spec.outlined,
-                                      size: 20,
+                                      size: spec.main ? 28 : 20,
                                       color: index == i
                                           ? theme.colorScheme.onPrimaryContainer
+                                          : spec.main
+                                          ? theme.colorScheme.primary
                                           : theme.colorScheme.onSurface,
                                     ),
                                     Text(

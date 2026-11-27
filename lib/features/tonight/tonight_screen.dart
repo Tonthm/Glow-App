@@ -333,12 +333,6 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
               ),
               const SizedBox(height: GlowSpacing.md),
             ],
-            // The centre of the home screen. Tapping it opens dressing up.
-            MyStudentCard(
-              onTap: () =>
-                  ref.read(selectedTabIndexProvider.notifier).state = 3,
-            ),
-            const SizedBox(height: GlowSpacing.xl),
             if (!hasSchedule)
               const _EmptyScheduleCard()
             else
@@ -350,6 +344,16 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                 error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
                 data: _buildPlan,
               ),
+            const SizedBox(height: GlowSpacing.md),
+            GlowFold(
+              icon: Icons.badge_outlined,
+              title: 'บัตรของฉัน',
+              // Tapping the card opens dressing up.
+              child: MyStudentCard(
+                onTap: () =>
+                    ref.read(selectedTabIndexProvider.notifier).state = 3,
+              ),
+            ),
             if (hasSchedule &&
                 ref.watch(platformCapabilitiesProvider).calendarReminders) ...[
               const SizedBox(height: GlowSpacing.lg),
@@ -423,8 +427,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
     );
   }
 
-  /// Below the card: tonight's bedtime, one line of why, and the button.
-  /// Everything else is folded away.
+  /// The sleep tab in order of importance (CLAUDE.md section 1): tonight's
+  /// plan, the evening, winding down, the one main button, countdowns.
   Widget _buildPlan(TonightPlanData plan) {
     if (_pickedFor != plan.wakeDate) {
       _pickedFor = plan.wakeDate;
@@ -483,18 +487,23 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
           ),
           const SizedBox(height: GlowSpacing.md),
         ],
+        // 1. Tonight's plan.
         _TonightTime(plan: plan),
-        const SizedBox(height: GlowSpacing.md),
-        _buildBedButton(plan, isMain: true),
-        const SizedBox(height: GlowSpacing.xl),
+        const SizedBox(height: GlowSpacing.lg),
         ..._notices(plan),
+        // 2. The evening.
+        if (plan.eveningEnabled && plan.inBedAt == null) ...[
+          EveningCard(onOpen: () => _openEvening(plan)),
+          const SizedBox(height: GlowSpacing.md),
+        ],
+        // 3. Winding down.
         if (showRoutine) ...[
           GlowFold(
             icon: Icons.self_improvement,
-            title: 'ท่าก่อนนอน',
+            title: 'ช่วงก่อนนอน',
             summary: plan.routineDone
-                ? 'ทำแล้ว'
-                : 'ประมาณ ${_routineMinutes(plan)} นาที',
+                ? 'ท่ายืดและหายใจ ทำแล้ว'
+                : 'ท่ายืดและหายใจ ประมาณ ${_routineMinutes(plan)} นาที',
             child: ActivityCard(
               key: ValueKey(plan.wakeDate),
               selected: _picked ?? plan.activities,
@@ -509,21 +518,18 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
           ),
           const SizedBox(height: GlowSpacing.md),
         ],
-        if (plan.eveningEnabled && plan.inBedAt == null) ...[
-          GlowFold(
-            icon: Icons.checklist,
-            title: 'ตารางเย็นนี้',
-            child: EveningCard(onOpen: () => _openEvening(plan)),
-          ),
-          const SizedBox(height: GlowSpacing.md),
-        ],
+        // 4. The main button.
+        _buildBedButton(plan, isMain: true),
+        const SizedBox(height: GlowSpacing.lg),
+        // 5. What is coming.
+        const CountdownStrip(),
         _weekFold(plan),
       ],
     );
   }
 
-  /// Warnings that shouldn't be folded away: a busy evening, a night the
-  /// schedule cuts short, and an exam coming up.
+  /// Warnings that belong to tonight's plan and shouldn't be folded away: a
+  /// busy evening, and a night the schedule cuts short.
   List<Widget> _notices(TonightPlanData plan) => [
     if (plan.load.level == EveningLoadLevel.yellow) ...[
       WarningBar(
@@ -549,7 +555,6 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         ),
       const SizedBox(height: GlowSpacing.md),
     ],
-    const CountdownStrip(),
   ];
 
   /// The week's nights, tonight's quests, and "วันนี้หมดแรง".
