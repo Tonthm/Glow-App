@@ -16,6 +16,7 @@ import '../web/web_reminder_bars.dart';
 import '../demo/demo_button.dart';
 import '../../theme/theme_gallery_screen.dart';
 import '../../theme/tokens.dart';
+import '../../theme/glow_colors.dart';
 import '../shared/minutes_stepper.dart';
 import '../shared/time_of_day_field.dart';
 import 'evening_settings_rows.dart';
@@ -40,11 +41,13 @@ class SettingsScreen extends ConsumerWidget {
           // No more than five here.
           SettingRow(
             title: 'โปรไฟล์และบัตร',
+            icon: Icons.badge_outlined,
             onTap: () => showCardDetailsSheet(context),
           ),
           _durationRow(
             context,
             title: 'เวลาเดินทาง',
+            icon: Icons.schedule_outlined,
             minutes: settings.defaultTravelMinutes,
             step: 5,
             min: 0,
@@ -54,6 +57,7 @@ class SettingsScreen extends ConsumerWidget {
           _durationRow(
             context,
             title: 'เวลาเตรียมตัว',
+            icon: Icons.timelapse_outlined,
             minutes: settings.prepMinutes,
             step: 5,
             min: 0,
@@ -61,6 +65,7 @@ class SettingsScreen extends ConsumerWidget {
             onSave: (v) => repo.updatePrepAndTravel(prepMinutes: v),
           ),
           SettingRow(
+            icon: Icons.calendar_today_outlined,
             title: platform.calendarReminders
                 ? 'เตือนในปฏิทิน'
                 : 'การแจ้งเตือน',
@@ -68,6 +73,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           SettingRow(
             title: 'โหมดสี',
+            icon: Icons.nightlight_outlined,
             value: _themeLabels[settings.themeMode]!,
             onTap: () async {
               final mode = await showChoiceSheet<AppThemeMode>(
@@ -81,6 +87,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           ListTile(
+            tileColor: context.glowColors.pastel(GlowPastel.lilac),
             leading: const Icon(Icons.tune),
             title: const Text('ตั้งค่าขั้นสูง'),
             subtitle: const Text(
@@ -96,6 +103,16 @@ class SettingsScreen extends ConsumerWidget {
               'แอปนี้ไม่ใช่คำแนะนำทางการแพทย์ ถ้านอนไม่หลับหรือง่วงมากต่อเนื่อง'
               'หลายสัปดาห์ ควรปรึกษาแพทย์',
               style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: Text(
+              'Glow',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontFamily: 'Fredoka',
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -575,9 +592,11 @@ Widget _durationRow(
   required int min,
   required int max,
   required Future<void> Function(int) onSave,
+  IconData? icon,
 }) {
   return SettingRow(
     title: title,
+    icon: icon,
     value: formatMinutesAsHours(minutes),
     onTap: () async {
       final picked = await showDurationSheet(

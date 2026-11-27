@@ -71,7 +71,7 @@ class AppShell extends ConsumerWidget {
           borderRadius: BorderRadius.circular(GlowRadius.pill),
           clipBehavior: Clip.antiAlias,
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             child: Row(
               children: [
                 for (final (i, spec) in _tabSpecs.indexed)
@@ -94,26 +94,34 @@ class AppShell extends ConsumerWidget {
                                   i,
                           child: ExcludeSemantics(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    index == i ? spec.filled : spec.outlined,
-                                    size: 22,
-                                    color: index == i
-                                        ? theme.colorScheme.onPrimaryContainer
-                                        : theme.colorScheme.onSurface,
-                                  ),
-                                  Text(
-                                    spec.label,
-                                    style: theme.textTheme.labelSmall?.copyWith(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minHeight: 40,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      index == i ? spec.filled : spec.outlined,
+                                      size: 20,
                                       color: index == i
                                           ? theme.colorScheme.onPrimaryContainer
                                           : theme.colorScheme.onSurface,
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      spec.label,
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: index == i
+                                                ? theme
+                                                      .colorScheme
+                                                      .onPrimaryContainer
+                                                : theme.colorScheme.onSurface,
+                                          ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

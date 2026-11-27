@@ -23,13 +23,12 @@ import '../../theme/widgets/glow_primary_button.dart';
 import 'story_painter.dart';
 import 'story_preview.dart';
 
-typedef StoryRenderer =
-    Future<Uint8List> Function(
-      StorySummary story,
-      StoryOptions options, {
-      ui.Image? logo,
-      ui.Image? photo,
-    });
+typedef StoryRenderer = Future<Uint8List> Function(
+  StorySummary story,
+  StoryOptions options, {
+  ui.Image? logo,
+  ui.Image? photo,
+});
 
 /// Replaced in widget tests, where real drawing never finishes.
 final storyRendererProvider = Provider<StoryRenderer>((ref) => renderStoryPng);
@@ -37,7 +36,7 @@ final storyRendererProvider = Provider<StoryRenderer>((ref) => renderStoryPng);
 /// The app icon as the picture draws it. The caller frees it.
 final storyLogoProvider = Provider<Future<ui.Image?> Function()>((ref) {
   return () async {
-    final data = await rootBundle.load('assets/logo_square.png');
+    final data = await rootBundle.load('assets/mascot.png');
     return openPickedPhoto(data.buffer.asUint8List(), maxSide: 256);
   };
 });
@@ -86,6 +85,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
 
   /// The user's own picture, held only while this screen is open.
   ui.Image? _photo;
+  bool _showPhotoPreview = false;
 
   /// The files as the screen now shows them, made ahead of the tap. Null
   /// while being made.
@@ -219,6 +219,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
         return;
       }
       _replacePhoto(photo);
+      setState(() => _showPhotoPreview = true);
     } catch (_) {
       _say('เปิดรูปนี้ไม่ได้ ลองรูปอื่น');
     }
@@ -235,6 +236,77 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showPhotoPreview && _photo != null && _nights != null) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) setState(() => _showPhotoPreview = false);
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('ใส่บนรูปของฉัน'),
+            leading: BackButton(
+              onPressed: () => setState(() => _showPhotoPreview = false),
+            ),
+          ),
+          body: SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: AspectRatio(
+                              aspectRatio: 9 / 16,
+                              child: StoryPreview(
+                                story: _story(),
+                                options: _options,
+                                logo: _logo,
+                                photo: _photo,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: GlowSpacing.md),
+                        Text(
+                          'รูปที่เลือกอยู่ในเครื่องนี้เท่านั้น ไม่ถูกส่งไปไหน',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      GlowPrimaryButton(
+                        label: 'ใส่บนรูปของฉันแล้วบันทึก',
+                        immediate: true,
+                        onPressed: _combinedPng == null
+                            ? null
+                            : () => _send(_combinedPng!, 'glow_photo.png'),
+                      ),
+                      const SizedBox(height: GlowSpacing.sm),
+                      OutlinedButton(
+                        onPressed: _pickPhoto,
+                        child: const Text('เปลี่ยนรูป'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('แชร์ลงสตอรี่')),
       body: _nights == null
@@ -269,7 +341,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
               gap,
               Center(
                 child: SizedBox(
-                  height: (height * 0.46).clamp(240.0, 560.0),
+                  height: (height * 0.385).clamp(200.0, 400.0),
                   child: StoryPreview(
                     story: story,
                     options: _options,
@@ -287,12 +359,21 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                   ),
                 )
               else ...[
-                Text(
-                  storyRangeLine(story),
-                  textAlign: TextAlign.center,
-                  style: small,
+                GlowCard(
+                  child: Column(
+                    children: [
+                      Text(
+                        storyRangeLine(story),
+                        textAlign: TextAlign.center,
+                        style: small,
+                      ),
+                      if (_view != StoryView.night) ...[
+                        const SizedBox(height: GlowSpacing.sm),
+                        const _DotLegend(),
+                      ],
+                    ],
+                  ),
                 ),
-                if (_view != StoryView.night) ...[gap, const _DotLegend()],
               ],
               if (_renderFailed) ...[
                 gap,
@@ -310,7 +391,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                   () => _options = _options.copyWith(darkText: v.first),
                 ),
               ),
-              gap,
+              const SizedBox(height: GlowSpacing.sm),
               SegmentedButton<StoryPosition>(
                 showSelectedIcon: false,
                 segments: [
@@ -384,21 +465,40 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GlowPrimaryButton(
-                  label: _sharer.canShare ? 'แชร์' : 'ดาวน์โหลดไฟล์ PNG',
-                  immediate: true,
-                  onPressed: overlay == null
-                      ? null
-                      : () => _send(overlay, 'glow_${_view.name}.png'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GlowPrimaryButton(
+                        label: _sharer.canShare ? 'แชร์' : 'ดาวน์โหลดไฟล์ PNG',
+                        icon: _sharer.canShare
+                            ? Icons.ios_share_outlined
+                            : Icons.download_outlined,
+                        immediate: true,
+                        onPressed: overlay == null
+                            ? null
+                            : () => _send(overlay, 'glow_${_view.name}.png'),
+                      ),
+                    ),
+                    // Saving without the share sheet, where there is one.
+                    if (_sharer.canShare) ...[
+                      const SizedBox(width: GlowSpacing.sm),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: overlay == null
+                              ? null
+                              : () => _download(
+                                  overlay,
+                                  'glow_${_view.name}.png',
+                                ),
+                          child: const Text(
+                            'ดาวน์โหลดไฟล์ PNG',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                // Saving without the share sheet, where there is one.
-                if (_sharer.canShare)
-                  TextButton(
-                    onPressed: overlay == null
-                        ? null
-                        : () => _download(overlay, 'glow_${_view.name}.png'),
-                    child: const Text('ดาวน์โหลดไฟล์ PNG'),
-                  ),
               ],
             ),
           ),
@@ -434,7 +534,7 @@ class _DotLegend extends StatelessWidget {
             children: [
               StoryDotIcon(dot: e.key, darkText: darkDots),
               const SizedBox(width: GlowSpacing.xs),
-              Text(e.value, style: theme.textTheme.labelSmall),
+              Flexible(child: Text(e.value, style: theme.textTheme.labelSmall)),
             ],
           ),
       ],

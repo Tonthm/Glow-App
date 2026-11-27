@@ -55,7 +55,7 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     await loadFonts();
     logo = await openPickedPhoto(
-      File('assets/logo_square.png').readAsBytesSync(),
+      File('assets/mascot.png').readAsBytesSync(),
     );
   });
 

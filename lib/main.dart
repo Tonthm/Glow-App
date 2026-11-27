@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_shell.dart';
 import 'data/database.dart';
 import 'features/onboarding/onboarding_screen.dart';
+import 'features/onboarding/splash_screen.dart';
 import 'features/web/web_app_gate.dart';
 import 'providers.dart';
 import 'services/app_clock.dart';
@@ -85,8 +86,7 @@ class _RootGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsStreamProvider);
     return settingsAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const SplashScreen(),
       error: (e, _) =>
           Scaffold(body: Center(child: Text('เกิดข้อผิดพลาด: $e'))),
       data: (settings) => settings.onboardingCompleted

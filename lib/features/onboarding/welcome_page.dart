@@ -3,10 +3,11 @@ import 'dart:typed_data';
 import 'package:material_ui/material_ui.dart';
 
 import '../../theme/tokens.dart';
-import '../../theme/widgets/glow_logo.dart';
 import '../../theme/widgets/glow_primary_button.dart';
+import '../../theme/widgets/warning_bar.dart';
 import '../card/photo_field.dart';
 import '../card/profile_fields.dart';
+import 'onboarding_header.dart';
 
 /// The very first screen: what makes Glow different, and who the card is
 /// for. All of it can be skipped; going on without skipping needs a name.
@@ -30,7 +31,7 @@ class WelcomePage extends StatelessWidget {
     this.birthDateError,
   });
 
-  static const headline = 'ใส่ตารางเรียน 2 นาที แล้วรู้เวลานอนทั้งสัปดาห์';
+  static const headline = 'มารู้จักกันก่อน';
 
   @override
   Widget build(BuildContext context) {
@@ -46,18 +47,19 @@ class WelcomePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const GlowLogo(size: 88),
-                    const SizedBox(height: GlowSpacing.md),
+                    const OnboardingHeader(step: 1),
+                    Text(headline, style: textTheme.titleLarge),
+                    const SizedBox(height: GlowSpacing.sm),
                     Text(
-                      headline,
-                      textAlign: TextAlign.center,
-                      style: textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: GlowSpacing.lg),
-                    Text(
-                      'ทำบัตรของคุณ ใส่แค่ชื่อก็พอ ที่เหลือใส่ทีหลังได้ '
-                      'ข้อมูลเก็บในเครื่องนี้เท่านั้น',
+                      'ใส่ตารางเรียน 2 นาที ให้ Glow ช่วยวางแผนการนอน',
                       style: textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: GlowSpacing.xl),
+                    const WarningBar(
+                      severity: WarningBarSeverity.yellow,
+                      message:
+                          'ทำบัตรของคุณ ใส่แค่ชื่อก็พอ ที่เหลือใส่ทีหลังได้ '
+                          'ข้อมูลเก็บในเครื่องนี้เท่านั้น',
                     ),
                     const SizedBox(height: GlowSpacing.md),
                     ProfileFields(

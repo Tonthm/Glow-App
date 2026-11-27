@@ -86,10 +86,7 @@ void main() {
     await tester.enterText(field('ชื่อ'), 'มายด์');
     await tester.enterText(field('วันเกิด (ว/ด/ปปปป)'), '31/4/2551');
     await tap(tester, 'ต่อไป');
-    expect(
-      find.text('ไม่มีวันที่นี้ในปฏิทิน ลองตรวจอีกครั้ง'),
-      findsOneWidget,
-    );
+    expect(find.text('ไม่มีวันที่นี้ในปฏิทิน ลองตรวจอีกครั้ง'), findsOneWidget);
 
     await tester.enterText(field('วันเกิด (ว/ด/ปปปป)'), '01052543');
     await tap(tester, 'ต่อไป');
@@ -128,7 +125,58 @@ void main() {
     await finish(tester);
   });
 
-  testWidgets('the profile editor fits a small phone and saves', (tester) async {
+  testWidgets('setup steppers keep travel nonnegative and save chosen values', (
+    tester,
+  ) async {
+    await start();
+    await show(tester, const OnboardingScreen());
+    await tap(tester, 'ข้าม');
+    final lessTravel = find.byWidgetPredicate(
+      (widget) =>
+          widget is IconButton &&
+          widget.tooltip == 'ลด เวลาเดินทางไปเรียน 5 นาที',
+    );
+    for (var i = 0; i < 6; i++) {
+      await tester.ensureVisible(lessTravel);
+      await settle(tester);
+      await tester.tap(lessTravel);
+      await settle(tester);
+    }
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is IconButton &&
+                  widget.tooltip == 'ลด เวลาเดินทางไปเรียน 5 นาที',
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    final laterClass = find.byWidgetPredicate(
+      (widget) =>
+          widget is IconButton &&
+          widget.tooltip == 'เพิ่ม เรียนเช้าสุดกี่โมง 5 นาที',
+    );
+    await tester.scrollUntilVisible(
+      laterClass,
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await settle(tester);
+    await tester.tap(laterClass);
+    await settle(tester);
+    await tap(tester, 'เริ่มใช้งาน');
+    final row = await settings.get();
+    expect(row.defaultTravelMinutes, 0);
+    expect(row.earliestClassMinutes, 8 * 60 + 5);
+    await finish(tester);
+  });
+
+  testWidgets('the profile editor fits a small phone and saves', (
+    tester,
+  ) async {
     await start();
     await show(
       tester,

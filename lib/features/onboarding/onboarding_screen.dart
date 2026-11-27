@@ -8,12 +8,15 @@ import '../../core/card_config.dart';
 import '../../providers.dart';
 import '../../services/app_clock.dart';
 import '../../theme/tokens.dart';
+import '../../theme/glow_colors.dart';
+import '../../theme/widgets/glow_card.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../card/profile_fields.dart';
 import '../settings/battery_optimization_sheet.dart';
 import '../shared/minutes_stepper.dart';
 import '../shared/time_of_day_field.dart';
 import 'welcome_page.dart';
+import 'onboarding_header.dart';
 
 /// First the card (skippable), then only what the sleep time needs. Everything
 /// else starts at its default and can be changed in settings.
@@ -121,67 +124,177 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         if (!didPop) setState(() => _onWelcome = true);
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('อีก 2 ข้อ'),
-          leading: BackButton(
-            onPressed: () => setState(() => _onWelcome = true),
-          ),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(GlowSpacing.pageMargin),
-          children: [
-            Text(
-              'ใช้คิดเวลาเข้านอน ที่เหลือตั้งค่าเริ่มต้นให้แล้ว',
-              style: textTheme.bodyMedium,
-            ),
-            const SizedBox(height: GlowSpacing.lg),
-            TimeOfDayField(
-              label: 'เรียนเช้าสุดกี่โมง',
-              time: _earliestClass,
-              onChanged: (v) => setState(() => _earliestClass = v),
-            ),
-            MinutesStepper(
-              label: 'เวลาเดินทางไปเรียน',
-              minutes: _travelMinutes,
-              step: 5,
-              onChanged: (v) => setState(() => _travelMinutes = v),
-            ),
-            Text(
-              'ใช้เวลานี้ในวันจันทร์–ศุกร์ จนกว่าจะใส่ตารางเรียนจริง',
-              style: textTheme.bodyMedium,
-            ),
-            if (ref.watch(platformCapabilitiesProvider).deviceSetupHelp) ...[
-              const Divider(height: GlowSpacing.xxl),
-              OutlinedButton(
-                onPressed: _notificationsRequested
-                    ? null
-                    : _requestNotifications,
-                child: Text(
-                  _notificationsRequested
-                      ? 'ขอสิทธิ์แจ้งเตือนแล้ว'
-                      : 'ขอสิทธิ์แจ้งเตือน',
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+                  children: [
+                    const OnboardingHeader(step: 2),
+                    Text('อีก 2 ข้อ ก็พร้อมแล้ว', style: textTheme.titleLarge),
+                    const SizedBox(height: GlowSpacing.sm),
+                    Text(
+                      'ใช้คิดเวลาเข้านอน ที่เหลือตั้งค่าเริ่มต้นให้แล้ว',
+                      style: textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: GlowSpacing.xxl),
+                    _SetupValueCard(
+                      label: 'เรียนเช้าสุดกี่โมง',
+                      value: formatTimeOfDay(_earliestClass),
+                      pastel: GlowPastel.sky,
+                      onMinus: () => setState(
+                        () =>
+                            _earliestClass = stepTimeOfDay(_earliestClass, -5),
+                      ),
+                      onPlus: () => setState(
+                        () => _earliestClass = stepTimeOfDay(_earliestClass, 5),
+                      ),
+                      onPick: () async {
+                        final picked = await showTimeWheel(
+                          context,
+                          title: 'เรียนเช้าสุดกี่โมง',
+                          initial: _earliestClass,
+                        );
+                        if (picked != null && mounted) {
+                          setState(() => _earliestClass = picked);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: GlowSpacing.lg),
+                    _SetupValueCard(
+                      label: 'เวลาเดินทางไปเรียน',
+                      value: formatMinutesAsHours(_travelMinutes),
+                      pastel: GlowPastel.mint,
+                      onMinus: _travelMinutes < 5
+                          ? null
+                          : () => setState(() => _travelMinutes -= 5),
+                      onPlus: () => setState(() => _travelMinutes += 5),
+                    ),
+                    const SizedBox(height: GlowSpacing.lg),
+                    Text(
+                      'ใช้เวลานี้ในวันจันทร์–ศุกร์ จนกว่าจะใส่ตารางเรียนจริง',
+                      style: textTheme.bodyMedium,
+                    ),
+                    if (ref
+                        .watch(platformCapabilitiesProvider)
+                        .deviceSetupHelp) ...[
+                      const Divider(height: GlowSpacing.xxl),
+                      OutlinedButton(
+                        onPressed: _notificationsRequested
+                            ? null
+                            : _requestNotifications,
+                        child: Text(
+                          _notificationsRequested
+                              ? 'ขอสิทธิ์แจ้งเตือนแล้ว'
+                              : 'ขอสิทธิ์แจ้งเตือน',
+                        ),
+                      ),
+                      const SizedBox(height: GlowSpacing.sm),
+                      OutlinedButton(
+                        onPressed: () => showBatteryOptimizationSheet(context),
+                        child: const Text('ปิดการประหยัดแบตให้ Glow'),
+                      ),
+                    ],
+                    const SizedBox(height: GlowSpacing.xxl),
+                    GlowCard(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.nightlight_outlined, size: 22),
+                          const SizedBox(width: GlowSpacing.md),
+                          Expanded(
+                            child: Text(
+                              'แอปนี้ไม่ใช่คำแนะนำทางการแพทย์ ถ้านอนไม่หลับหรือง่วงมาก'
+                              'ต่อเนื่องหลายสัปดาห์ ควรปรึกษาแพทย์',
+                              style: textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: GlowSpacing.sm),
-              OutlinedButton(
-                onPressed: () => showBatteryOptimizationSheet(context),
-                child: const Text('ปิดการประหยัดแบตให้ Glow'),
+              Padding(
+                padding: const EdgeInsets.all(GlowSpacing.pageMargin),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    GlowPrimaryButton(
+                      label: 'เริ่มใช้งาน',
+                      onPressed: _finishing ? null : _finish,
+                    ),
+                    BackButton(
+                      onPressed: () => setState(() => _onWelcome = true),
+                    ),
+                  ],
+                ),
               ),
             ],
-            const SizedBox(height: GlowSpacing.xl),
-            Text(
-              'แอปนี้ไม่ใช่คำแนะนำทางการแพทย์ ถ้านอนไม่หลับหรือง่วงมาก'
-              'ต่อเนื่องหลายสัปดาห์ ควรปรึกษาแพทย์',
-              style: textTheme.bodyMedium,
-            ),
-            const SizedBox(height: GlowSpacing.lg),
-            GlowPrimaryButton(
-              label: 'เริ่มใช้งาน',
-              onPressed: _finishing ? null : _finish,
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
+
+class _SetupValueCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final GlowPastel pastel;
+  final VoidCallback? onMinus;
+  final VoidCallback onPlus;
+  final VoidCallback? onPick;
+
+  const _SetupValueCard({
+    required this.label,
+    required this.value,
+    required this.pastel,
+    required this.onMinus,
+    required this.onPlus,
+    this.onPick,
+  });
+
+  @override
+  Widget build(BuildContext context) => GlowCard(
+    pastel: pastel,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodyLarge),
+        const SizedBox(height: GlowSpacing.md),
+        Row(
+          children: [
+            IconButton(
+              tooltip: 'ลด $label 5 นาที',
+              onPressed: onMinus,
+              icon: const Icon(Icons.remove),
+            ),
+            Expanded(
+              child: TextButton(
+                onPressed: onPick,
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
+                  disabledForegroundColor: Theme.of(context)
+                      .colorScheme
+                      .onSurface,
+                ),
+                child: Text(
+                  value,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: 'เพิ่ม $label 5 นาที',
+              onPressed: onPlus,
+              icon: const Icon(Icons.add),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }

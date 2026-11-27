@@ -28,8 +28,15 @@ class StoryPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: storySize.width / storySize.height,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(GlowRadius.button),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(GlowRadius.card),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline,
+            width: GlowStroke.outline,
+          ),
+        ),
         child: CustomPaint(
           painter: _PreviewPainter(story, options, logo, photo),
         ),

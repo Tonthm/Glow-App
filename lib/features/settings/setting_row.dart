@@ -10,12 +10,14 @@ class SettingRow extends StatelessWidget {
   final String title;
   final String? value;
   final VoidCallback onTap;
+  final IconData? icon;
 
   const SettingRow({
     super.key,
     required this.title,
     required this.onTap,
     this.value,
+    this.icon,
   });
 
   @override
@@ -23,6 +25,7 @@ class SettingRow extends StatelessWidget {
     return Column(
       children: [
         ListTile(
+          leading: icon == null ? null : Icon(icon, size: 20),
           title: Text(title),
           trailing: value == null
               ? const Icon(Icons.chevron_right)

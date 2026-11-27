@@ -6,7 +6,6 @@ import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_card.dart';
-import '../../theme/widgets/empty_state.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/stat_tile.dart';
 import '../share/share_screen.dart';
@@ -116,10 +115,37 @@ class StatsScreen extends ConsumerWidget {
                 data: (cells) {
                   final hasAnyData = cells.any((c) => c.checkIn != null);
                   if (!hasAnyData) {
-                    return const EmptyState(
-                      icon: Icons.bar_chart_outlined,
-                      message:
-                          'ยังไม่มีข้อมูล เช็กอินสักสองสามคืนแล้วค่อยกลับมาดู',
+                    return GlowCard(
+                      child: SizedBox.expand(
+                        child: Center(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.bar_chart_rounded, size: 88),
+                                const SizedBox(height: GlowSpacing.xl),
+                                Text(
+                                  'คืนนี้คือจุดเริ่มต้น',
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: GlowSpacing.sm),
+                                Text(
+                                  'ยังไม่มีข้อมูล เช็กอินสักสองสามคืน\nแล้วค่อยกลับมาดู',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: GlowSpacing.xxl),
+                                Text(
+                                  'ทุกคืนที่นอนดี มีความหมาย',
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     );
                   }
                   final fallAsleepMinutes =

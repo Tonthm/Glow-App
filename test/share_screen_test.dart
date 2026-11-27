@@ -18,6 +18,8 @@ import 'package:glow/features/share/story_samples.dart';
 import 'package:glow/providers.dart';
 import 'package:glow/services/app_clock.dart';
 import 'package:glow/services/image_share.dart';
+import 'package:glow/services/photo_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:glow/theme/app_theme.dart';
 import 'package:glow/theme/widgets/student_card.dart';
 import 'package:material_ui/material_ui.dart';
@@ -44,6 +46,12 @@ class FakeSharer implements ImageSharer {
     downloaded.add(name);
     return true;
   }
+}
+
+class _StoryPhoto implements PhotoPicker {
+  @override
+  Future<Uint8List?> pick(PhotoFrom from, {bool selfie = true}) async =>
+      img.encodePng(img.Image(width: 90, height: 160));
 }
 
 void main() {
@@ -87,6 +95,7 @@ void main() {
           databaseProvider.overrideWithValue(db),
           clockProvider.overrideWithValue(() => now),
           imageSharerProvider.overrideWithValue(sharer),
+          photoPickerProvider.overrideWithValue(_StoryPhoto()),
           storyLogoProvider.overrideWithValue(() async => null),
           storyRendererProvider.overrideWithValue((
             StorySummary story,
@@ -185,6 +194,29 @@ void main() {
       expect(find.textContaining('ยังไม่มีคืนที่เช็กอิน'), findsOneWidget);
     }
     expect(drawn, isEmpty);
+    await closeDatabase(tester, db);
+  });
+
+  testWidgets('photo preview saves the combined file and returns to options', (
+    tester,
+  ) async {
+    await show(tester);
+    await tapOn(tester, find.text('ดูบนรูปของฉัน'));
+    final previewTitle = find.text('ใส่บนรูปของฉัน');
+    for (var i = 0; i < 100 && previewTitle.evaluate().isEmpty; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await settle(tester);
+    expect(previewTitle, findsOneWidget);
+    await tapOn(tester, find.text('ใส่บนรูปของฉันแล้วบันทึก'));
+    expect(sharer.shared, ['glow_photo.png']);
+    await tester.tap(find.byType(BackButton));
+    await settle(tester);
+    expect(find.text('แชร์ลงสตอรี่'), findsOneWidget);
+    expect(tester.takeException(), isNull);
     await closeDatabase(tester, db);
   });
 
