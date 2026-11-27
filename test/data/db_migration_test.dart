@@ -4,8 +4,17 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:glow/data/database.dart';
 
-/// What schema 21 added.
+/// What schema 22 added.
+const _rewindFrom22 = [
+  'ALTER TABLE settings DROP COLUMN cycle_align_enabled',
+  'ALTER TABLE settings DROP COLUMN cycle_minutes',
+  'ALTER TABLE night_plans DROP COLUMN cycle_shift_minutes',
+  'ALTER TABLE night_plans DROP COLUMN cycle_minutes',
+];
+
+/// What schema 21 added, and the newer columns on top of it.
 const _rewindFrom21 = [
+  ..._rewindFrom22,
   'ALTER TABLE ai_settings DROP COLUMN image_consent_version',
 ];
 
@@ -299,6 +308,41 @@ void main() {
     final ai = await db.select(db.aiSettings).getSingle();
     expect((ai.enabled, ai.consentVersion, ai.dailyQuota), (true, 1, 50));
     expect(ai.imageConsentVersion, 0);
+    await db.close();
+  });
+
+  test('a version 21 database keeps plans, fire and coins', () async {
+    await prepare([
+      'INSERT INTO settings (id, onboarding_completed, target_max_minutes)'
+          ' VALUES (0, 1, 555)',
+      'INSERT INTO night_plans (wake_date, planned_wake_at, planned_bedtime_at,'
+          ' is_locked) VALUES (1795478400, 1795502100, 1795470600, 1)',
+      'INSERT INTO weekly_items (title, day_of_week, start_minutes,'
+          " end_minutes, type) VALUES ('ฟิสิกส์', 1, 480, 540, 0)",
+      'INSERT INTO wallets (id, coins) VALUES (0, 91)',
+      'INSERT INTO owned_items (item_id, acquired_at)'
+          " VALUES ('blanket_navy', 1795000000)",
+      'INSERT INTO fire_states (id, points, level, shields)'
+          ' VALUES (0, 9, 3, 2)',
+      ..._rewindFrom22,
+      'PRAGMA user_version = 21',
+    ]);
+
+    final db = AppDatabase.forTesting(NativeDatabase(file));
+    final settings = await db.select(db.settings).getSingle();
+    expect(settings.targetMaxMinutes, 555);
+    expect(settings.cycleAlignEnabled, isTrue);
+    expect(settings.cycleMinutes, 90);
+    final plan = await db.select(db.nightPlans).getSingle();
+    // A night locked before the update keeps its time and has no reason.
+    expect(plan.plannedBedtimeAt.millisecondsSinceEpoch, 1795470600000);
+    expect(plan.cycleShiftMinutes, isNull);
+    expect(plan.cycleMinutes, isNull);
+    expect((await db.select(db.weeklyItems).getSingle()).title, 'ฟิสิกส์');
+    expect((await db.select(db.wallets).getSingle()).coins, 91);
+    expect((await db.select(db.ownedItems).getSingle()).itemId, 'blanket_navy');
+    final fire = await db.select(db.fireStates).getSingle();
+    expect((fire.points, fire.level, fire.shields), (9, 3, 2));
     await db.close();
   });
 

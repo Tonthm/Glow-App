@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/birth_date.dart';
 import '../../core/day_overrides.dart';
+import '../../core/sleep_cycles.dart';
 import '../../core/task_reminders.dart';
 import '../../data/database.dart';
 import '../../data/settings_repository.dart';
@@ -340,6 +341,31 @@ class AdvancedSettingsScreen extends ConsumerWidget {
                   picked.hour * 60 + picked.minute,
                 );
               }
+            },
+          ),
+          const SizedBox(height: GlowSpacing.sm),
+          SwitchListTile(
+            title: const Text('จัดเวลานอนให้ครบรอบ'),
+            subtitle: const Text(
+              'เข้านอนเร็วขึ้นได้ ไม่ช้าลง และไม่เกินเป้าสูงสุด (ค่าประมาณ)',
+            ),
+            value: settings.cycleAlignEnabled,
+            onChanged: (v) => repo.updateCycles(align: v),
+          ),
+          const SizedBox(height: GlowSpacing.sm),
+          SettingRow(
+            title: 'ความยาวรอบการนอน (ประมาณ)',
+            value: '${settings.cycleMinutes} นาที',
+            onTap: () async {
+              final minutes = await showDurationSheet(
+                context,
+                title: 'ความยาวรอบการนอน ต่างกันตามคนและวัย',
+                initial: settings.cycleMinutes,
+                step: 5,
+                min: minCycleMinutes,
+                max: maxCycleMinutes,
+              );
+              if (minutes != null) await repo.updateCycles(minutes: minutes);
             },
           ),
           const _SectionHeader('ท่าก่อนนอน'),

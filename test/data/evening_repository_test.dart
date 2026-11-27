@@ -59,7 +59,18 @@ void main() {
     expect(block.start.isBefore(at(20)), isFalse);
   });
 
+  test('with sleep cycles on, work moves at the earlier reminder', () async {
+    await add('เลข', 60);
+    // Six cycles: bedtime 22:15, so the reminder is 21:15.
+    await evening.carryOverLockedTasks(at(21, 14));
+    expect((await db.select(db.eveningTasks).getSingle()).planDate, monday);
+    await evening.carryOverLockedTasks(at(21, 15));
+    expect((await db.select(db.eveningTasks).getSingle()).planDate, tuesday);
+  });
+
   test('unfinished work moves to tomorrow once the plan locks', () async {
+    // These times are the sleep formula's own, without sleep cycles.
+    await SettingsRepository(db).updateCycles(align: false);
     await add('เลข', 60);
     // A free evening: bedtime 22:45, so the reminder is 21:45.
     await evening.carryOverLockedTasks(at(21, 44));

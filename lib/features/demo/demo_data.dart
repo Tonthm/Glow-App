@@ -40,6 +40,102 @@ Future<void> resetDemoData(AppDatabase db, DateTime today) async {
   });
 }
 
+/// Cases for checking the cycle bar. All wake at 06:30.
+enum CycleDemo {
+  sixCycles(
+    'เป้า 8–9 ชม. ปัดเป็น 6 รอบได้',
+    targetMin: 480,
+    targetMax: 540,
+  ),
+  overTarget(
+    'เป้า 8–8:45 ปัดแล้วเกิน จึงคงเดิม',
+    targetMin: 480,
+    targetMax: 525,
+  ),
+  beforeExam(
+    'คืนก่อนสอบ เป้า 8–9 ชม.',
+    targetMin: 480,
+    targetMax: 540,
+    exam: true,
+  ),
+  shortCycle(
+    'รอบ 70 นาที เป้า 8–10 ชม.',
+    targetMin: 480,
+    targetMax: 600,
+    cycleMinutes: 70,
+  ),
+  longCycle(
+    'รอบ 100 นาที เป้า 8–10 ชม.',
+    targetMin: 480,
+    targetMax: 600,
+    cycleMinutes: 100,
+  );
+
+  final String label;
+  final int targetMin;
+  final int targetMax;
+  final int cycleMinutes;
+  final bool exam;
+
+  const CycleDemo(
+    this.label, {
+    required this.targetMin,
+    required this.targetMax,
+    this.cycleMinutes = 90,
+    this.exam = false,
+  });
+}
+
+/// Wipes everything and sets up one [CycleDemo] around [today]: a class at
+/// 07:55 every day, so every wake time is 06:30.
+Future<void> resetCycleDemo(
+  AppDatabase db,
+  DateTime today,
+  CycleDemo demo,
+) async {
+  await db.transaction(() async {
+    await BackupService(db).deleteAllData();
+    final settings = SettingsRepository(db);
+    await settings.ensureRowExists();
+    await settings.markOnboardingCompleted(
+      _day(today, 0, demoStartHour - 3),
+    );
+    await settings.updateTargetHours(
+      minMinutes: demo.targetMin,
+      maxMinutes: demo.targetMax,
+    );
+    await settings.updateCycles(minutes: demo.cycleMinutes);
+    for (var day = DateTime.monday; day <= DateTime.sunday; day++) {
+      await db
+          .into(db.weeklyItems)
+          .insert(
+            WeeklyItemsCompanion.insert(
+              title: 'คณิตศาสตร์',
+              dayOfWeek: day,
+              startMinutes: 7 * 60 + 55,
+              endMinutes: 12 * 60,
+              type: WeeklyItemType.classSession,
+            ),
+          );
+    }
+    if (demo.exam) {
+      await db
+          .into(db.oneTimeItems)
+          .insert(
+            OneTimeItemsCompanion.insert(
+              title: 'สอบกลางภาค ฟิสิกส์',
+              date: _day(today, 1),
+              type: OneTimeItemType.exam,
+              // In the afternoon: an exam over the morning class would
+              // replace it and change the wake time.
+              startMinutes: const Value(13 * 60),
+              endMinutes: const Value(15 * 60),
+            ),
+          );
+    }
+  });
+}
+
 Future<void> _addSubjectColors(AppDatabase db) async {
   const colors = {
     'คณิตศาสตร์': 'ม่วง',

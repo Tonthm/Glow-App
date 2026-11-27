@@ -88,6 +88,7 @@ class DemoButton extends ConsumerWidget {
                     : 'ปิด AI จำลองแล้ว';
               },
             ),
+            item('ตรวจรอบการนอน (ล้างข้อมูล)', () => _cycleDemo(context, ref)),
             item('ตรวจภาพแชร์', () async {
               unawaited(
                 navigator.push(
@@ -116,6 +117,36 @@ class DemoButton extends ConsumerWidget {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
     }
+  }
+
+  /// Asks which cycle bar case to set up, at 19:00 so nothing has locked.
+  Future<String?> _cycleDemo(BuildContext context, WidgetRef ref) async {
+    final host = ref.context;
+    final db = ref.read(databaseProvider);
+    final clock = ref.read(clockOffsetProvider.notifier);
+    final demo = await showGlowBottomSheet<CycleDemo>(
+      context: host,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'ตรวจรอบการนอน ตื่น 06:30',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          for (final demo in CycleDemo.values)
+            ListTile(
+              dense: true,
+              title: Text(demo.label),
+              onTap: () => Navigator.of(context).pop(demo),
+            ),
+        ],
+      ),
+    );
+    if (demo == null) return null;
+    final today = DateTime.now();
+    await clock.travelTo(DateTime(today.year, today.month, today.day, 19));
+    await resetCycleDemo(db, today, demo);
+    return demo.label;
   }
 
   Future<String?> _jumpToPlan(WidgetRef ref, {required bool notify}) async {

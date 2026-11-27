@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'countdown_strip.dart';
+import 'cycle_bar.dart';
 import '../../core/first_class.dart';
 import '../../core/activity_guess.dart';
 import '../../core/bed_press.dart';
@@ -72,6 +73,7 @@ class TonightPlanData {
   final bool routineDone;
   final ScheduleEntry? firstAppointment;
   final List<HeatmapCell> weekCells;
+  final NightCycles cycles;
 
   const TonightPlanData({
     required this.wakeDate,
@@ -93,6 +95,7 @@ class TonightPlanData {
     required this.routineDone,
     required this.firstAppointment,
     required this.weekCells,
+    required this.cycles,
   });
 }
 
@@ -195,6 +198,7 @@ final tonightPlanProvider = FutureProvider.autoDispose<TonightPlanData>((
     hiddenPoseIds: settings == null ? const {} : hiddenPoseSet(settings),
     routineDone: routineLog?.completed ?? false,
     firstAppointment: await repo.firstAppointment(wakeDate),
+    cycles: await repo.cyclesFor(draft),
     weekCells: await ref
         .watch(statsRepositoryProvider)
         .rangeCells(
@@ -489,6 +493,8 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         ],
         // 1. Tonight's plan.
         _TonightTime(plan: plan),
+        const SizedBox(height: GlowSpacing.md),
+        CycleBar(cycles: plan.cycles),
         const SizedBox(height: GlowSpacing.lg),
         ..._notices(plan),
         // 2. The evening.

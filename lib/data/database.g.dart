@@ -172,6 +172,33 @@ class $SettingsTable extends Settings
     requiredDuringInsert: false,
     defaultValue: const Constant(15),
   );
+  static const VerificationMeta _cycleAlignEnabledMeta = const VerificationMeta(
+    'cycleAlignEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> cycleAlignEnabled = GeneratedColumn<bool>(
+    'cycle_align_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("cycle_align_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _cycleMinutesMeta = const VerificationMeta(
+    'cycleMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> cycleMinutes = GeneratedColumn<int>(
+    'cycle_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(90),
+  );
   static const VerificationMeta _latestWakeMinutesMeta = const VerificationMeta(
     'latestWakeMinutes',
   );
@@ -493,6 +520,8 @@ class $SettingsTable extends Settings
     notifyDeadline,
     notifyBeforeClass,
     beforeClassMinutes,
+    cycleAlignEnabled,
+    cycleMinutes,
     latestWakeMinutes,
     latestBedtimeMinutes,
     termStart,
@@ -638,6 +667,24 @@ class $SettingsTable extends Settings
         beforeClassMinutes.isAcceptableOrUnknown(
           data['before_class_minutes']!,
           _beforeClassMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cycle_align_enabled')) {
+      context.handle(
+        _cycleAlignEnabledMeta,
+        cycleAlignEnabled.isAcceptableOrUnknown(
+          data['cycle_align_enabled']!,
+          _cycleAlignEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cycle_minutes')) {
+      context.handle(
+        _cycleMinutesMeta,
+        cycleMinutes.isAcceptableOrUnknown(
+          data['cycle_minutes']!,
+          _cycleMinutesMeta,
         ),
       );
     }
@@ -909,6 +956,14 @@ class $SettingsTable extends Settings
         DriftSqlType.int,
         data['${effectivePrefix}before_class_minutes'],
       )!,
+      cycleAlignEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}cycle_align_enabled'],
+      )!,
+      cycleMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cycle_minutes'],
+      )!,
       latestWakeMinutes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}latest_wake_minutes'],
@@ -1045,6 +1100,11 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   final bool notifyDeadline;
   final bool notifyBeforeClass;
   final int beforeClassMinutes;
+
+  /// Sleep cycles (section 20): whether bedtime moves earlier to make
+  /// whole cycles, and how long one is taken to be. Added in schema 22.
+  final bool cycleAlignEnabled;
+  final int cycleMinutes;
   final int latestWakeMinutes;
   final int latestBedtimeMinutes;
   final DateTime? termStart;
@@ -1094,6 +1154,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     required this.notifyDeadline,
     required this.notifyBeforeClass,
     required this.beforeClassMinutes,
+    required this.cycleAlignEnabled,
+    required this.cycleMinutes,
     required this.latestWakeMinutes,
     required this.latestBedtimeMinutes,
     this.termStart,
@@ -1142,6 +1204,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     map['notify_deadline'] = Variable<bool>(notifyDeadline);
     map['notify_before_class'] = Variable<bool>(notifyBeforeClass);
     map['before_class_minutes'] = Variable<int>(beforeClassMinutes);
+    map['cycle_align_enabled'] = Variable<bool>(cycleAlignEnabled);
+    map['cycle_minutes'] = Variable<int>(cycleMinutes);
     map['latest_wake_minutes'] = Variable<int>(latestWakeMinutes);
     map['latest_bedtime_minutes'] = Variable<int>(latestBedtimeMinutes);
     if (!nullToAbsent || termStart != null) {
@@ -1199,6 +1263,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       notifyDeadline: Value(notifyDeadline),
       notifyBeforeClass: Value(notifyBeforeClass),
       beforeClassMinutes: Value(beforeClassMinutes),
+      cycleAlignEnabled: Value(cycleAlignEnabled),
+      cycleMinutes: Value(cycleMinutes),
       latestWakeMinutes: Value(latestWakeMinutes),
       latestBedtimeMinutes: Value(latestBedtimeMinutes),
       termStart: termStart == null && nullToAbsent
@@ -1262,6 +1328,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       notifyDeadline: serializer.fromJson<bool>(json['notifyDeadline']),
       notifyBeforeClass: serializer.fromJson<bool>(json['notifyBeforeClass']),
       beforeClassMinutes: serializer.fromJson<int>(json['beforeClassMinutes']),
+      cycleAlignEnabled: serializer.fromJson<bool>(json['cycleAlignEnabled']),
+      cycleMinutes: serializer.fromJson<int>(json['cycleMinutes']),
       latestWakeMinutes: serializer.fromJson<int>(json['latestWakeMinutes']),
       latestBedtimeMinutes: serializer.fromJson<int>(
         json['latestBedtimeMinutes'],
@@ -1318,6 +1386,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       'notifyDeadline': serializer.toJson<bool>(notifyDeadline),
       'notifyBeforeClass': serializer.toJson<bool>(notifyBeforeClass),
       'beforeClassMinutes': serializer.toJson<int>(beforeClassMinutes),
+      'cycleAlignEnabled': serializer.toJson<bool>(cycleAlignEnabled),
+      'cycleMinutes': serializer.toJson<int>(cycleMinutes),
       'latestWakeMinutes': serializer.toJson<int>(latestWakeMinutes),
       'latestBedtimeMinutes': serializer.toJson<int>(latestBedtimeMinutes),
       'termStart': serializer.toJson<DateTime?>(termStart),
@@ -1364,6 +1434,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     bool? notifyDeadline,
     bool? notifyBeforeClass,
     int? beforeClassMinutes,
+    bool? cycleAlignEnabled,
+    int? cycleMinutes,
     int? latestWakeMinutes,
     int? latestBedtimeMinutes,
     Value<DateTime?> termStart = const Value.absent(),
@@ -1405,6 +1477,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     notifyDeadline: notifyDeadline ?? this.notifyDeadline,
     notifyBeforeClass: notifyBeforeClass ?? this.notifyBeforeClass,
     beforeClassMinutes: beforeClassMinutes ?? this.beforeClassMinutes,
+    cycleAlignEnabled: cycleAlignEnabled ?? this.cycleAlignEnabled,
+    cycleMinutes: cycleMinutes ?? this.cycleMinutes,
     latestWakeMinutes: latestWakeMinutes ?? this.latestWakeMinutes,
     latestBedtimeMinutes: latestBedtimeMinutes ?? this.latestBedtimeMinutes,
     termStart: termStart.present ? termStart.value : this.termStart,
@@ -1471,6 +1545,12 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
       beforeClassMinutes: data.beforeClassMinutes.present
           ? data.beforeClassMinutes.value
           : this.beforeClassMinutes,
+      cycleAlignEnabled: data.cycleAlignEnabled.present
+          ? data.cycleAlignEnabled.value
+          : this.cycleAlignEnabled,
+      cycleMinutes: data.cycleMinutes.present
+          ? data.cycleMinutes.value
+          : this.cycleMinutes,
       latestWakeMinutes: data.latestWakeMinutes.present
           ? data.latestWakeMinutes.value
           : this.latestWakeMinutes,
@@ -1557,6 +1637,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           ..write('notifyDeadline: $notifyDeadline, ')
           ..write('notifyBeforeClass: $notifyBeforeClass, ')
           ..write('beforeClassMinutes: $beforeClassMinutes, ')
+          ..write('cycleAlignEnabled: $cycleAlignEnabled, ')
+          ..write('cycleMinutes: $cycleMinutes, ')
           ..write('latestWakeMinutes: $latestWakeMinutes, ')
           ..write('latestBedtimeMinutes: $latestBedtimeMinutes, ')
           ..write('termStart: $termStart, ')
@@ -1601,6 +1683,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     notifyDeadline,
     notifyBeforeClass,
     beforeClassMinutes,
+    cycleAlignEnabled,
+    cycleMinutes,
     latestWakeMinutes,
     latestBedtimeMinutes,
     termStart,
@@ -1644,6 +1728,8 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
           other.notifyDeadline == this.notifyDeadline &&
           other.notifyBeforeClass == this.notifyBeforeClass &&
           other.beforeClassMinutes == this.beforeClassMinutes &&
+          other.cycleAlignEnabled == this.cycleAlignEnabled &&
+          other.cycleMinutes == this.cycleMinutes &&
           other.latestWakeMinutes == this.latestWakeMinutes &&
           other.latestBedtimeMinutes == this.latestBedtimeMinutes &&
           other.termStart == this.termStart &&
@@ -1685,6 +1771,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<bool> notifyDeadline;
   final Value<bool> notifyBeforeClass;
   final Value<int> beforeClassMinutes;
+  final Value<bool> cycleAlignEnabled;
+  final Value<int> cycleMinutes;
   final Value<int> latestWakeMinutes;
   final Value<int> latestBedtimeMinutes;
   final Value<DateTime?> termStart;
@@ -1724,6 +1812,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.notifyDeadline = const Value.absent(),
     this.notifyBeforeClass = const Value.absent(),
     this.beforeClassMinutes = const Value.absent(),
+    this.cycleAlignEnabled = const Value.absent(),
+    this.cycleMinutes = const Value.absent(),
     this.latestWakeMinutes = const Value.absent(),
     this.latestBedtimeMinutes = const Value.absent(),
     this.termStart = const Value.absent(),
@@ -1764,6 +1854,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     this.notifyDeadline = const Value.absent(),
     this.notifyBeforeClass = const Value.absent(),
     this.beforeClassMinutes = const Value.absent(),
+    this.cycleAlignEnabled = const Value.absent(),
+    this.cycleMinutes = const Value.absent(),
     this.latestWakeMinutes = const Value.absent(),
     this.latestBedtimeMinutes = const Value.absent(),
     this.termStart = const Value.absent(),
@@ -1804,6 +1896,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Expression<bool>? notifyDeadline,
     Expression<bool>? notifyBeforeClass,
     Expression<int>? beforeClassMinutes,
+    Expression<bool>? cycleAlignEnabled,
+    Expression<int>? cycleMinutes,
     Expression<int>? latestWakeMinutes,
     Expression<int>? latestBedtimeMinutes,
     Expression<DateTime>? termStart,
@@ -1850,6 +1944,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       if (notifyBeforeClass != null) 'notify_before_class': notifyBeforeClass,
       if (beforeClassMinutes != null)
         'before_class_minutes': beforeClassMinutes,
+      if (cycleAlignEnabled != null) 'cycle_align_enabled': cycleAlignEnabled,
+      if (cycleMinutes != null) 'cycle_minutes': cycleMinutes,
       if (latestWakeMinutes != null) 'latest_wake_minutes': latestWakeMinutes,
       if (latestBedtimeMinutes != null)
         'latest_bedtime_minutes': latestBedtimeMinutes,
@@ -1898,6 +1994,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     Value<bool>? notifyDeadline,
     Value<bool>? notifyBeforeClass,
     Value<int>? beforeClassMinutes,
+    Value<bool>? cycleAlignEnabled,
+    Value<int>? cycleMinutes,
     Value<int>? latestWakeMinutes,
     Value<int>? latestBedtimeMinutes,
     Value<DateTime?>? termStart,
@@ -1938,6 +2036,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
       notifyDeadline: notifyDeadline ?? this.notifyDeadline,
       notifyBeforeClass: notifyBeforeClass ?? this.notifyBeforeClass,
       beforeClassMinutes: beforeClassMinutes ?? this.beforeClassMinutes,
+      cycleAlignEnabled: cycleAlignEnabled ?? this.cycleAlignEnabled,
+      cycleMinutes: cycleMinutes ?? this.cycleMinutes,
       latestWakeMinutes: latestWakeMinutes ?? this.latestWakeMinutes,
       latestBedtimeMinutes: latestBedtimeMinutes ?? this.latestBedtimeMinutes,
       termStart: termStart ?? this.termStart,
@@ -2012,6 +2112,12 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     }
     if (beforeClassMinutes.present) {
       map['before_class_minutes'] = Variable<int>(beforeClassMinutes.value);
+    }
+    if (cycleAlignEnabled.present) {
+      map['cycle_align_enabled'] = Variable<bool>(cycleAlignEnabled.value);
+    }
+    if (cycleMinutes.present) {
+      map['cycle_minutes'] = Variable<int>(cycleMinutes.value);
     }
     if (latestWakeMinutes.present) {
       map['latest_wake_minutes'] = Variable<int>(latestWakeMinutes.value);
@@ -2109,6 +2215,8 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
           ..write('notifyDeadline: $notifyDeadline, ')
           ..write('notifyBeforeClass: $notifyBeforeClass, ')
           ..write('beforeClassMinutes: $beforeClassMinutes, ')
+          ..write('cycleAlignEnabled: $cycleAlignEnabled, ')
+          ..write('cycleMinutes: $cycleMinutes, ')
           ..write('latestWakeMinutes: $latestWakeMinutes, ')
           ..write('latestBedtimeMinutes: $latestBedtimeMinutes, ')
           ..write('termStart: $termStart, ')
@@ -3420,6 +3528,28 @@ class $NightPlansTable extends NightPlans
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _cycleShiftMinutesMeta = const VerificationMeta(
+    'cycleShiftMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> cycleShiftMinutes = GeneratedColumn<int>(
+    'cycle_shift_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cycleMinutesMeta = const VerificationMeta(
+    'cycleMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> cycleMinutes = GeneratedColumn<int>(
+    'cycle_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _usedShieldMeta = const VerificationMeta(
     'usedShield',
   );
@@ -3455,6 +3585,8 @@ class $NightPlansTable extends NightPlans
     prepOverrideMinutes,
     eveningFrom,
     eveningStartedAt,
+    cycleShiftMinutes,
+    cycleMinutes,
     usedShield,
   ];
   @override
@@ -3613,6 +3745,24 @@ class $NightPlansTable extends NightPlans
         ),
       );
     }
+    if (data.containsKey('cycle_shift_minutes')) {
+      context.handle(
+        _cycleShiftMinutesMeta,
+        cycleShiftMinutes.isAcceptableOrUnknown(
+          data['cycle_shift_minutes']!,
+          _cycleShiftMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cycle_minutes')) {
+      context.handle(
+        _cycleMinutesMeta,
+        cycleMinutes.isAcceptableOrUnknown(
+          data['cycle_minutes']!,
+          _cycleMinutesMeta,
+        ),
+      );
+    }
     if (data.containsKey('used_shield')) {
       context.handle(
         _usedShieldMeta,
@@ -3704,6 +3854,14 @@ class $NightPlansTable extends NightPlans
         DriftSqlType.dateTime,
         data['${effectivePrefix}evening_started_at'],
       ),
+      cycleShiftMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cycle_shift_minutes'],
+      ),
+      cycleMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cycle_minutes'],
+      ),
       usedShield: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}used_shield'],
@@ -3761,6 +3919,11 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
   /// "เริ่มตอนนี้" on a day with no classes.
   final DateTime? eveningStartedAt;
 
+  /// Set when the plan locks: how many minutes earlier sleep cycles made
+  /// bedtime, and the cycle length used. Null on older nights.
+  final int? cycleShiftMinutes;
+  final int? cycleMinutes;
+
   /// A shield absorbed this night's miss. Kept on the plan because a missed
   /// night has no check-in row to mark.
   final bool usedShield;
@@ -3783,6 +3946,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     this.prepOverrideMinutes,
     this.eveningFrom,
     this.eveningStartedAt,
+    this.cycleShiftMinutes,
+    this.cycleMinutes,
     required this.usedShield,
   });
   @override
@@ -3821,6 +3986,12 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     }
     if (!nullToAbsent || eveningStartedAt != null) {
       map['evening_started_at'] = Variable<DateTime>(eveningStartedAt);
+    }
+    if (!nullToAbsent || cycleShiftMinutes != null) {
+      map['cycle_shift_minutes'] = Variable<int>(cycleShiftMinutes);
+    }
+    if (!nullToAbsent || cycleMinutes != null) {
+      map['cycle_minutes'] = Variable<int>(cycleMinutes);
     }
     map['used_shield'] = Variable<bool>(usedShield);
     return map;
@@ -3862,6 +4033,12 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       eveningStartedAt: eveningStartedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(eveningStartedAt),
+      cycleShiftMinutes: cycleShiftMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cycleShiftMinutes),
+      cycleMinutes: cycleMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cycleMinutes),
       usedShield: Value(usedShield),
     );
   }
@@ -3894,6 +4071,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       eveningStartedAt: serializer.fromJson<DateTime?>(
         json['eveningStartedAt'],
       ),
+      cycleShiftMinutes: serializer.fromJson<int?>(json['cycleShiftMinutes']),
+      cycleMinutes: serializer.fromJson<int?>(json['cycleMinutes']),
       usedShield: serializer.fromJson<bool>(json['usedShield']),
     );
   }
@@ -3919,6 +4098,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       'prepOverrideMinutes': serializer.toJson<int?>(prepOverrideMinutes),
       'eveningFrom': serializer.toJson<DateTime?>(eveningFrom),
       'eveningStartedAt': serializer.toJson<DateTime?>(eveningStartedAt),
+      'cycleShiftMinutes': serializer.toJson<int?>(cycleShiftMinutes),
+      'cycleMinutes': serializer.toJson<int?>(cycleMinutes),
       'usedShield': serializer.toJson<bool>(usedShield),
     };
   }
@@ -3942,6 +4123,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     Value<int?> prepOverrideMinutes = const Value.absent(),
     Value<DateTime?> eveningFrom = const Value.absent(),
     Value<DateTime?> eveningStartedAt = const Value.absent(),
+    Value<int?> cycleShiftMinutes = const Value.absent(),
+    Value<int?> cycleMinutes = const Value.absent(),
     bool? usedShield,
   }) => NightPlan(
     id: id ?? this.id,
@@ -3970,6 +4153,10 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     eveningStartedAt: eveningStartedAt.present
         ? eveningStartedAt.value
         : this.eveningStartedAt,
+    cycleShiftMinutes: cycleShiftMinutes.present
+        ? cycleShiftMinutes.value
+        : this.cycleShiftMinutes,
+    cycleMinutes: cycleMinutes.present ? cycleMinutes.value : this.cycleMinutes,
     usedShield: usedShield ?? this.usedShield,
   );
   NightPlan copyWithCompanion(NightPlansCompanion data) {
@@ -4014,6 +4201,12 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
       eveningStartedAt: data.eveningStartedAt.present
           ? data.eveningStartedAt.value
           : this.eveningStartedAt,
+      cycleShiftMinutes: data.cycleShiftMinutes.present
+          ? data.cycleShiftMinutes.value
+          : this.cycleShiftMinutes,
+      cycleMinutes: data.cycleMinutes.present
+          ? data.cycleMinutes.value
+          : this.cycleMinutes,
       usedShield: data.usedShield.present
           ? data.usedShield.value
           : this.usedShield,
@@ -4041,13 +4234,15 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           ..write('prepOverrideMinutes: $prepOverrideMinutes, ')
           ..write('eveningFrom: $eveningFrom, ')
           ..write('eveningStartedAt: $eveningStartedAt, ')
+          ..write('cycleShiftMinutes: $cycleShiftMinutes, ')
+          ..write('cycleMinutes: $cycleMinutes, ')
           ..write('usedShield: $usedShield')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     wakeDate,
     plannedWakeAt,
@@ -4066,8 +4261,10 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
     prepOverrideMinutes,
     eveningFrom,
     eveningStartedAt,
+    cycleShiftMinutes,
+    cycleMinutes,
     usedShield,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4090,6 +4287,8 @@ class NightPlan extends DataClass implements Insertable<NightPlan> {
           other.prepOverrideMinutes == this.prepOverrideMinutes &&
           other.eveningFrom == this.eveningFrom &&
           other.eveningStartedAt == this.eveningStartedAt &&
+          other.cycleShiftMinutes == this.cycleShiftMinutes &&
+          other.cycleMinutes == this.cycleMinutes &&
           other.usedShield == this.usedShield);
 }
 
@@ -4112,6 +4311,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
   final Value<int?> prepOverrideMinutes;
   final Value<DateTime?> eveningFrom;
   final Value<DateTime?> eveningStartedAt;
+  final Value<int?> cycleShiftMinutes;
+  final Value<int?> cycleMinutes;
   final Value<bool> usedShield;
   const NightPlansCompanion({
     this.id = const Value.absent(),
@@ -4132,6 +4333,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.prepOverrideMinutes = const Value.absent(),
     this.eveningFrom = const Value.absent(),
     this.eveningStartedAt = const Value.absent(),
+    this.cycleShiftMinutes = const Value.absent(),
+    this.cycleMinutes = const Value.absent(),
     this.usedShield = const Value.absent(),
   });
   NightPlansCompanion.insert({
@@ -4153,6 +4356,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     this.prepOverrideMinutes = const Value.absent(),
     this.eveningFrom = const Value.absent(),
     this.eveningStartedAt = const Value.absent(),
+    this.cycleShiftMinutes = const Value.absent(),
+    this.cycleMinutes = const Value.absent(),
     this.usedShield = const Value.absent(),
   }) : wakeDate = Value(wakeDate),
        plannedWakeAt = Value(plannedWakeAt),
@@ -4176,6 +4381,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Expression<int>? prepOverrideMinutes,
     Expression<DateTime>? eveningFrom,
     Expression<DateTime>? eveningStartedAt,
+    Expression<int>? cycleShiftMinutes,
+    Expression<int>? cycleMinutes,
     Expression<bool>? usedShield,
   }) {
     return RawValuesInsertable({
@@ -4198,6 +4405,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
         'prep_override_minutes': prepOverrideMinutes,
       if (eveningFrom != null) 'evening_from': eveningFrom,
       if (eveningStartedAt != null) 'evening_started_at': eveningStartedAt,
+      if (cycleShiftMinutes != null) 'cycle_shift_minutes': cycleShiftMinutes,
+      if (cycleMinutes != null) 'cycle_minutes': cycleMinutes,
       if (usedShield != null) 'used_shield': usedShield,
     });
   }
@@ -4221,6 +4430,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     Value<int?>? prepOverrideMinutes,
     Value<DateTime?>? eveningFrom,
     Value<DateTime?>? eveningStartedAt,
+    Value<int?>? cycleShiftMinutes,
+    Value<int?>? cycleMinutes,
     Value<bool>? usedShield,
   }) {
     return NightPlansCompanion(
@@ -4242,6 +4453,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
       prepOverrideMinutes: prepOverrideMinutes ?? this.prepOverrideMinutes,
       eveningFrom: eveningFrom ?? this.eveningFrom,
       eveningStartedAt: eveningStartedAt ?? this.eveningStartedAt,
+      cycleShiftMinutes: cycleShiftMinutes ?? this.cycleShiftMinutes,
+      cycleMinutes: cycleMinutes ?? this.cycleMinutes,
       usedShield: usedShield ?? this.usedShield,
     );
   }
@@ -4303,6 +4516,12 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
     if (eveningStartedAt.present) {
       map['evening_started_at'] = Variable<DateTime>(eveningStartedAt.value);
     }
+    if (cycleShiftMinutes.present) {
+      map['cycle_shift_minutes'] = Variable<int>(cycleShiftMinutes.value);
+    }
+    if (cycleMinutes.present) {
+      map['cycle_minutes'] = Variable<int>(cycleMinutes.value);
+    }
     if (usedShield.present) {
       map['used_shield'] = Variable<bool>(usedShield.value);
     }
@@ -4330,6 +4549,8 @@ class NightPlansCompanion extends UpdateCompanion<NightPlan> {
           ..write('prepOverrideMinutes: $prepOverrideMinutes, ')
           ..write('eveningFrom: $eveningFrom, ')
           ..write('eveningStartedAt: $eveningStartedAt, ')
+          ..write('cycleShiftMinutes: $cycleShiftMinutes, ')
+          ..write('cycleMinutes: $cycleMinutes, ')
           ..write('usedShield: $usedShield')
           ..write(')'))
         .toString();
@@ -10296,6 +10517,8 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<bool> notifyDeadline,
   Value<bool> notifyBeforeClass,
   Value<int> beforeClassMinutes,
+  Value<bool> cycleAlignEnabled,
+  Value<int> cycleMinutes,
   Value<int> latestWakeMinutes,
   Value<int> latestBedtimeMinutes,
   Value<DateTime?> termStart,
@@ -10336,6 +10559,8 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<bool> notifyDeadline,
   Value<bool> notifyBeforeClass,
   Value<int> beforeClassMinutes,
+  Value<bool> cycleAlignEnabled,
+  Value<int> cycleMinutes,
   Value<int> latestWakeMinutes,
   Value<int> latestBedtimeMinutes,
   Value<DateTime?> termStart,
@@ -10439,6 +10664,16 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<int> get beforeClassMinutes => $composableBuilder(
     column: $table.beforeClassMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get cycleAlignEnabled => $composableBuilder(
+    column: $table.cycleAlignEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cycleMinutes => $composableBuilder(
+    column: $table.cycleMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10643,6 +10878,16 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get cycleAlignEnabled => $composableBuilder(
+    column: $table.cycleAlignEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cycleMinutes => $composableBuilder(
+    column: $table.cycleMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get latestWakeMinutes => $composableBuilder(
     column: $table.latestWakeMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -10839,6 +11084,16 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get cycleAlignEnabled => $composableBuilder(
+    column: $table.cycleAlignEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cycleMinutes => $composableBuilder(
+    column: $table.cycleMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get latestWakeMinutes => $composableBuilder(
     column: $table.latestWakeMinutes,
     builder: (column) => column,
@@ -10999,6 +11254,8 @@ class $$SettingsTableTableManager
                 Value<bool> notifyDeadline = const Value.absent(),
                 Value<bool> notifyBeforeClass = const Value.absent(),
                 Value<int> beforeClassMinutes = const Value.absent(),
+                Value<bool> cycleAlignEnabled = const Value.absent(),
+                Value<int> cycleMinutes = const Value.absent(),
                 Value<int> latestWakeMinutes = const Value.absent(),
                 Value<int> latestBedtimeMinutes = const Value.absent(),
                 Value<DateTime?> termStart = const Value.absent(),
@@ -11038,6 +11295,8 @@ class $$SettingsTableTableManager
                 notifyDeadline: notifyDeadline,
                 notifyBeforeClass: notifyBeforeClass,
                 beforeClassMinutes: beforeClassMinutes,
+                cycleAlignEnabled: cycleAlignEnabled,
+                cycleMinutes: cycleMinutes,
                 latestWakeMinutes: latestWakeMinutes,
                 latestBedtimeMinutes: latestBedtimeMinutes,
                 termStart: termStart,
@@ -11079,6 +11338,8 @@ class $$SettingsTableTableManager
                 Value<bool> notifyDeadline = const Value.absent(),
                 Value<bool> notifyBeforeClass = const Value.absent(),
                 Value<int> beforeClassMinutes = const Value.absent(),
+                Value<bool> cycleAlignEnabled = const Value.absent(),
+                Value<int> cycleMinutes = const Value.absent(),
                 Value<int> latestWakeMinutes = const Value.absent(),
                 Value<int> latestBedtimeMinutes = const Value.absent(),
                 Value<DateTime?> termStart = const Value.absent(),
@@ -11118,6 +11379,8 @@ class $$SettingsTableTableManager
                 notifyDeadline: notifyDeadline,
                 notifyBeforeClass: notifyBeforeClass,
                 beforeClassMinutes: beforeClassMinutes,
+                cycleAlignEnabled: cycleAlignEnabled,
+                cycleMinutes: cycleMinutes,
                 latestWakeMinutes: latestWakeMinutes,
                 latestBedtimeMinutes: latestBedtimeMinutes,
                 termStart: termStart,
@@ -11729,6 +11992,8 @@ typedef $$NightPlansTableCreateCompanionBuilder = NightPlansCompanion Function({
   Value<int?> prepOverrideMinutes,
   Value<DateTime?> eveningFrom,
   Value<DateTime?> eveningStartedAt,
+  Value<int?> cycleShiftMinutes,
+  Value<int?> cycleMinutes,
   Value<bool> usedShield,
 });
 typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
@@ -11750,6 +12015,8 @@ typedef $$NightPlansTableUpdateCompanionBuilder = NightPlansCompanion Function({
   Value<int?> prepOverrideMinutes,
   Value<DateTime?> eveningFrom,
   Value<DateTime?> eveningStartedAt,
+  Value<int?> cycleShiftMinutes,
+  Value<int?> cycleMinutes,
   Value<bool> usedShield,
 });
 
@@ -11849,6 +12116,16 @@ class $$NightPlansTableFilterComposer
 
   ColumnFilters<DateTime> get eveningStartedAt => $composableBuilder(
     column: $table.eveningStartedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cycleShiftMinutes => $composableBuilder(
+    column: $table.cycleShiftMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cycleMinutes => $composableBuilder(
+    column: $table.cycleMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11957,6 +12234,16 @@ class $$NightPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get cycleShiftMinutes => $composableBuilder(
+    column: $table.cycleShiftMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cycleMinutes => $composableBuilder(
+    column: $table.cycleMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get usedShield => $composableBuilder(
     column: $table.usedShield,
     builder: (column) => ColumnOrderings(column),
@@ -12048,6 +12335,16 @@ class $$NightPlansTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get cycleShiftMinutes => $composableBuilder(
+    column: $table.cycleShiftMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cycleMinutes => $composableBuilder(
+    column: $table.cycleMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get usedShield => $composableBuilder(
     column: $table.usedShield,
     builder: (column) => column,
@@ -12103,6 +12400,8 @@ class $$NightPlansTableTableManager
                 Value<int?> prepOverrideMinutes = const Value.absent(),
                 Value<DateTime?> eveningFrom = const Value.absent(),
                 Value<DateTime?> eveningStartedAt = const Value.absent(),
+                Value<int?> cycleShiftMinutes = const Value.absent(),
+                Value<int?> cycleMinutes = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
               }) => NightPlansCompanion(
                 id: id,
@@ -12123,6 +12422,8 @@ class $$NightPlansTableTableManager
                 prepOverrideMinutes: prepOverrideMinutes,
                 eveningFrom: eveningFrom,
                 eveningStartedAt: eveningStartedAt,
+                cycleShiftMinutes: cycleShiftMinutes,
+                cycleMinutes: cycleMinutes,
                 usedShield: usedShield,
               ),
           createCompanionCallback:
@@ -12145,6 +12446,8 @@ class $$NightPlansTableTableManager
                 Value<int?> prepOverrideMinutes = const Value.absent(),
                 Value<DateTime?> eveningFrom = const Value.absent(),
                 Value<DateTime?> eveningStartedAt = const Value.absent(),
+                Value<int?> cycleShiftMinutes = const Value.absent(),
+                Value<int?> cycleMinutes = const Value.absent(),
                 Value<bool> usedShield = const Value.absent(),
               }) => NightPlansCompanion.insert(
                 id: id,
@@ -12165,6 +12468,8 @@ class $$NightPlansTableTableManager
                 prepOverrideMinutes: prepOverrideMinutes,
                 eveningFrom: eveningFrom,
                 eveningStartedAt: eveningStartedAt,
+                cycleShiftMinutes: cycleShiftMinutes,
+                cycleMinutes: cycleMinutes,
                 usedShield: usedShield,
               ),
           withReferenceMapper: (p0) => p0

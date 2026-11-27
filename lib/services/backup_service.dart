@@ -16,7 +16,7 @@ class BackupService {
 
   BackupService(this.db);
 
-  static const _version = 12;
+  static const _version = 13;
 
   /// The card photo goes in only if [includePhoto] is asked for.
   Future<Map<String, dynamic>> buildSnapshot({
@@ -153,6 +153,8 @@ class BackupService {
                 'notifyDeadline': false,
                 'notifyBeforeClass': false,
                 'beforeClassMinutes': 15,
+                'cycleAlignEnabled': true,
+                'cycleMinutes': 90,
                 ...settingsJson,
               }).toCompanion(false),
               mode: InsertMode.insertOrReplace,

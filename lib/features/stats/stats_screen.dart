@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../core/check_in.dart';
+import '../../core/sleep_cycles.dart';
 import '../../data/stats_repository.dart';
 import '../../providers.dart';
 import '../../theme/tokens.dart';
@@ -64,6 +66,37 @@ final _monthComparisonProvider = FutureProvider.autoDispose<String>((
   if (diff == 0) return 'เทียบกับเดือนก่อน: นอนเฉลี่ยเท่าเดิม';
   return 'เทียบกับเดือนก่อน: นอนเฉลี่ย${diff > 0 ? 'มากขึ้น' : 'น้อยลง'} '
       '${diff.abs()} นาที';
+});
+
+/// "เฉลี่ย N รอบต่อคืน" over the last 7 and 30 days, from the nights with a
+/// check-in (section 20). Null with no such night.
+final _cycleAveragesProvider = FutureProvider.autoDispose<String?>((ref) async {
+  final settings = await ref.watch(settingsStreamProvider.future);
+  ref.watch(nightHistoryChangesProvider);
+  final repo = ref.watch(statsRepositoryProvider);
+  final today = _dateOnly(ref.watch(clockProvider)());
+
+  Future<String?> over(int days) async {
+    final cells = await repo.rangeCells(
+      DateTime(today.year, today.month, today.day - days + 1),
+      today,
+    );
+    final average = averageCycles([
+      for (final cell in cells)
+        if (cell.checkIn case final checkIn?)
+          actualSleepDuration(
+            lightsOffAt: checkIn.lightsOffAt,
+            wakeAt: checkIn.actualWakeAt,
+            fallAsleepMinutes: settings.fallAsleepMinutes,
+          ).inMinutes,
+    ], settings.cycleMinutes);
+    return average == null
+        ? null
+        : '${cycleCountLabel(average)} รอบ ($days วันล่าสุด)';
+  }
+
+  final parts = [?await over(7), ?await over(30)];
+  return parts.isEmpty ? null : 'เฉลี่ยต่อคืน ประมาณ ${parts.join(' · ')}';
 });
 
 /// Heatmap + summary stats per CLAUDE.md section 10.
@@ -161,6 +194,7 @@ class StatsScreen extends ConsumerWidget {
                       ref.watch(fireStateStreamProvider).value?.longestStreak ??
                       0;
                   final comparison = ref.watch(_monthComparisonProvider).value;
+                  final cycles = ref.watch(_cycleAveragesProvider).value;
                   return ListView(
                     children: [
                       GlowCard(
@@ -177,6 +211,18 @@ class StatsScreen extends ConsumerWidget {
                         summary: summary,
                         longestStreak: longestStreak,
                       ),
+                      if (cycles != null) ...[
+                        Text(
+                          cycles,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          'จำนวนรอบเป็นค่าประมาณจากเวลาที่เช็กอิน ไม่ใช่การวัด',
+                          style: Theme.of(context).textTheme.labelSmall,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                       if (comparison != null) ...[
                         const SizedBox(height: GlowSpacing.lg),
                         Text(

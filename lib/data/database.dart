@@ -55,6 +55,11 @@ class Settings extends Table {
       boolean().withDefault(const Constant(false))();
   IntColumn get beforeClassMinutes =>
       integer().withDefault(const Constant(15))();
+  /// Sleep cycles (section 20): whether bedtime moves earlier to make
+  /// whole cycles, and how long one is taken to be. Added in schema 22.
+  BoolColumn get cycleAlignEnabled =>
+      boolean().withDefault(const Constant(true))();
+  IntColumn get cycleMinutes => integer().withDefault(const Constant(90))();
   IntColumn get latestWakeMinutes =>
       integer().withDefault(const Constant(480))();
   IntColumn get latestBedtimeMinutes =>
@@ -183,6 +188,11 @@ class NightPlans extends Table {
 
   /// "เริ่มตอนนี้" on a day with no classes.
   DateTimeColumn get eveningStartedAt => dateTime().nullable()();
+
+  /// Set when the plan locks: how many minutes earlier sleep cycles made
+  /// bedtime, and the cycle length used. Null on older nights.
+  IntColumn get cycleShiftMinutes => integer().nullable()();
+  IntColumn get cycleMinutes => integer().nullable()();
 
   /// A shield absorbed this night's miss. Kept on the plan because a missed
   /// night has no check-in row to mark.
@@ -497,7 +507,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   /// createTable() builds a table from the *latest* definition, so a column
   /// added in a later version may already be there. A migration that stopped
@@ -639,6 +649,12 @@ class AppDatabase extends _$AppDatabase {
           aiSettings,
           aiSettings.imageConsentVersion,
         );
+      }
+      if (from < 22) {
+        await _addColumnIfMissing(m, settings, settings.cycleAlignEnabled);
+        await _addColumnIfMissing(m, settings, settings.cycleMinutes);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.cycleShiftMinutes);
+        await _addColumnIfMissing(m, nightPlans, nightPlans.cycleMinutes);
       }
     },
     // A removed photo or birth date is wiped from the file, not only

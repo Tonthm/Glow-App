@@ -28,6 +28,25 @@ bool hasForbiddenPhrase(String text) {
   return aiForbiddenPhrases.any(packed.contains);
 }
 
+/// Nothing about sleep cycles is ever sent to the AI, so anything it says
+/// about them is made up. This includes claims about waking refreshed.
+const List<String> aiCyclePhrases = [
+  'รอบการนอน',
+  'รอบนอน',
+  'วงจรการนอน',
+  'หลับลึก',
+  'ตื่นสดชื่น',
+  'ตื่นมาสดชื่น',
+  'ตื่นอย่างสดชื่น',
+];
+
+final _sleepStageName = RegExp(r'\bn?rem\b', caseSensitive: false);
+
+bool _talksAboutSleepCycles(String text) {
+  final packed = text.replaceAll(RegExp(r'\s+'), '');
+  return aiCyclePhrases.any(packed.contains) || _sleepStageName.hasMatch(text);
+}
+
 const _thaiDigits = '๐๑๒๓๔๕๖๗๘๙';
 
 String _toArabicDigits(String text) {
@@ -58,7 +77,7 @@ Set<String> numbersIn(String text) {
 bool isSafeExplanation(String summary, List<String> facts) {
   final text = summary.trim();
   if (text.isEmpty || text.length > aiExplanationMaxChars) return false;
-  if (hasForbiddenPhrase(text)) return false;
+  if (hasForbiddenPhrase(text) || _talksAboutSleepCycles(text)) return false;
   final allowed = numbersIn(facts.join('\n'));
   return numbersIn(text).every(allowed.contains);
 }

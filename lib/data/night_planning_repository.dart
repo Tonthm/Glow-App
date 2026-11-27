@@ -9,11 +9,28 @@ import '../core/schedule_load.dart';
 import '../core/schedule_models.dart';
 import '../core/schedule_resolver.dart';
 import '../core/sleep_calculator.dart';
+import '../core/sleep_cycles.dart';
 import 'database.dart';
 import 'schedule_repository.dart';
 import 'settings_repository.dart';
 
 DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+/// One night's sleep cycle figures, for the bar under tonight's plan.
+class NightCycles {
+  /// How many minutes earlier cycles made bedtime; 0 if they didn't.
+  final int shiftMinutes;
+  final int cycleMinutes;
+  final int fallAsleepMinutes;
+  final int sleepMinutes;
+
+  const NightCycles({
+    required this.shiftMinutes,
+    required this.cycleMinutes,
+    required this.fallAsleepMinutes,
+    required this.sleepMinutes,
+  });
+}
 
 /// Combines schedule + settings + core calculator/resolver to produce night
 /// plans, and persists the lock snapshot described in CLAUDE.md section 3
@@ -26,8 +43,22 @@ class NightPlanningRepository {
   NightPlanningRepository(this.db, this.scheduleRepo, this.settingsRepo);
 
   /// All 7 nights (Mon..Sun) of the calendar week containing [anyDateInWeek],
-  /// with weekly bedtime smoothing (section 3 step 7) already applied.
+  /// with weekly bedtime smoothing (section 3 step 7) already applied, and
+  /// then sleep cycles (section 20) if they are on.
   Future<List<NightPlanDraft>> computeWeekDrafts(DateTime anyDateInWeek) async {
+    final formula = await _formulaWeek(anyDateInWeek);
+    final settings = await settingsRepo.get();
+    if (!settings.cycleAlignEnabled) return formula;
+    return alignWeekToCycles(
+      formula,
+      fallAsleepMinutes: settings.fallAsleepMinutes,
+      targetMaxMinutes: settings.targetMaxMinutes,
+      cycleMinutes: settings.cycleMinutes,
+    );
+  }
+
+  /// The week by the section 3 formula alone.
+  Future<List<NightPlanDraft>> _formulaWeek(DateTime anyDateInWeek) async {
     final monday = mondayOfWeek(anyDateInWeek);
     final settingsRow = await settingsRepo.get();
     final settings = toSleepSettings(settingsRow);
@@ -63,6 +94,34 @@ class NightPlanningRepository {
     });
 
     return smoothWeekNightPlans(drafts);
+  }
+
+  /// How much earlier than the formula [draft]'s bedtime is.
+  Future<int> _cycleShift(NightPlanDraft draft) async {
+    final target = _dateOnly(draft.wakeDate);
+    final formula = (await _formulaWeek(
+      target,
+    )).firstWhere((n) => n.wakeDate == target);
+    return formula.bedtime.difference(draft.bedtime).inMinutes;
+  }
+
+  /// Cycle figures for [draft]. A locked night keeps what it locked with.
+  Future<NightCycles> cyclesFor(NightPlanDraft draft) async {
+    final settings = await settingsRepo.get();
+    final row = await getPlanRow(draft.wakeDate);
+    final locked = row != null && row.isLocked;
+    return NightCycles(
+      shiftMinutes: locked
+          ? row.cycleShiftMinutes ?? 0
+          : await _cycleShift(draft),
+      cycleMinutes: (locked ? row.cycleMinutes : null) ?? settings.cycleMinutes,
+      fallAsleepMinutes: settings.fallAsleepMinutes,
+      sleepMinutes: plannedSleepMinutes(
+        wakeTime: draft.wakeTime,
+        bedtime: draft.bedtime,
+        fallAsleepMinutes: settings.fallAsleepMinutes,
+      ),
+    );
   }
 
   /// Weekly items for working out wake times, where the earliest class time
@@ -333,6 +392,8 @@ class NightPlanningRepository {
         isLocked: const Value(true),
         lockedAt: Value(now),
         questMode: Value(mode.index),
+        cycleShiftMinutes: Value(await _cycleShift(draft)),
+        cycleMinutes: Value((await settingsRepo.get()).cycleMinutes),
       );
       if (existing != null) {
         await (db.update(

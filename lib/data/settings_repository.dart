@@ -4,6 +4,7 @@ import '../core/birth_date.dart';
 import '../core/day_overrides.dart';
 import '../core/evening_planner.dart';
 import '../core/sleep_calculator.dart';
+import '../core/sleep_cycles.dart';
 import 'database.dart';
 
 class SettingsRepository {
@@ -168,6 +169,18 @@ class SettingsRepository {
         ),
       );
     });
+  }
+
+  /// Sleep cycle choices; the length is kept within 70–100 minutes.
+  Future<void> updateCycles({bool? align, int? minutes}) async {
+    await (db.update(db.settings)..where((t) => t.id.equals(0))).write(
+      SettingsCompanion(
+        cycleAlignEnabled: Value.absentIfNull(align),
+        cycleMinutes: Value.absentIfNull(
+          minutes == null ? null : clampCycleMinutes(minutes),
+        ),
+      ),
+    );
   }
 
   Future<void> updateRoutineEnabled(bool enabled) async {

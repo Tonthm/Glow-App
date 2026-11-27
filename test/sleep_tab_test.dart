@@ -5,6 +5,7 @@ library;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:glow/core/sleep_cycles.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:glow/data/database.dart';
@@ -92,6 +93,18 @@ void main() {
     final db = await _open(tester, const Size(393, 852));
     await tapOn(tester, find.text('แผนช่วงเย็น'));
     expect(find.text('ตารางเย็นนี้'), findsOneWidget);
+    await closeDatabase(tester, db);
+  });
+
+  testWidgets('the cycle bar says it is an estimate and why', (tester) async {
+    final db = await _open(tester, const Size(320, 1800));
+    expect(find.textContaining(RegExp(r'^ประมาณ .* รอบ')), findsOneWidget);
+    expect(find.text(cycleDisclaimer), findsOneWidget);
+    expect(find.byKey(const ValueKey('fall-asleep')), findsOneWidget);
+    // Nothing claims to know what kind of sleep any part is.
+    expect(find.textContaining('REM'), findsNothing);
+    expect(find.textContaining('หลับลึก'), findsNothing);
+    expect(tester.takeException(), isNull);
     await closeDatabase(tester, db);
   });
 

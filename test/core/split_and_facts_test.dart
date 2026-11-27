@@ -17,6 +17,25 @@ List<DateTime> dates(List<ScheduledPart> result) => [
 ];
 
 void main() {
+  test('an AI explanation may not talk about sleep cycles', () {
+    const facts = ['งานทั้งหมดวางลงในเย็นนี้ได้พอดี'];
+    for (final claim in [
+      'นอนครบรอบการนอนพอดี',
+      'จะได้ ตื่น สดชื่น',
+      'ช่วงหลับลึกสำคัญมาก',
+      'มีเวลาให้ REM',
+      'ช่วง NREM ก็พอ',
+    ]) {
+      expect(
+        isSafeExplanation('งานวางลงได้พอดี $claim', facts),
+        isFalse,
+        reason: claim,
+      );
+    }
+    // Words that only look alike are fine.
+    expect(isSafeExplanation('Remember งานวางลงได้พอดี', facts), isTrue);
+  });
+
   group('scheduleParts', () {
     test('one part per evening when there is no deadline', () {
       final result = scheduleParts(
