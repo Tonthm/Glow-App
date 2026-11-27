@@ -14,8 +14,7 @@ import 'package:glow/main.dart';
 import 'package:glow/providers.dart';
 import 'package:glow/services/notification_service_web.dart'
     as web_notifications;
-import 'package:glow/services/permissions_service_web.dart'
-    as web_permissions;
+import 'package:glow/services/permissions_service_web.dart' as web_permissions;
 import 'package:glow/services/platform/platform_capabilities.dart';
 import 'package:glow/services/app_clock.dart';
 
@@ -100,10 +99,28 @@ void main() {
     final db = await _open(tester, const Size(320, 1800));
     expect(find.textContaining(RegExp(r'^ประมาณ .* รอบ')), findsOneWidget);
     expect(find.text(cycleDisclaimer), findsOneWidget);
-    expect(find.byKey(const ValueKey('fall-asleep')), findsOneWidget);
+    for (final part in ['fall-asleep', 'cycle-1']) {
+      final size = tester.getSize(find.byKey(ValueKey(part)));
+      expect(size.height, 14, reason: '$part must be visible');
+      expect(size.width, greaterThan(4), reason: part);
+    }
     // Nothing claims to know what kind of sleep any part is.
     expect(find.textContaining('REM'), findsNothing);
     expect(find.textContaining('หลับลึก'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await closeDatabase(tester, db);
+  });
+
+  testWidgets('stats show the estimated average cycles a night', (
+    tester,
+  ) async {
+    final db = await _open(tester, const Size(393, 2000));
+    await tapOn(tester, find.text('สถิติ'));
+    expect(
+      find.textContaining(RegExp(r'^เฉลี่ยต่อคืน ประมาณ .* รอบ \(7 วันล่าสุด')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('ค่าประมาณจากเวลาที่เช็กอิน'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await closeDatabase(tester, db);
   });

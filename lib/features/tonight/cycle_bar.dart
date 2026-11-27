@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/sleep_cycles.dart';
 import '../../data/night_planning_repository.dart';
+import '../../theme/glow_colors.dart';
 import '../../theme/tokens.dart';
 
 /// Tonight from bedtime to wake as estimated sleep cycles (CLAUDE.md section
@@ -38,6 +39,8 @@ class CycleBar extends StatelessWidget {
           child: SizedBox(
             height: _height,
             child: Row(
+              // An empty box has no height of its own.
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (final (i, part) in parts.indexed) ...[
                   if (i > 0) const SizedBox(width: 3),
@@ -50,8 +53,13 @@ class CycleBar extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: part.fallingAsleep
                             ? theme.dividerColor
-                            : theme.colorScheme.primary,
+                            : context.glowColors.pastel(GlowPastel.lilac),
                         borderRadius: BorderRadius.circular(GlowRadius.cell),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.35,
+                          ),
+                        ),
                       ),
                     ),
                   ),
