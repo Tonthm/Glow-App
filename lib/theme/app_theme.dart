@@ -145,7 +145,11 @@ class GlowAppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: background,
       fontFamily: 'IBMPlexSansThai',
-      textTheme: baseTextTheme.apply(fontFamilyFallback: const ['Nunito']),
+      // Thai first: the big numbers' font has no Thai letters, and without a
+      // bundled one the web version would download a font from Google.
+      textTheme: baseTextTheme.apply(
+        fontFamilyFallback: const ['IBMPlexSansThai', 'Nunito'],
+      ),
       dividerColor: divider,
       dividerTheme: DividerThemeData(
         color: divider,

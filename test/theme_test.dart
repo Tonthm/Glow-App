@@ -80,5 +80,26 @@ void main() {
         );
       }
     });
+
+    // On the web, a letter that no listed font has makes Flutter download one
+    // from Google. Fredoka and Nunito have no Thai letters.
+    test('every ${brightness.name} text style has a bundled Thai font', () {
+      final styles = theme.textTheme;
+      for (final style in [
+        styles.displayLarge,
+        styles.headlineLarge,
+        styles.titleLarge,
+        styles.titleMedium,
+        styles.bodyLarge,
+        styles.bodyMedium,
+        styles.bodySmall,
+        styles.labelSmall,
+      ]) {
+        expect([
+          style!.fontFamily,
+          ...?style.fontFamilyFallback,
+        ], contains('IBMPlexSansThai'));
+      }
+    });
   }
 }
