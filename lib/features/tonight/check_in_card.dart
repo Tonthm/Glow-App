@@ -37,39 +37,78 @@ class CheckInCard extends ConsumerStatefulWidget {
 class _CheckInCardState extends ConsumerState<CheckInCard> {
   late DateTime _lightsOffAt = widget.pending.defaultLightsOff;
   late LightsOffSource _source = widget.pending.defaultSource;
-  late DateTime _wakeAt = widget.pending.plannedWakeTime;
+
+  /// A wake time the user picked. While null, the wake time is the moment
+  /// "ตื่นแล้ว" is pressed, if that can still tell.
+  DateTime? _pickedWake;
   bool _submitting = false;
 
+  WakeTimeAnswer _answerAt(DateTime now) => wakeTimeAnswer(
+    wakeDate: widget.pending.wakeDate,
+    plannedWakeTime: widget.pending.plannedWakeTime,
+    now: now,
+  );
+
   Future<void> _editTimes() async {
+    final now = ref.read(clockProvider)();
+    final asked = _pickedWake == null ? _answerAt(now) : null;
     final result = await showGlowBottomSheet<(DateTime, DateTime)>(
       context: context,
       builder: (context) => _EditTimesSheet(
         wakeDate: widget.pending.wakeDate,
         initialLightsOff: _lightsOffAt,
-        initialWake: _wakeAt,
+        // The wheel has to start somewhere; nothing is saved from it until
+        // the user saves the sheet and then confirms.
+        initialWake:
+            _pickedWake ??
+            (asked == WakeTimeAnswer.pressTime
+                ? toMinute(now)
+                : widget.pending.plannedWakeTime),
       ),
     );
     if (result != null) {
       setState(() {
         if (result.$1 != _lightsOffAt) _source = LightsOffSource.edited;
         _lightsOffAt = result.$1;
-        _wakeAt = result.$2;
+        _pickedWake = result.$2;
       });
     }
   }
 
+  /// "ตื่นแล้ว". If the card has been open so long that the press no longer
+  /// tells the wake time, it asks instead of saving.
   Future<void> _confirm() async {
+    final now = ref.read(clockProvider)();
+    final picked = _pickedWake;
+    if (picked == null && _answerAt(now) != WakeTimeAnswer.pressTime) {
+      setState(() {});
+      return;
+    }
+    await _submit(picked ?? toMinute(now), now);
+  }
+
+  /// "เพิ่งตื่นตอนนี้", said by the user after a late opening.
+  Future<void> _wokeJustNow() async {
+    final now = ref.read(clockProvider)();
+    // Past midnight it is no longer "now"; the card then only lets them pick.
+    if (_answerAt(now) == WakeTimeAnswer.askNextDay) {
+      setState(() {});
+      return;
+    }
+    await _submit(toMinute(now), now);
+  }
+
+  Future<void> _submit(DateTime wakeAt, DateTime now) async {
     setState(() => _submitting = true);
     try {
       final fireRepo = ref.read(fireRepositoryProvider);
       final checkInRepo = ref.read(checkInRepositoryProvider);
-      final now = ref.read(clockProvider)();
 
       final fireBefore = await fireRepo.get();
       final result = await checkInRepo.recordCheckIn(
         wakeDate: widget.pending.wakeDate,
         lightsOffAt: _lightsOffAt,
-        actualWakeAt: _wakeAt,
+        actualWakeAt: wakeAt,
         now: now,
         source: _source,
       );
@@ -94,11 +133,19 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
     final textTheme = Theme.of(context).textTheme;
     final fallAsleepMinutes =
         ref.watch(settingsStreamProvider).value?.fallAsleepMinutes ?? 15;
-    final duration = actualSleepDuration(
-      lightsOffAt: _lightsOffAt,
-      wakeAt: _wakeAt,
-      fallAsleepMinutes: fallAsleepMinutes,
-    );
+    final now = ref.watch(clockProvider)();
+    final picked = _pickedWake;
+    final answer = _answerAt(now);
+    final pressTells = picked == null && answer == WakeTimeAnswer.pressTime;
+    // Null while the user still has to say when they woke.
+    final wakeAt = picked ?? (pressTells ? toMinute(now) : null);
+    final duration = wakeAt == null
+        ? null
+        : actualSleepDuration(
+            lightsOffAt: _lightsOffAt,
+            wakeAt: wakeAt,
+            fallAsleepMinutes: fallAsleepMinutes,
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -109,28 +156,52 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
             children: [
               TextSpan(text: '${_formatTime(_lightsOffAt)} '),
               arrowSpan(textTheme.displayLarge),
-              TextSpan(text: ' ${_formatTime(_wakeAt)}'),
+              TextSpan(
+                text: wakeAt == null ? ' --:--' : ' ${_formatTime(wakeAt)}',
+              ),
             ],
           ),
           style: textTheme.displayLarge,
         ),
         const SizedBox(height: GlowSpacing.xs),
-        Text(
-          'นอน ${duration.inHours} ชม. ${duration.inMinutes % 60} นาที',
-          style: textTheme.bodyMedium,
-        ),
+        if (duration != null)
+          Text(
+            'นอน ${duration.inHours} ชม. ${duration.inMinutes % 60} นาที',
+            style: textTheme.bodyMedium,
+          )
+        else
+          Text('ตื่นกี่โมง', style: textTheme.titleLarge),
+        if (pressTells)
+          Text(
+            'เวลาตื่นคือตอนที่กดปุ่ม ถ้าไม่ตรงให้แก้เวลา',
+            style: textTheme.labelSmall,
+          ),
         if (!widget.pending.countsAsPressed)
           Text('เมื่อคืนไม่ได้กดเข้านอน', style: textTheme.labelSmall),
         const SizedBox(height: GlowSpacing.xl),
-        GlowPrimaryButton(
-          label: 'ตื่นแล้ว · ใช่ ตามนี้',
-          onPressed: _submitting ? null : _confirm,
-        ),
-        const SizedBox(height: GlowSpacing.sm),
-        TextButton(
-          onPressed: _submitting ? null : _editTimes,
-          child: const Text('แก้เวลา'),
-        ),
+        if (wakeAt != null) ...[
+          GlowPrimaryButton(
+            label: 'ตื่นแล้ว · ใช่ ตามนี้',
+            onPressed: _submitting ? null : _confirm,
+          ),
+          const SizedBox(height: GlowSpacing.sm),
+          TextButton(
+            onPressed: _submitting ? null : _editTimes,
+            child: const Text('แก้เวลา'),
+          ),
+        ] else ...[
+          GlowPrimaryButton(
+            label: 'เลือกเวลาตื่น',
+            onPressed: _submitting ? null : _editTimes,
+          ),
+          if (answer == WakeTimeAnswer.askSameDay) ...[
+            const SizedBox(height: GlowSpacing.sm),
+            TextButton(
+              onPressed: _submitting ? null : _wokeJustNow,
+              child: const Text('เพิ่งตื่นตอนนี้'),
+            ),
+          ],
+        ],
       ],
     );
   }

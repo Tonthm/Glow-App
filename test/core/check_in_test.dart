@@ -150,6 +150,34 @@ void main() {
     });
   });
 
+  group('wakeTimeAnswer', () {
+    final wakeDate = DateTime(2026, 12, 1);
+    final planned = DateTime(2026, 12, 1, 6, 35);
+    WakeTimeAnswer at(int day, int hour, int minute, [int second = 0]) =>
+        wakeTimeAnswer(
+          wakeDate: wakeDate,
+          plannedWakeTime: planned,
+          now: DateTime(2026, 12, day, hour, minute, second),
+        );
+
+    test('around the planned time, the press is the wake time', () {
+      expect(at(1, 4, 35), WakeTimeAnswer.pressTime);
+      expect(at(1, 6, 35), WakeTimeAnswer.pressTime);
+      // Two hours after, to the end of that minute.
+      expect(at(1, 8, 35, 59), WakeTimeAnswer.pressTime);
+    });
+
+    test('later that day, the user is asked', () {
+      expect(at(1, 8, 36), WakeTimeAnswer.askSameDay);
+      expect(at(1, 23, 59), WakeTimeAnswer.askSameDay);
+    });
+
+    test('the next day, only the user can say', () {
+      expect(at(2, 0, 0), WakeTimeAnswer.askNextDay);
+      expect(at(2, 9, 0), WakeTimeAnswer.askNextDay);
+    });
+  });
+
   group('resolveCheckInTimes', () {
     final wakeDate = d(2026, 11, 23);
 

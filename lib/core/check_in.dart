@@ -49,8 +49,7 @@ CheckInOutcome classifyCheckIn({
     result = CheckInResult.over;
   } else if (sleepMinutes >= settings.targetMinMinutes) {
     result = CheckInResult.enough;
-  } else if (settings.targetMinMinutes - sleepMinutes <=
-      slightlyShortMinutes) {
+  } else if (settings.targetMinMinutes - sleepMinutes <= slightlyShortMinutes) {
     result = CheckInResult.almostEnough;
   } else {
     result = CheckInResult.notEnough;
@@ -106,6 +105,41 @@ Duration actualSleepDuration({
       wakeAt.difference(lightsOffAt) - Duration(minutes: fallAsleepMinutes);
   return slept.isNegative ? Duration.zero : slept;
 }
+
+/// How long after the planned wake time a press still tells when the user
+/// woke up.
+const Duration wakePressGrace = Duration(hours: 2);
+
+/// Where the check-in card gets the wake time from (section 6). It is never
+/// filled in from the plan.
+enum WakeTimeAnswer {
+  /// The moment "ตื่นแล้ว" is pressed.
+  pressTime,
+
+  /// Pressed too late to tell: "just now" is offered, or a time to pick.
+  askSameDay,
+
+  /// After the day they woke, only a picked time makes sense.
+  askNextDay,
+}
+
+WakeTimeAnswer wakeTimeAnswer({
+  required DateTime wakeDate,
+  required DateTime plannedWakeTime,
+  required DateTime now,
+}) {
+  final day = DateTime(wakeDate.year, wakeDate.month, wakeDate.day);
+  if (DateTime(now.year, now.month, now.day).isAfter(day)) {
+    return WakeTimeAnswer.askNextDay;
+  }
+  return toMinute(now).isAfter(plannedWakeTime.add(wakePressGrace))
+      ? WakeTimeAnswer.askSameDay
+      : WakeTimeAnswer.pressTime;
+}
+
+/// Times are shown and saved to the minute.
+DateTime toMinute(DateTime t) =>
+    DateTime(t.year, t.month, t.day, t.hour, t.minute);
 
 /// Turns the two clock times picked on the "แก้เวลา" wheels into full
 /// date-times for the night that ends on [wakeDate]. A lights-off from noon
