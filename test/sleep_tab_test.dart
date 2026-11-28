@@ -17,6 +17,7 @@ import 'package:glow/services/notification_service_web.dart'
 import 'package:glow/services/permissions_service_web.dart' as web_permissions;
 import 'package:glow/services/platform/platform_capabilities.dart';
 import 'package:glow/services/app_clock.dart';
+import 'package:glow/theme/widgets/glow_mascot.dart';
 
 import 'helpers.dart';
 
@@ -127,6 +128,33 @@ void main() {
 
   testWidgets('fits the smallest phone', (tester) async {
     final db = await _open(tester, const Size(320, 640));
+    expect(tester.takeException(), isNull);
+    await closeDatabase(tester, db);
+  });
+
+  testWidgets('mascot follows bedtime and undo on a small phone', (
+    tester,
+  ) async {
+    final db = await _open(tester, const Size(320, 640));
+    GlowMascotPose pose() =>
+        tester.widget<GlowMascot>(find.byType(GlowMascot)).pose;
+    expect(pose(), GlowMascotPose.ready);
+    await tapOn(tester, find.text('เข้านอนแล้ว'));
+    await tester.scrollUntilVisible(
+      find.byType(GlowMascot),
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await settle(tester);
+    expect(pose(), GlowMascotPose.sleeping);
+    await tapOn(tester, find.text('ยังไม่นอน'));
+    await tester.scrollUntilVisible(
+      find.byType(GlowMascot),
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await settle(tester);
+    expect(pose(), GlowMascotPose.ready);
     expect(tester.takeException(), isNull);
     await closeDatabase(tester, db);
   });

@@ -15,6 +15,7 @@ import 'package:glow/services/notification_service_web.dart'
     as web_notifications;
 import 'package:glow/services/permissions_service_web.dart' as web_permissions;
 import 'package:glow/services/platform/platform_capabilities.dart';
+import 'package:glow/theme/widgets/glow_mascot.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers.dart';
@@ -80,6 +81,10 @@ void main() {
     tester,
   ) async {
     await open(tester, _tuesday(6, 52));
+    expect(
+      tester.widget<GlowMascot>(find.byType(GlowMascot)).pose,
+      GlowMascotPose.awake,
+    );
     expect(find.textContaining('06:52'), findsOneWidget);
     expect(find.textContaining('06:35'), findsNothing);
     expect(find.textContaining('เวลาตื่นคือตอนที่กดปุ่ม'), findsOneWidget);
@@ -88,6 +93,10 @@ void main() {
     now = DateTime(2026, 12, 1, 6, 58, 40);
     await tapOn(tester, find.text(_confirm));
     expect(await savedWake(tester), _tuesday(6, 58));
+    expect(
+      tester.widget<GlowMascot>(find.byType(GlowMascot)).pose,
+      GlowMascotPose.awake,
+    );
     await closeDatabase(tester, db);
   });
 

@@ -9,6 +9,7 @@ import '../../data/database.dart';
 import '../../providers.dart';
 import '../../theme/glow_colors.dart';
 import '../../theme/tokens.dart';
+import '../../theme/widgets/glow_mascot.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../share/share_screen.dart';
 
@@ -65,6 +66,8 @@ class CheckInResultScreen extends ConsumerWidget {
               Center(
                 child: Column(
                   children: [
+                    const GlowMascot(pose: GlowMascotPose.awake),
+                    const SizedBox(height: GlowSpacing.sm),
                     Text(
                       _resultLabels[result.outcome.result]!,
                       style: textTheme.displayLarge,

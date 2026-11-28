@@ -27,6 +27,7 @@ import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_card.dart';
 import '../../theme/widgets/glow_fold.dart';
+import '../../theme/widgets/glow_mascot.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/night_ring.dart';
 import '../../theme/widgets/warning_bar.dart';
@@ -801,6 +802,12 @@ class _TonightTime extends StatelessWidget {
 
     return Column(
       children: [
+        GlowMascot(
+          pose: plan.inBedAt == null
+              ? GlowMascotPose.ready
+              : GlowMascotPose.sleeping,
+        ),
+        const SizedBox(height: GlowSpacing.sm),
         Text('เข้านอนคืนนี้', style: textTheme.bodyMedium),
         Text(_formatTime(plan.draft.bedtime), style: textTheme.displayLarge),
         Text(

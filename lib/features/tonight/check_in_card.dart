@@ -10,6 +10,7 @@ import '../../providers.dart';
 import '../../theme/widgets/arrow_span.dart';
 import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
+import '../../theme/widgets/glow_mascot.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../services/app_clock.dart';
 
@@ -149,6 +150,8 @@ class _CheckInCardState extends ConsumerState<CheckInCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const GlowMascot(pose: GlowMascotPose.awake),
+        const SizedBox(height: GlowSpacing.sm),
         Text('เมื่อคืน', style: textTheme.bodyMedium),
         const SizedBox(height: GlowSpacing.xs),
         Text.rich(
