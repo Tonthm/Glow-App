@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'countdown_strip.dart';
 import 'cycle_bar.dart';
 import '../../core/first_class.dart';
+import '../../core/calendar_view.dart' show isSameDay;
 import '../../core/guide.dart';
 import '../../core/activity_guess.dart';
 import '../../core/bed_press.dart';
@@ -27,7 +28,6 @@ import '../../theme/tokens.dart';
 import '../../theme/widgets/glow_bottom_sheet.dart';
 import '../../theme/widgets/glow_card.dart';
 import '../../theme/widgets/glow_fold.dart';
-import '../../theme/widgets/glow_mascot.dart';
 import '../../theme/widgets/glow_primary_button.dart';
 import '../../theme/widgets/night_ring.dart';
 import '../../theme/widgets/warning_bar.dart';
@@ -46,6 +46,7 @@ import '../web/web_reminder_bars.dart';
 import 'check_in_card.dart';
 import 'check_in_result_screen.dart';
 import 'tonight_actions.dart';
+import 'tonight_scene.dart';
 import '../../services/app_clock.dart';
 import '../../services/home_widget_service.dart';
 
@@ -319,69 +320,105 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
       );
     }
 
+    final plan = planAsync.value;
+    final showScene =
+        hasSchedule && plan != null && plan.pendingCheckIn == null;
     return Scaffold(
-      appBar: AppBar(
-        // The one place that uses the wordmark font (THEME.md).
-        title: const Text(
-          'Glow',
-          style: TextStyle(fontFamily: 'Fredoka', fontWeight: FontWeight.w600),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.ios_share),
-            tooltip: 'แชร์ลงสตอรี่',
-            onPressed: _shareCard,
-          ),
-          const SettingsButton(),
-          const GuideButton(),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(tonightPlanProvider),
-        child: ListView(
-          padding: const EdgeInsets.all(GlowSpacing.pageMargin),
-          children: [
-            if (_notificationsOk == false) ...[
-              const WarningBar(
-                severity: WarningBarSeverity.red,
-                message:
-                    'สิทธิ์แจ้งเตือนถูกปิดอยู่ แจ้งเตือนจะไม่ทำงาน '
-                    'เปิดได้ในตั้งค่าเครื่อง',
-              ),
-              const SizedBox(height: GlowSpacing.md),
-            ],
-            if (!hasSchedule)
-              const _EmptyScheduleCard()
-            else
-              planAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 48),
-                  child: Center(child: CircularProgressIndicator()),
+      appBar: showScene ? null : _header(),
+      body: SafeArea(
+        top: showScene,
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () async => ref.invalidate(tonightPlanProvider),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              if (showScene)
+                TonightScene(
+                  inBed: plan.inBedAt != null,
+                  header: _header(scene: true),
                 ),
-                error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
-                data: _buildPlan,
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  GlowSpacing.pageMargin,
+                  showScene ? 0 : GlowSpacing.pageMargin,
+                  GlowSpacing.pageMargin,
+                  GlowSpacing.pageMargin,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_notificationsOk == false) ...[
+                      const WarningBar(
+                        severity: WarningBarSeverity.red,
+                        message:
+                            'สิทธิ์แจ้งเตือนถูกปิดอยู่ แจ้งเตือนจะไม่ทำงาน '
+                            'เปิดได้ในตั้งค่าเครื่อง',
+                      ),
+                      const SizedBox(height: GlowSpacing.md),
+                    ],
+                    if (!hasSchedule)
+                      const _EmptyScheduleCard()
+                    else
+                      planAsync.when(
+                        loading: () => const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 48),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                        error: (e, _) => Text('เกิดข้อผิดพลาด: $e'),
+                        data: _buildPlan,
+                      ),
+                    const StarterChecklist(),
+                    const SizedBox(height: GlowSpacing.md),
+                    GlowFold(
+                      icon: Icons.badge_outlined,
+                      title: 'บัตรของฉัน',
+                      // Tapping the card opens dressing up.
+                      child: MyStudentCard(
+                        onTap: () =>
+                            ref.read(selectedTabIndexProvider.notifier).state =
+                                3,
+                      ),
+                    ),
+                    if (hasSchedule &&
+                        ref
+                            .watch(platformCapabilitiesProvider)
+                            .calendarReminders) ...[
+                      const SizedBox(height: GlowSpacing.lg),
+                      const WebReminderBars(),
+                    ],
+                  ],
+                ),
               ),
-            const StarterChecklist(),
-            const SizedBox(height: GlowSpacing.md),
-            GlowFold(
-              icon: Icons.badge_outlined,
-              title: 'บัตรของฉัน',
-              // Tapping the card opens dressing up.
-              child: MyStudentCard(
-                onTap: () =>
-                    ref.read(selectedTabIndexProvider.notifier).state = 3,
-              ),
-            ),
-            if (hasSchedule &&
-                ref.watch(platformCapabilitiesProvider).calendarReminders) ...[
-              const SizedBox(height: GlowSpacing.lg),
-              const WebReminderBars(),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
+
+  AppBar _header({bool scene = false}) => AppBar(
+    primary: !scene,
+    toolbarHeight: scene ? 52 : null,
+    backgroundColor: scene ? Colors.transparent : null,
+    // The one place that uses the wordmark font (THEME.md).
+    title: const FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        'Glow',
+        style: TextStyle(fontFamily: 'Fredoka', fontWeight: FontWeight.w600),
+      ),
+    ),
+    actions: [
+      IconButton(
+        icon: const Icon(Icons.ios_share),
+        tooltip: 'แชร์ลงสตอรี่',
+        onPressed: _shareCard,
+      ),
+      const SettingsButton(),
+      const GuideButton(),
+    ],
+  );
 
   void _shareCard() {
     Navigator.of(context)
@@ -421,7 +458,11 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (isMain)
-          GlowPrimaryButton(label: label, onPressed: onPressed)
+          GlowPrimaryButton(
+            label: label,
+            icon: Icons.bedtime_outlined,
+            onPressed: onPressed,
+          )
         else
           OutlinedButton(onPressed: onPressed, child: Text(label)),
         if (pressedAt == null && !canPress)
@@ -492,6 +533,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         plan.inBedAt == null &&
         plan.routineEnabled &&
         !ref.read(clockProvider)().isBefore(plan.activityCardFrom);
+    final showEvening = plan.eveningEnabled && plan.inBedAt == null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -506,32 +548,44 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
         // 1. Tonight's plan.
         _TonightTime(plan: plan),
         const SizedBox(height: GlowSpacing.md),
-        CycleBar(cycles: plan.cycles),
-        const SizedBox(height: GlowSpacing.lg),
+        _FirstAppointmentCard(plan: plan, now: ref.read(clockProvider)()),
+        const SizedBox(height: GlowSpacing.md),
         ..._notices(plan),
         // 2. The evening.
-        if (plan.eveningEnabled && plan.inBedAt == null) ...[
-          EveningCard(onOpen: () => _openEvening(plan)),
-          const SizedBox(height: GlowSpacing.md),
-        ],
         // 3. Winding down.
-        if (showRoutine) ...[
-          GlowFold(
-            icon: Icons.self_improvement,
-            title: 'ช่วงก่อนนอน',
-            summary: plan.routineDone
-                ? 'ท่ายืดและหายใจ ทำแล้ว'
-                : 'ท่ายืดและหายใจ ประมาณ ${_routineMinutes(plan)} นาที',
-            child: ActivityCard(
-              key: ValueKey(plan.wakeDate),
-              selected: _picked ?? plan.activities,
-              confirmed: plan.activitiesConfirmed,
-              onConfirm: () =>
-                  _saveActivities(plan, _picked ?? plan.activities),
-              done: plan.routineDone,
-              minutes: _routineMinutes(plan),
-              onChanged: (value) => setState(() => _picked = value),
-              onStart: () => _startRoutine(plan),
+        if (showEvening || showRoutine) ...[
+          GlowCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                if (showEvening)
+                  EveningCard(embedded: true, onOpen: () => _openEvening(plan)),
+                if (showEvening && showRoutine)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: GlowSpacing.lg),
+                    child: Divider(),
+                  ),
+                if (showRoutine)
+                  GlowFold(
+                    embedded: true,
+                    icon: Icons.self_improvement,
+                    title: 'ช่วงก่อนนอน',
+                    summary: plan.routineDone
+                        ? 'ท่ายืดและหายใจ ทำแล้ว'
+                        : 'ท่ายืดและหายใจ ประมาณ ${_routineMinutes(plan)} นาที',
+                    child: ActivityCard(
+                      key: ValueKey(plan.wakeDate),
+                      selected: _picked ?? plan.activities,
+                      confirmed: plan.activitiesConfirmed,
+                      onConfirm: () =>
+                          _saveActivities(plan, _picked ?? plan.activities),
+                      done: plan.routineDone,
+                      minutes: _routineMinutes(plan),
+                      onChanged: (value) => setState(() => _picked = value),
+                      onStart: () => _startRoutine(plan),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: GlowSpacing.md),
@@ -789,33 +843,117 @@ class _TonightTime extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final first = plan.firstAppointment;
-    final firstLabel = first == null
-        ? 'วันว่าง'
-        : first.title == earliestClassTitle
-        ? 'เรียนเช้าสุดที่บอกไว้ ${_formatTime(first.start)}'
-        : '${switch (first.kind) {
-            ItemKind.exam => 'สอบ',
-            ItemKind.classSession => 'เรียนคาบแรก',
-            _ => 'นัดแรก',
-          }} ${_formatTime(first.start)}';
+    final rest = plan.draft.wakeTime.difference(plan.draft.bedtime);
+    return GlowCard(
+      padding: const EdgeInsets.all(GlowSpacing.md),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 36),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.bed_outlined, size: 18),
+                    const SizedBox(width: GlowSpacing.sm),
+                    Flexible(
+                      child: Text('เข้านอนคืนนี้', style: textTheme.bodyMedium),
+                    ),
+                  ],
+                ),
+              ),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  _formatTime(plan.draft.bedtime),
+                  style: textTheme.displayLarge,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Text(
+                'ตื่น ${_formatTime(plan.draft.wakeTime)} · '
+                'มีเวลาพัก ${rest.inHours} ชม. ${rest.inMinutes.remainder(60)} นาที',
+                style: textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: GlowSpacing.md),
+              CycleBar(cycles: plan.cycles),
+            ],
+          ),
+          const Positioned(
+            top: 0,
+            right: 0,
+            child: InfoButton(GuideTip.cycles),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-    return Column(
-      children: [
-        GlowMascot(
-          pose: plan.inBedAt == null
-              ? GlowMascotPose.ready
-              : GlowMascotPose.sleeping,
-        ),
-        const SizedBox(height: GlowSpacing.sm),
-        Text('เข้านอนคืนนี้', style: textTheme.bodyMedium),
-        Text(_formatTime(plan.draft.bedtime), style: textTheme.displayLarge),
-        Text(
-          'ตื่น ${_formatTime(plan.draft.wakeTime)} · $firstLabel',
-          style: textTheme.bodyMedium,
-          textAlign: TextAlign.center,
-        ),
-      ],
+class _FirstAppointmentCard extends StatelessWidget {
+  final TonightPlanData plan;
+  final DateTime now;
+
+  const _FirstAppointmentCard({required this.plan, required this.now});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final first = plan.firstAppointment;
+    final label = first == null
+        ? 'วันว่าง'
+        : switch (first.kind) {
+            ItemKind.exam => 'สอบวิชาแรก',
+            ItemKind.classSession => 'เรียนวิชาแรก',
+            _ => 'นัดแรก',
+          };
+    final title = first == null
+        ? 'ไม่มีนัดในตาราง'
+        : first.title == earliestClassTitle
+        ? 'เรียนเช้าสุดที่บอกไว้'
+        : first.title;
+    final stackTime = MediaQuery.textScalerOf(context).scale(24) > 32;
+    final time = first == null
+        ? null
+        : Text(
+            _formatTime(first.start),
+            style: textTheme.displayLarge?.copyWith(
+              fontSize: GlowFontSize.title,
+            ),
+          );
+    return GlowCard(
+      pastel: GlowPastel.lilac,
+      padding: const EdgeInsets.all(GlowSpacing.md),
+      child: Row(
+        children: [
+          Icon(
+            first?.kind == ItemKind.exam
+                ? Icons.school_outlined
+                : Icons.calendar_today_outlined,
+          ),
+          const SizedBox(width: GlowSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${isSameDay(plan.wakeDate, now) ? 'วันนี้' : 'พรุ่งนี้'} · $label',
+                  style: textTheme.bodySmall,
+                ),
+                Text(title, style: textTheme.titleMedium),
+                if (stackTime && time != null) time,
+              ],
+            ),
+          ),
+          if (!stackTime && time != null) ...[
+            const SizedBox(width: GlowSpacing.md),
+            time,
+          ],
+        ],
+      ),
     );
   }
 }

@@ -9,7 +9,10 @@ import 'package:glow/core/sleep_cycles.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:glow/data/database.dart';
+import 'package:glow/data/schedule_repository.dart';
+import 'package:glow/data/settings_repository.dart';
 import 'package:glow/features/demo/demo_data.dart';
+import 'package:glow/features/tonight/tonight_scene.dart';
 import 'package:glow/main.dart';
 import 'package:glow/providers.dart';
 import 'package:glow/services/notification_service_web.dart'
@@ -24,17 +27,25 @@ import 'helpers.dart';
 /// A Tuesday evening, when the activity card is already showing.
 final _now = DateTime(2026, 12, 1, 20, 30);
 
-Future<AppDatabase> _open(WidgetTester tester, Size size) async {
+Future<AppDatabase> _open(
+  WidgetTester tester,
+  Size size, {
+  DateTime? now,
+  Future<void> Function(AppDatabase)? prepare,
+}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final db = AppDatabase.forTesting(NativeDatabase.memory());
-  await tester.runAsync(() => resetDemoData(db, DateTime(2026, 12, 1)));
+  await tester.runAsync(() async {
+    await resetDemoData(db, DateTime(2026, 12, 1));
+    if (prepare != null) await prepare(db);
+  });
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         databaseProvider.overrideWithValue(db),
-        clockProvider.overrideWithValue(() => _now),
+        clockProvider.overrideWithValue(() => now ?? _now),
         // The web version, the main platform.
         platformCapabilitiesProvider.overrideWithValue(
           PlatformCapabilities.web,
@@ -128,6 +139,85 @@ void main() {
 
   testWidgets('fits the smallest phone', (tester) async {
     final db = await _open(tester, const Size(320, 640));
+    expect(tester.takeException(), isNull);
+    await closeDatabase(tester, db);
+  });
+
+  testWidgets('scene follows theme and remains usable with large Thai text', (
+    tester,
+  ) async {
+    final db = await _open(tester, const Size(320, 640));
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await settle(tester);
+    Finder background(String theme) => find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName ==
+              'assets/scenes/tonight_$theme.webp',
+    );
+    expect(background('light'), findsOneWidget);
+    await tester.runAsync(
+      () => SettingsRepository(db).updateThemeMode(AppThemeMode.dark),
+    );
+    await settle(tester);
+    expect(background('dark'), findsOneWidget);
+    await tapOn(tester, find.text('เข้านอนแล้ว'));
+    await tester.scrollUntilVisible(
+      find.byType(TonightScene),
+      -300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await settle(tester);
+    expect(find.text('ฝันดีนะ พักให้เต็มที่'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await closeDatabase(tester, db);
+  });
+
+  testWidgets('first appointment uses the real exam title and time', (
+    tester,
+  ) async {
+    const title = 'การออกแบบระบบและประสบการณ์ผู้ใช้งานดิจิทัล';
+    final db = await _open(
+      tester,
+      const Size(320, 1800),
+      prepare: (db) => ScheduleRepository(db)
+          .addOneTimeItem(
+            title: title,
+            date: DateTime(2026, 12, 2),
+            type: OneTimeItemType.exam,
+            startMinutes: 7 * 60,
+            endMinutes: 8 * 60,
+          )
+          .then((_) {}),
+    );
+    expect(find.text('พรุ่งนี้ · สอบวิชาแรก'), findsOneWidget);
+    expect(find.text(title).first, findsOneWidget);
+    expect(find.text('07:00'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await closeDatabase(tester, db);
+  });
+
+  testWidgets('a free day has no invented class or time', (tester) async {
+    final db = await _open(
+      tester,
+      const Size(320, 1800),
+      prepare: (db) async {
+        await db.delete(db.weeklyItems).go();
+        await db.delete(db.oneTimeItems).go();
+        await SettingsRepository(db).updateEarliestClass(8 * 60);
+        await ScheduleRepository(db).addOneTimeItem(
+          title: 'วันหยุด',
+          date: DateTime(2026, 12, 2),
+          type: OneTimeItemType.holiday,
+        );
+      },
+    );
+    expect(find.byType(TonightScene), findsOneWidget);
+    expect(find.text('พรุ่งนี้ · วันว่าง'), findsOneWidget);
+    expect(find.text('ไม่มีนัดในตาราง'), findsOneWidget);
+    expect(find.text('เรียนเช้าสุดที่บอกไว้'), findsNothing);
     expect(tester.takeException(), isNull);
     await closeDatabase(tester, db);
   });

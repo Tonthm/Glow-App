@@ -31,7 +31,8 @@ Future<void> tapOn(WidgetTester tester, Finder finder) async {
       scrollable: find.byType(Scrollable).first,
     );
   }
-  await tester.ensureVisible(finder);
+  // Keep the target clear of fixed headers and the debug demo shortcut.
+  await Scrollable.ensureVisible(tester.element(finder), alignment: .5);
   await settle(tester);
   await tester.tap(finder);
   await settle(tester);

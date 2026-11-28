@@ -15,8 +15,9 @@ import 'task_form_sheet.dart';
 /// opens the whole evening, which also lists every task.
 class EveningCard extends ConsumerWidget {
   final VoidCallback onOpen;
+  final bool embedded;
 
-  const EveningCard({super.key, required this.onOpen});
+  const EveningCard({super.key, required this.onOpen, this.embedded = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,61 +31,64 @@ class EveningCard extends ConsumerWidget {
         '${b.start.isAfter(now) ? 'ถัดไป ${formatClock(b.start)}' : 'ตอนนี้'}: '
         '${b.title} ถึง ${formatClock(b.end)}';
 
-    return GlowCard(
-      padding: const EdgeInsets.fromLTRB(
-        GlowSpacing.lg,
-        GlowSpacing.md,
-        GlowSpacing.sm,
-        GlowSpacing.md,
-      ),
-      onTap: onOpen,
-      child: Row(
-        children: [
-          const Icon(Icons.checklist),
-          const SizedBox(width: GlowSpacing.lg),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('แผนช่วงเย็น', style: textTheme.titleMedium),
-                if (view.tasks.isEmpty)
-                  Text('ยังไม่มีงานคืนนี้', style: textTheme.bodyMedium)
-                else if (next != null)
-                  Row(
-                    children: [
-                      SubjectDot(
-                        ref.watch(subjectColorsProvider).value ?? const {},
-                        next.title,
-                      ),
-                      Expanded(
-                        child: Text(
-                          describe(next),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodyMedium,
-                        ),
-                      ),
-                    ],
-                  ),
-                if (view.plan.overflow.isNotEmpty)
-                  Text(
-                    'งานเกินไป ${view.plan.overflowMinutes} นาที',
-                    style: textTheme.bodyLarge,
-                  ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: 'เพิ่มงาน',
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              await showTaskForm(context, planDate: view.eveningDate);
-              ref.invalidate(eveningViewProvider);
-            },
-          ),
-        ],
-      ),
+    const padding = EdgeInsets.fromLTRB(
+      GlowSpacing.lg,
+      GlowSpacing.md,
+      GlowSpacing.sm,
+      GlowSpacing.md,
     );
+    final content = Row(
+      children: [
+        const Icon(Icons.checklist),
+        const SizedBox(width: GlowSpacing.lg),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('แผนช่วงเย็น', style: textTheme.titleMedium),
+              if (view.tasks.isEmpty)
+                Text('ยังไม่มีงานคืนนี้', style: textTheme.bodyMedium)
+              else if (next != null)
+                Row(
+                  children: [
+                    SubjectDot(
+                      ref.watch(subjectColorsProvider).value ?? const {},
+                      next.title,
+                    ),
+                    Expanded(
+                      child: Text(
+                        describe(next),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              if (view.plan.overflow.isNotEmpty)
+                Text(
+                  'งานเกินไป ${view.plan.overflowMinutes} นาที',
+                  style: textTheme.bodyLarge,
+                ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'เพิ่มงาน',
+          icon: const Icon(Icons.add),
+          onPressed: () async {
+            await showTaskForm(context, planDate: view.eveningDate);
+            ref.invalidate(eveningViewProvider);
+          },
+        ),
+      ],
+    );
+    return embedded
+        ? InkWell(
+            onTap: onOpen,
+            child: Padding(padding: padding, child: content),
+          )
+        : GlowCard(padding: padding, onTap: onOpen, child: content);
   }
 }

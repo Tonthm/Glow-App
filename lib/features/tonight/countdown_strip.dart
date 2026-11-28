@@ -80,9 +80,12 @@ class CountdownStrip extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: GlowSpacing.sm),
-                  Text(
-                    daysLeftLabel(item.daysLeft),
-                    style: textTheme.titleMedium,
+                  Flexible(
+                    child: Text(
+                      daysLeftLabel(item.daysLeft),
+                      textAlign: TextAlign.end,
+                      style: textTheme.titleMedium,
+                    ),
                   ),
                 ],
               ),
