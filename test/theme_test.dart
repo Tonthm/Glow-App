@@ -42,8 +42,8 @@ void main() {
       readable('links on cards', scheme.primary, scheme.surface);
       readable(
         'selected navigation label',
-        scheme.onPrimaryContainer,
-        scheme.primaryContainer,
+        scheme.onSurface,
+        glow.pastel(GlowPastel.peach),
       );
       final secondaryButton = theme.outlinedButtonTheme.style!;
       readable(

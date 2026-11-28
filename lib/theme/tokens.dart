@@ -97,7 +97,7 @@ class GlowFontSize {
 class GlowBaseColors {
   // Light mode
   static const backgroundLight = Color(0xFFFFF9F0);
-  static const surfaceLight = Color(0xFFFFFFFF);
+  static const surfaceLight = Color(0xFFFFFDF8);
   static const textPrimaryLight = Color(0xFF302D2A);
   static const textSecondaryLight = Color(0xFF736B62);
   static const outlineLight = Color(0xFF302D2A);
@@ -115,12 +115,12 @@ class GlowBaseColors {
   static const backgroundDark = Color(0xFF22222F);
   static const surfaceDark = Color(0xFF2D2C3C);
   static const textPrimaryDark = Color(0xFFF4F2FB);
-  static const textSecondaryDark = Color(0xFFB5B0C9);
+  static const textSecondaryDark = Color(0xFFC0BACE);
   static const outlineDark = Color(0xFF8D87A8);
   static const dividerDark = Color(0xFF454052);
   static const accentDark = Color(0xFFFFA18F);
   static const onAccentDark = Color(0xFF17141F);
-  static const accentFillDark = Color(0xFFFB6B58);
+  static const accentFillDark = Color(0xFFFFA18F);
   static const onAccentFillDark = Color(0xFF302D2A);
 
   // Same in both modes
@@ -135,19 +135,24 @@ class GlowBaseColors {
 /// Soft fills for cards, tags and subject colors. Text on them is the normal
 /// text color: the light set is pale, the dark set is deep.
 class GlowPastelColors {
-  static const lilacLight = Color(0xFFDCD5F5);
+  static const lilacLight = Color(0xFFE7DEF7);
   static const pinkLight = Color(0xFFF6D5D9);
-  static const peachLight = Color(0xFFFFE3CF);
+  static const peachLight = Color(0xFFFFE1D7);
   static const butterLight = Color(0xFFFFECB9);
   static const mintLight = Color(0xFFD2EBDD);
   static const skyLight = Color(0xFFD8E7F4);
 
-  static const lilacDark = Color(0xFF37315C);
+  static const lilacDark = Color(0xFF3B3459);
   static const pinkDark = Color(0xFF4F2D40);
-  static const peachDark = Color(0xFF503526);
+  static const peachDark = Color(0xFF513B45);
   static const butterDark = Color(0xFF473F1E);
   static const mintDark = Color(0xFF224233);
   static const skyDark = Color(0xFF213A53);
+
+  static const cycleLight = Color(0xFFCAB9E7);
+  static const cycleDark = Color(0xFFA48AC9);
+  static const fallAsleepLight = Color(0xFFF6B5A5);
+  static const fallAsleepDark = Color(0xFFE99784);
 }
 
 /// Colors of the drawings on the student card. The card looks the same in

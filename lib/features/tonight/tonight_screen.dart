@@ -340,9 +340,9 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
                 ),
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                  GlowSpacing.pageMargin,
+                  showScene ? 20 : GlowSpacing.pageMargin,
                   showScene ? 0 : GlowSpacing.pageMargin,
-                  GlowSpacing.pageMargin,
+                  showScene ? 20 : GlowSpacing.pageMargin,
                   GlowSpacing.pageMargin,
                 ),
                 child: Column(
@@ -400,6 +400,7 @@ class _TonightScreenState extends ConsumerState<TonightScreen> {
   AppBar _header({bool scene = false}) => AppBar(
     primary: !scene,
     toolbarHeight: scene ? 52 : null,
+    titleSpacing: scene ? 21 : null,
     backgroundColor: scene ? Colors.transparent : null,
     // The one place that uses the wordmark font (THEME.md).
     title: const FittedBox(
@@ -845,7 +846,7 @@ class _TonightTime extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final rest = plan.draft.wakeTime.difference(plan.draft.bedtime);
     return GlowCard(
-      padding: const EdgeInsets.all(GlowSpacing.md),
+      padding: const EdgeInsets.fromLTRB(17, 15, 17, 13),
       child: Stack(
         children: [
           Column(
@@ -859,7 +860,10 @@ class _TonightTime extends StatelessWidget {
                     const Icon(Icons.bed_outlined, size: 18),
                     const SizedBox(width: GlowSpacing.sm),
                     Flexible(
-                      child: Text('เข้านอนคืนนี้', style: textTheme.bodyMedium),
+                      child: Text(
+                        'เข้านอนคืนนี้',
+                        style: textTheme.bodyMedium?.copyWith(fontSize: 13),
+                      ),
                     ),
                   ],
                 ),
@@ -868,15 +872,41 @@ class _TonightTime extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   _formatTime(plan.draft.bedtime),
-                  style: textTheme.displayLarge,
+                  style: textTheme.displayLarge?.copyWith(
+                    fontSize: 60,
+                    height: 1.1,
+                    letterSpacing: -1.5,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
-              Text(
-                'ตื่น ${_formatTime(plan.draft.wakeTime)} · '
-                'มีเวลาพัก ${rest.inHours} ชม. ${rest.inMinutes.remainder(60)} นาที',
-                style: textTheme.bodySmall,
-                textAlign: TextAlign.center,
+              const SizedBox(height: GlowSpacing.xs),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wb_twilight_outlined, size: 16),
+                  const SizedBox(width: 7),
+                  Flexible(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(text: 'ตื่น '),
+                          TextSpan(
+                            text: _formatTime(plan.draft.wakeTime),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          TextSpan(
+                            text:
+                                ' · มีเวลาพัก ${rest.inHours} ชม. '
+                                '${rest.inMinutes.remainder(60)} นาที',
+                          ),
+                        ],
+                      ),
+                      style: textTheme.bodySmall?.copyWith(fontSize: 13),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: GlowSpacing.md),
               CycleBar(cycles: plan.cycles),
@@ -922,17 +952,24 @@ class _FirstAppointmentCard extends StatelessWidget {
             _formatTime(first.start),
             style: textTheme.displayLarge?.copyWith(
               fontSize: GlowFontSize.title,
+              fontWeight: FontWeight.w500,
+              height: 1,
             ),
           );
     return GlowCard(
       pastel: GlowPastel.lilac,
-      padding: const EdgeInsets.all(GlowSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
         children: [
-          Icon(
-            first?.kind == ItemKind.exam
-                ? Icons.school_outlined
-                : Icons.calendar_today_outlined,
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: Icon(
+              first?.kind == ItemKind.exam
+                  ? Icons.school_outlined
+                  : Icons.calendar_today_outlined,
+              size: 27,
+            ),
           ),
           const SizedBox(width: GlowSpacing.md),
           Expanded(
@@ -941,9 +978,12 @@ class _FirstAppointmentCard extends StatelessWidget {
               children: [
                 Text(
                   '${isSameDay(plan.wakeDate, now) ? 'วันนี้' : 'พรุ่งนี้'} · $label',
-                  style: textTheme.bodySmall,
+                  style: textTheme.bodySmall?.copyWith(fontSize: 11),
                 ),
-                Text(title, style: textTheme.titleMedium),
+                Text(
+                  title,
+                  style: textTheme.titleMedium?.copyWith(fontSize: 14),
+                ),
                 if (stackTime && time != null) time,
               ],
             ),

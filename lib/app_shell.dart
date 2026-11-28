@@ -10,43 +10,29 @@ import 'features/stats/stats_screen.dart';
 import 'features/tonight/tonight_screen.dart';
 import 'providers.dart';
 import 'theme/tokens.dart';
+import 'theme/glow_colors.dart';
 
 const _tabs = [TonightScreen(), ScheduleScreen(), StatsScreen(), RoomScreen()];
 
 class _TabSpec {
   final IconData outlined;
-  final IconData filled;
   final String label;
 
-  /// The sleep tab: a bigger icon that keeps the accent color.
+  /// The sleep tab keeps the accent color when another tab is selected.
   final bool main;
 
   const _TabSpec({
     required this.outlined,
-    required this.filled,
     required this.label,
     this.main = false,
   });
 }
 
 const _tabSpecs = [
-  _TabSpec(
-    outlined: Icons.bedtime_outlined,
-    filled: Icons.bedtime,
-    label: 'นอน',
-    main: true,
-  ),
-  _TabSpec(
-    outlined: Icons.calendar_today_outlined,
-    filled: Icons.calendar_today,
-    label: 'ตาราง',
-  ),
-  _TabSpec(
-    outlined: Icons.bar_chart_outlined,
-    filled: Icons.bar_chart,
-    label: 'สถิติ',
-  ),
-  _TabSpec(outlined: Icons.badge_outlined, filled: Icons.badge, label: 'บัตร'),
+  _TabSpec(outlined: Icons.bedtime_outlined, label: 'นอน', main: true),
+  _TabSpec(outlined: Icons.calendar_today_outlined, label: 'ตาราง'),
+  _TabSpec(outlined: Icons.bar_chart_outlined, label: 'สถิติ'),
+  _TabSpec(outlined: Icons.badge_outlined, label: 'บัตร'),
 ];
 
 /// Four labelled tabs in the floating capsule from the Figma design.
@@ -105,7 +91,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                       button: true,
                       child: Material(
                         color: index == i
-                            ? theme.colorScheme.primaryContainer
+                            ? context.glowColors.pastel(GlowPastel.peach)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                         child: InkWell(
@@ -126,10 +112,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      index == i ? spec.filled : spec.outlined,
-                                      size: spec.main ? 28 : 20,
+                                      spec.outlined,
+                                      size: 20,
                                       color: index == i
-                                          ? theme.colorScheme.onPrimaryContainer
+                                          ? theme.colorScheme.onSurface
                                           : spec.main
                                           ? theme.colorScheme.primary
                                           : theme.colorScheme.onSurface,
@@ -138,11 +124,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       spec.label,
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
-                                            color: index == i
-                                                ? theme
-                                                      .colorScheme
-                                                      .onPrimaryContainer
-                                                : theme.colorScheme.onSurface,
+                                            color: theme.colorScheme.onSurface,
                                           ),
                                     ),
                                   ],

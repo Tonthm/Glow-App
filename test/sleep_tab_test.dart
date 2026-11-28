@@ -21,6 +21,7 @@ import 'package:glow/services/permissions_service_web.dart' as web_permissions;
 import 'package:glow/services/platform/platform_capabilities.dart';
 import 'package:glow/services/app_clock.dart';
 import 'package:glow/theme/widgets/glow_mascot.dart';
+import 'package:glow/theme/widgets/glow_card.dart';
 
 import 'helpers.dart';
 
@@ -90,13 +91,19 @@ void main() {
     await closeDatabase(tester, db);
   });
 
-  testWidgets('the sleep tab icon is the biggest', (tester) async {
-    final db = await _open(tester, const Size(393, 852));
-    final sleep = tester.widget<Icon>(find.byIcon(Icons.bedtime));
-    final other = tester.widget<Icon>(
-      find.byIcon(Icons.calendar_today_outlined).last,
-    );
-    expect(sleep.size, greaterThan(other.size!));
+  testWidgets('navigation keeps touch targets on a small phone', (
+    tester,
+  ) async {
+    final db = await _open(tester, const Size(320, 640));
+    for (final label in ['นอน', 'ตาราง', 'สถิติ', 'บัตร']) {
+      final target = find.ancestor(
+        of: find.text(label),
+        matching: find.byType(InkWell),
+      );
+      final size = tester.getSize(target);
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
+    }
     await closeDatabase(tester, db);
   });
 
@@ -113,7 +120,7 @@ void main() {
     expect(find.text(cycleDisclaimer), findsOneWidget);
     for (final part in ['fall-asleep', 'cycle-1']) {
       final size = tester.getSize(find.byKey(ValueKey(part)));
-      expect(size.height, 14, reason: '$part must be visible');
+      expect(size.height, 6, reason: '$part follows the compact mockup');
       expect(size.width, greaterThan(4), reason: part);
     }
     // Nothing claims to know what kind of sleep any part is.
@@ -143,6 +150,30 @@ void main() {
     await closeDatabase(tester, db);
   });
 
+  for (final width in [320.0, 393.0, 520.0]) {
+    testWidgets('scene keeps artwork and card overlap at $width dp', (
+      tester,
+    ) async {
+      final db = await _open(tester, Size(width, 1800));
+      final background = find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName ==
+                'assets/scenes/tonight_light.webp',
+      );
+      final card = find.ancestor(
+        of: find.text('เข้านอนคืนนี้'),
+        matching: find.byType(GlowCard),
+      );
+      final imageBounds = tester.getRect(background);
+      expect(imageBounds.width / imageBounds.height, closeTo(1.5, .001));
+      expect(imageBounds.bottom - tester.getRect(card).top, closeTo(10, .001));
+      expect(tester.takeException(), isNull);
+      await closeDatabase(tester, db);
+    });
+  }
+
   testWidgets('scene follows theme and remains usable with large Thai text', (
     tester,
   ) async {
@@ -171,6 +202,14 @@ void main() {
     );
     await settle(tester);
     expect(find.text('ฝันดีนะ พักให้เต็มที่'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byType(GlowMascot)).dy,
+      greaterThanOrEqualTo(
+        tester
+            .getBottomLeft(find.text('บอกว่าเข้านอนแล้ว · แล้วเจอกันตอนเช้า'))
+            .dy,
+      ),
+    );
     expect(tester.takeException(), isNull);
     await closeDatabase(tester, db);
   });

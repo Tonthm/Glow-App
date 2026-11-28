@@ -30,15 +30,23 @@ class GlowFold extends StatelessWidget {
       collapsedShape: const Border(),
       // What was picked inside stays when it is folded again.
       maintainState: true,
-      leading: Icon(icon),
-      title: Text(title, style: textTheme.titleMedium),
+      minTileHeight: embedded ? 54 : null,
+      tilePadding: embedded ? const EdgeInsets.symmetric(horizontal: 14) : null,
+      dense: embedded ? true : null,
+      leading: Icon(icon, size: embedded ? 20 : null),
+      title: Text(
+        title,
+        style: textTheme.titleMedium?.copyWith(fontSize: embedded ? 13 : null),
+      ),
       subtitle: summary == null
           ? null
           : Text(
               summary!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.bodyMedium,
+              style: textTheme.bodyMedium?.copyWith(
+                fontSize: embedded ? 11 : null,
+              ),
             ),
       childrenPadding: const EdgeInsets.fromLTRB(
         GlowSpacing.lg,

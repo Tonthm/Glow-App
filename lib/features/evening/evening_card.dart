@@ -31,24 +31,36 @@ class EveningCard extends ConsumerWidget {
         '${b.start.isAfter(now) ? 'ถัดไป ${formatClock(b.start)}' : 'ตอนนี้'}: '
         '${b.title} ถึง ${formatClock(b.end)}';
 
-    const padding = EdgeInsets.fromLTRB(
-      GlowSpacing.lg,
-      GlowSpacing.md,
-      GlowSpacing.sm,
-      GlowSpacing.md,
-    );
+    final padding = embedded
+        ? const EdgeInsets.symmetric(horizontal: 14, vertical: 3)
+        : const EdgeInsets.fromLTRB(
+            GlowSpacing.lg,
+            GlowSpacing.md,
+            GlowSpacing.sm,
+            GlowSpacing.md,
+          );
     final content = Row(
       children: [
-        const Icon(Icons.checklist),
-        const SizedBox(width: GlowSpacing.lg),
+        Icon(Icons.checklist, size: embedded ? 20 : 24),
+        SizedBox(width: embedded ? 12 : GlowSpacing.lg),
         Expanded(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('แผนช่วงเย็น', style: textTheme.titleMedium),
+              Text(
+                'แผนช่วงเย็น',
+                style: textTheme.titleMedium?.copyWith(
+                  fontSize: embedded ? 13 : null,
+                ),
+              ),
               if (view.tasks.isEmpty)
-                Text('ยังไม่มีงานคืนนี้', style: textTheme.bodyMedium)
+                Text(
+                  'ยังไม่มีงานคืนนี้',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: embedded ? 11 : null,
+                  ),
+                )
               else if (next != null)
                 Row(
                   children: [
@@ -61,7 +73,9 @@ class EveningCard extends ConsumerWidget {
                         describe(next),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyMedium,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontSize: embedded ? 11 : null,
+                        ),
                       ),
                     ),
                   ],

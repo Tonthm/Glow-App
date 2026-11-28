@@ -13,7 +13,7 @@ class CycleBar extends StatelessWidget {
 
   const CycleBar({super.key, required this.cycles});
 
-  static const _height = 14.0;
+  static const _height = 6.0;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +43,7 @@ class CycleBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (final (i, part) in parts.indexed) ...[
-                  if (i > 0) const SizedBox(width: 3),
+                  if (i > 0) const SizedBox(width: 4),
                   Expanded(
                     flex: part.minutes,
                     child: DecoratedBox(
@@ -52,14 +52,9 @@ class CycleBar extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: part.fallingAsleep
-                            ? theme.dividerColor
-                            : context.glowColors.pastel(GlowPastel.lilac),
+                            ? context.glowColors.fallAsleepFill
+                            : context.glowColors.cycleFill,
                         borderRadius: BorderRadius.circular(GlowRadius.cell),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.35,
-                          ),
-                        ),
                       ),
                     ),
                   ),
@@ -73,19 +68,19 @@ class CycleBar extends StatelessWidget {
           'ประมาณ $count รอบ'
           '${cycles.fallAsleepMinutes > 0 ? ' · เผื่อหลับ ${cycles.fallAsleepMinutes} นาที' : ''}',
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall,
+          style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
         ),
         Text(
           cycleDisclaimer,
           textAlign: TextAlign.center,
-          style: theme.textTheme.labelSmall,
+          style: theme.textTheme.labelSmall?.copyWith(fontSize: 11),
         ),
         if (reason != null) ...[
           const SizedBox(height: GlowSpacing.xs),
           Text(
             reason,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall,
+            style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
           ),
         ],
       ],

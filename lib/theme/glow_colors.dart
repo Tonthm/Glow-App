@@ -19,6 +19,8 @@ class GlowColors extends ThemeExtension<GlowColors> {
   final Color enough;
   final Color enoughOnTime;
   final Color over;
+  final Color cycleFill;
+  final Color fallAsleepFill;
 
   /// One color per [GlowPastel], in enum order.
   final List<Color> pastels;
@@ -31,6 +33,8 @@ class GlowColors extends ThemeExtension<GlowColors> {
     required this.enough,
     required this.enoughOnTime,
     required this.over,
+    required this.cycleFill,
+    required this.fallAsleepFill,
     required this.pastels,
   });
 
@@ -42,6 +46,8 @@ class GlowColors extends ThemeExtension<GlowColors> {
     enough: GlowResultColors.enoughLight,
     enoughOnTime: GlowResultColors.enoughOnTimeLight,
     over: GlowResultColors.overLight,
+    cycleFill: GlowPastelColors.cycleLight,
+    fallAsleepFill: GlowPastelColors.fallAsleepLight,
     pastels: [
       GlowPastelColors.lilacLight,
       GlowPastelColors.pinkLight,
@@ -60,6 +66,8 @@ class GlowColors extends ThemeExtension<GlowColors> {
     enough: GlowResultColors.enoughDark,
     enoughOnTime: GlowResultColors.enoughOnTimeDark,
     over: GlowResultColors.overDark,
+    cycleFill: GlowPastelColors.cycleDark,
+    fallAsleepFill: GlowPastelColors.fallAsleepDark,
     pastels: [
       GlowPastelColors.lilacDark,
       GlowPastelColors.pinkDark,
@@ -90,6 +98,8 @@ class GlowColors extends ThemeExtension<GlowColors> {
     Color? enough,
     Color? enoughOnTime,
     Color? over,
+    Color? cycleFill,
+    Color? fallAsleepFill,
     List<Color>? pastels,
   }) {
     return GlowColors(
@@ -100,6 +110,8 @@ class GlowColors extends ThemeExtension<GlowColors> {
       enough: enough ?? this.enough,
       enoughOnTime: enoughOnTime ?? this.enoughOnTime,
       over: over ?? this.over,
+      cycleFill: cycleFill ?? this.cycleFill,
+      fallAsleepFill: fallAsleepFill ?? this.fallAsleepFill,
       pastels: pastels ?? this.pastels,
     );
   }
@@ -115,6 +127,8 @@ class GlowColors extends ThemeExtension<GlowColors> {
       enough: Color.lerp(enough, other.enough, t)!,
       enoughOnTime: Color.lerp(enoughOnTime, other.enoughOnTime, t)!,
       over: Color.lerp(over, other.over, t)!,
+      cycleFill: Color.lerp(cycleFill, other.cycleFill, t)!,
+      fallAsleepFill: Color.lerp(fallAsleepFill, other.fallAsleepFill, t)!,
       pastels: [
         for (var i = 0; i < pastels.length; i++)
           Color.lerp(pastels[i], other.pastels[i], t)!,
